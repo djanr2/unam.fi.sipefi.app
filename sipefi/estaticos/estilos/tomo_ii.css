@@ -1,0 +1,41 @@
+.estiloWarning{
+	border: solid #ffc107 !important;
+}
+
+/*Contenedor de secciones de carga de solicitud*/
+.contSections {
+	margin-left: 0% !important;
+    margin-right: 0% !important;
+    max-width: 100% !important;
+}
+
+.optionSections{
+	background-color: lightgray !important;
+    border-radius: 10px !important;
+    width: 250px !important;
+    height: 500px !important;
+}
+
+.infoSections {
+    padding-left: 2% !important;
+    width: 100% !important;
+    height: 500px !important;
+}
+
+.colorOS{
+	color: white !important;
+	height: 80px !important;
+    padding-top: 25px !important;
+}
+
+.letraBlanca{
+	color: white !important;
+}
+
+
+/*Estilo de boton para cancelacion de solicitud**/
+.bCancelarSol{
+	border-radius: 10px;
+	padding: 2px;
+    margin: 10px;
+}

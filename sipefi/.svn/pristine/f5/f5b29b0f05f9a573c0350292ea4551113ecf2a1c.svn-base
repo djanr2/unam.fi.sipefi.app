@@ -1,0 +1,155 @@
+'''
+    Este archivo funciona para conectar al modelo con el controlador y asi poder dar 
+    respuesta a la peticion solicitada al servidor desde el cliente.
+''' 
+from SARC.aplicaciones.principal.modelo.GeneralComun import GeneralComun as GenC
+from SARC.aplicaciones.cpr.modelo.ConsultasBD import ConsultasBD as CBDCPR
+from SARC.aplicaciones.principal.modelo.Configuracion import Configuracion as Conf
+from SARC.aplicaciones.principal.modelo.Archivo import Archivo
+
+from django.http import JsonResponse
+from django.http import HttpResponse
+from django.views.decorators.cache import never_cache
+
+import json
+
+@never_cache
+def cerrarSesionUsuarioSistema(request):
+    """
+        La funcion sirve para conectar la peticion cliente - servidor, 
+        en este caso sirve para procesar el cerrado de la sesion del usuario logueado
+    """
+    token = request.POST.get('token','')
+    resp = CBDCPR().validaSesionUsuario(token, 2)
+    if resp != "E":
+        CBDCPR().cierraSesionUsuario(token, "", 1)
+    return JsonResponse({"resp": "OK" }) 
+
+@never_cache
+def guardaRelSICvsSistema(request):
+    """
+        La funcion sirve para conectar la peticion cliente - servidor, 
+        en este caso se realiza el guardo de la relacion del numero SIC con el sistema de 
+        porcentaje a fideicomitir o de primas por riesgo.
+        
+        :return: Nos da como respuesta una estructura JSON con la informacion del guardado.
+    """
+    obj = json.loads(request.POST.get("obj",""))
+    return JsonResponse(GenC().guardaRelacionSICvsSistema(obj))
+
+@never_cache
+def guardaDetSIC(request):
+    """
+        La funcion sirve para conectar la peticion cliente - servidor, 
+        en este caso se realiza el guardo del detalle del numero SIC asociado con los porcentajes a fideicomitir
+        o las primas por riesgo.
+        
+        :return: Nos da como respuesta una estructura JSON con la informacion del guardado.
+    """
+    return JsonResponse(GenC().guardaDetalleSICAsociado(request))
+
+@never_cache
+def requestDataTable(request):
+    """
+        La funcion sirve para conectar la peticion cliente - servidor, 
+        en este caso se realiza un Server-side processing desde un DataTable para filtrar informacion
+        de alguna tabla en especifico.
+        
+        :return: Nos da como respuesta una estructura JSON con la informacion solicitada en la peticion.
+    """
+    return JsonResponse(CBDCPR().dameInfoTabla(request, []))
+
+@never_cache
+def requestGuardaMetodologia(request):
+    """
+        La funcion sirve para conectar la peticion cliente - servidor, 
+        en este caso se guarda la informacion del flujo de metodologias. 
+        
+        :return: Nos da como respuesta una estructura JSON con la informacion solicitada en la peticion.
+    """
+    obj = json.loads(request.POST.get("obj",""))
+    return JsonResponse(Conf().guardaMetodologia(obj),safe=False)
+
+@never_cache
+def requestGuardaParametro(request):
+    """
+        La funcion sirve para conectar la peticion cliente - servidor, 
+        en este caso se guarda la informacion del flujo de parametros. 
+        
+        :return: Nos da como respuesta una estructura JSON con la informacion solicitada en la peticion.
+    """
+    obj = json.loads(request.POST.get("obj",""))
+    return JsonResponse(Conf().guardaParametro(obj),safe=False)
+
+@never_cache
+def requestDameMeto(request):
+    """
+        La funcion sirve para conectar la peticion cliente - servidor, 
+        en este caso consulta la informacion de las metodologias disponibles.
+        
+        :return: Nos da como respuesta una estructura JSON con la informacion solicitada en la peticion.
+    """
+    return JsonResponse(CBDCPR().dameMetodologiasJson(),safe=False)
+
+@never_cache
+def requestDameParamMet(request):
+    """
+        La funcion sirve para conectar la peticion cliente - servidor, 
+        en este caso consulta la informacion de la relacion de metodologias con parametros.
+        
+        :return: Nos da como respuesta una estructura JSON con la informacion solicitada en la peticion.
+    """
+    return JsonResponse(Conf().dataRelParaMeto(),safe=False)
+
+@never_cache
+def requestGuardaRelParamMet(request):
+    """
+        La funcion sirve para conectar la peticion cliente - servidor, 
+        en este caso se guarda la informacion de la relacion de parametros con metodologias.
+        
+        :return: Nos da como respuesta una estructura JSON con la informacion solicitada en la peticion.
+    """
+    obj = json.loads(request.POST.get("obj",""))
+    return JsonResponse(Conf().guardaRelParamMet(obj),safe=False)
+
+@never_cache
+def requestInfoTParamMet(request):
+    """
+        La funcion sirve para conectar la peticion cliente - servidor, 
+        en este caso se consulta toda la informacion de los parametros y de las metodologias en donde estan presentes.
+        
+        :return: Nos da como respuesta una estructura JSON con la informacion solicitada en la peticion.
+    """
+    obj = json.loads(request.POST.get("obj",""))
+    return JsonResponse(CBDCPR().infoTParamMet(obj),safe=False)
+
+@never_cache
+def requestDescargaResumenSICDet(request):
+    """
+        Funcion que sirve para conectar la peticion cliente - servidor, 
+        en este caso se crea un archivo de excel con el resumen de SICS asociados para primas por riesgos o
+        porcentaje a fideicomitir con el detalle de cada SIC.
+        
+        :return: Nos da como respuesta un archivo excel con la respuesta esperada.
+    """
+    obj = json.loads(request.POST.get("obj",""))
+    datosSICs = obj['datos']
+    universo = int(obj['universo'])
+    nombreExcel = "Resumen de SICs con detalle para " + str("CPR" if universo == 1 else "PRF")
+    rFile = Archivo().DescargaResumenSICDet(datosSICs, universo)
+    response = HttpResponse(rFile ,content_type='application/ms-excel')
+    response['Content-Disposition'] = 'attachment; filename=' + nombreExcel + '.xlsx'
+    return response
+
+@never_cache
+def requestDescargaEviDetSIC(request):
+    """
+        Funcion que sirve para conectar la peticion cliente - servidor, 
+        en este caso se descarga el archivo de evidencias para el numero de sic solicitado.
+        
+        :return: Nos da como respuesta el archivo de evidencias del numero sic solicitado.
+    """
+    obj = json.loads(request.POST.get("obj",""))
+    sic = obj['sic']
+    universo = int(obj['universo'])
+    return Archivo().descargaEvidenciasSICDet(sic, universo)

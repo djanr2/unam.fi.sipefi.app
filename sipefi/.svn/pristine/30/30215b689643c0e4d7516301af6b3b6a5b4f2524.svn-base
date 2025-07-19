@@ -1,0 +1,258 @@
+.ajustaModalCargIng{
+	width: 1000px !important;
+	max-width: 1000px !important;
+}
+
+.estiloWarning{
+	border: solid #ffc107 !important;
+}
+
+/*Contenedor de secciones de carga de solicitud*/
+.contSectionsPF {
+	margin-left: 0% !important;
+    margin-right: 0% !important;
+    max-width: 100% !important;
+}
+
+.optionSectionsPF{
+	background-color: lightgray !important;
+    border-radius: 10px !important;
+    width: 250px !important;
+    height: 500px !important;
+}
+
+.infoSectionsPF {
+    padding-left: 2% !important;
+    width: 100% !important;
+    height: 500px !important;
+}
+
+.colorOSPF{
+	color: white !important;
+	height: 80px !important;
+    padding-top: 25px !important;
+}
+
+.letraBlanca{
+	color: white !important;
+}
+
+/*Estilo boton validacion ingresos*/
+#validarIngFin{
+	float: right;
+	margin-top: -6px;
+}
+
+/*Estilo para barra flotante de navegacion*/
+.navCMIng {
+	position: fixed;
+	transition: all 0.3s linear;
+	box-shadow: 2px 2px 8px 0px rgba(0, 0, 0, .4);
+	top: 185px;
+}
+
+.navCMIng ul {
+	margin-top: 0;
+	margin-bottom: 0rem;
+	list-style-type: none;
+	padding: 0;
+}
+
+.navCMIng li {
+	height: 45px;
+	position: relative;
+	width: 50px;
+}
+
+.navCMIng li a {
+	color: #fff !important;
+	display: block;
+	height: 100%;
+	width: 100%;
+	line-height: 45px;
+	padding-left: 25%;
+	border-bottom: 1px solid rgba(0, 0, 0, .4);
+	transition: all .3s linear;
+	text-decoration: none !important;
+}
+
+.navCMIng li:nth-child(1) a {
+	background: #4267B2;
+}
+
+.navCMIng .fa-scale-balanced {
+	position: absolute;
+	top: 10px;
+	color: white;
+}
+
+.navCMIng ul li a span {
+	display: none;
+	font-weight: bold;
+	letter-spacing: 1px;
+}
+
+.navCMIng a:hover {
+	z-index: 1;
+	width: 400px;
+	border-bottom: 1px solid rgba(0, 0, 0, .5);
+	box-shadow: 0 0 1px 1px rgba(0, 0, 0, .3);
+}
+
+.navCMIng ul li:hover a span {
+	padding-left: 10%;
+	display: block;
+	font-size: 15px;
+}
+
+/*Ajuste modal detalle credito*/
+.ajustaModDetCred{
+	width: 550px !important;
+	height: 600px !important;	
+	max-width: 1000px !important;
+}
+
+/*Estilo para barra flotante de navegacion de calculo masivo de solicitudes*/
+.navCalMasSol {
+	position: fixed;
+	transition: all 0.3s linear;
+	box-shadow: 2px 2px 8px 0px rgba(0, 0, 0, .4);
+	top: 240px;
+}
+
+.navCalMasSol ul {
+	margin-top: 0;
+	margin-bottom: 0rem;
+	list-style-type: none;
+	padding: 0;
+}
+
+.navCalMasSol li {
+	height: 45px;
+	position: relative;
+	width: 50px;
+}
+
+.navCalMasSol li a {
+	color: #fff !important;
+	display: block;
+	height: 100%;
+	width: 100%;
+	line-height: 45px;
+	padding-left: 25%;
+	border-bottom: 1px solid rgba(0, 0, 0, .4);
+	transition: all .3s linear;
+	text-decoration: none !important;
+}
+
+.navCalMasSol li:nth-child(1) a {
+	background: #4267B2;
+}
+
+.navCalMasSol .fa-calculator {
+	position: absolute;
+	top: 10px;
+	color: white;
+}
+
+.navCalMasSol ul li a span {
+	display: none;
+	font-weight: bold;
+	letter-spacing: 1px;
+}
+
+.navCalMasSol a:hover {
+	z-index: 1;
+	width: 400px;
+	border-bottom: 1px solid rgba(0, 0, 0, .5);
+	box-shadow: 0 0 1px 1px rgba(0, 0, 0, .3);
+}
+
+.navCalMasSol ul li:hover a span {
+	padding-left: 10%;
+	display: block;
+	font-size: 15px;
+}
+
+/*Estilo de boton para cancelacion de solicitud**/
+.bCancelarSol{
+	border-radius: 10px;
+	padding: 2px;
+    margin: 10px;
+}
+
+/*Estilo para barra flotante de navegacion
+* Asociacion de SIC
+*/
+.navRelSICvsSist {
+	position: fixed;
+	transition: all 0.3s linear;
+	box-shadow: 2px 2px 8px 0px rgba(0, 0, 0, .4);
+	top: 210px;
+    transform: translateY(-50%);
+    z-index: 2000;
+}
+
+.navRelSICvsSist ul {
+	margin-top: 0;
+	margin-bottom: 0rem;
+	list-style-type: none;
+	padding: 0;
+}
+
+.navRelSICvsSist li {
+	height: 45px;
+	position: relative;
+	width: 50px;
+}
+
+.navRelSICvsSist li a {
+	color: #fff !important;
+	display: block;
+	height: 100%;
+	width: 100%;
+	line-height: 45px;
+	padding-left: 25%;
+	border-bottom: 1px solid rgba(0, 0, 0, .4);
+	transition: all .3s linear;
+	text-decoration: none !important;
+}
+
+.navRelSICvsSist li:nth-child(1) a {
+	background: #4267B2;
+}
+
+.navRelSICvsSist li a i {
+	position: absolute;
+	top: 10px;
+	font-size: 25px;
+}
+
+.navRelSICvsSist ul li a span {
+	display: none;
+	font-weight: bold;
+	letter-spacing: 1px;
+}
+
+.navRelSICvsSist a:hover {
+	z-index: 2000;
+	width: 250px;
+	border-bottom: 1px solid rgba(0, 0, 0, .5);
+	box-shadow: 0 0 1px 1px rgba(0, 0, 0, .3);
+}
+
+.navRelSICvsSist ul li:hover a span {
+	padding-left: 10%;
+	display: block;
+	font-size: 15px;
+}
+
+.navRelSICvsSist li a .textoRelSiC{
+	position: absolute;
+    top: 50%;
+    left: 120px;
+    transform: translate(-50%, -50%);
+    font-weight: bold;
+    letter-spacing: 1px;
+    white-space: nowrap;
+}

@@ -1,0 +1,11 @@
+{% extends "../principal/tomo_ii.html" %}
+
+{% block extra_head %}{% endblock %}
+
+{% block content %}
+	{% include "principal/modales.html" %}
+    <div id="seccionBusqSoli" class="opcSeccIni">
+		{% include "tomo_ii/seccionBusquedaSoli.html" %}
+    </div>
+    </div>
+{% endblock %}

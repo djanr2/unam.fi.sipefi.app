@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="es">
+	<head>
+		<!-- Se importa todo lo necesario de Python-Django -->
+		{% load static %}
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+		<meta http-equiv="x-ua-compatible" content="IE=9">
+		<title>SIPEFI</title>
+		<link rel="shortcut icon" type="image/x-icon" href="{% static "imagenes/escudofi_negro.jpg" %}" />
+		<script>
+		    const rutaIdiomaDT = "{% static 'js/datatables/ParametrosDT_Esp.json' %}";
+		</script>
+		{% include "principal/estilos.html" %}
+		{% include "principal/scripts.html" %}
+		{% block extra_head %}{% endblock %}
+	</head>
+	<body>
+		<nav id="encabezado">
+		    <img id="logoFI" src="{% static 'imagenes/Logo_principal_FI.png' %}" alt="SIPEFI">
+		    <div>
+		        <span class="tituloProyecto">
+		            Sistema Integral de Planes de Estudio <br>
+		            Facultad de Ingenier&iacute;a
+		        </span>
+		        <br>
+		        <span class="textInfTitulo">versi&oacute;n 1.0</span>
+		    </div>
+		</nav>
+		<div id="datosAcceso" class='rounded-bottom'>
+			<div id="nomFac">
+				<strong>
+						Facultad de Ingenieria <br>
+						Plan de desarrollo 2023-2027
+				</strong>
+			</div>
+			<div id="botonesBarraAccion">
+				<a href= {{sipefi_login}} ><button type="button" class="btn btn-secondary SIPEFI_LOGIN">Salir</button></a>
+				<button target="regresarBusqSoli" type="button" class="menuBotones esconder btn btn-secondary">Regresar</button>
+				<button target="regresarLlenaSoli" type="button" class="menuBotones esconder btn btn-secondary">Regresar</button>
+				<button target="cargarSolicitud" type="button" class="menuBotones esconder btn btn-primary creaSolicitud">Continuar</button>
+				<button target="#modalComentarios" type="button" class="menuBotones esconder btn btn-info">Comentarios</button>
+				<button target="guardarSolicitud" type="button" class="menuBotones esconder btn btn-danger">Guardar solicitud</button>
+				<button target="rechazarSolicitud" type="button" class="menuBotones esconder btn btn-danger">Rechazar</button>
+				<button target="aprobarSolicitud" type="button" class="menuBotones esconder btn btn-danger">Aprobar</button>
+			</div>
+			<div id="infoDer">
+				<span><i class="fa-solid fa-user" style="color: white;"></i>
+					  <span id="usuario">{{usuario}}</span>
+					  <span id="usuarioSol" class="esconder"></span>
+					  <span id="rol" class="esconder">{{rol}}</span>
+					  <span id="token" class="esconder">{{token}}</span>
+					  <span id="universo" class="esconder">{{universo}}</span>
+				</span> 
+				<span><span class="fas fa-calendar-days" style="color: white;"></span> {% now "j/m/Y" %}</span> 
+				<span>Hora: <span id="hora"></span></span>
+			</div>
+		</div>
+		<div id='cuerpoPrincipal'>
+	        {% block content %}{% endblock %}
+		</div>
+		<script>
+			$(document).ready(function(){
+				const actualizarHora = () => {
+				    const ahora = new Date();
+				    const horas = ahora.getHours().toString().padStart(2, '0');
+				    const minutos = ahora.getMinutes().toString().padStart(2, '0');
+				    const segundos = ahora.getSeconds().toString().padStart(2, '0');
+				    document.getElementById('hora').textContent = `${horas}:${minutos}:${segundos}`;
+				};
+
+				// Actualizar al cargar
+				actualizarHora();
+
+				// Actualizar cada segundo
+				setInterval(actualizarHora, 1000);
+		 		soltii.inicio({{idsValidador}});
+			});
+		</script>
+	</body>
+</html>

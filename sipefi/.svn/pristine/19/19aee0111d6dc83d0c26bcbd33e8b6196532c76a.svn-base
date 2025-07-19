@@ -1,0 +1,323 @@
+/**
+ * comunE es un modulo que hace el trabajo de una Clase, es decir, funciona como Clase.
+ * Esta clase nos apoya con los eventos en comun que se estaran usando en el front entre los sistemas de PF y CPR.
+ * @module comunE
+ */
+
+const comunE = function(){
+	
+	/**
+	 * 
+	 * Funcion que inicializa eventos necesarios para la sesion de los sistemas.
+	 * @return {void} 
+	 * @method cargaEventoSesion
+	 * @static
+	 */
+	let cargaEventoSesion = function(){
+		
+		//Enviar una solicitud al servidor cuando se cierre la ventana o se cambie de página
+		window.addEventListener('beforeunload', function (event) {
+		    let param = {
+				token: $("#token").html()
+	    	}
+		    fComun.post("/cerrarSesion/",param, function(resp){});
+		});
+	};
+	
+	/**
+	 * 
+	 * Funcion que inicializa los eventos principales a usar para seccion en comun entre sistemas.
+	 * @return {void} 
+	 * @method cargaEventosPrincipales
+	 * @static
+	 */
+	let cargaEventosPrincipales = function(){
+		/**
+		 * Evento que muestra la sección de relacion de sic con el numero de solicitud de PF o CPR.
+		 * @event module:comunE~.navRelSICvsSist
+		 * @type {object}
+		 * @listens click
+		 */
+		$(".navRelSICvsSist").unbind("click");
+		$(".navRelSICvsSist").on("click", function(){
+			$(".opcSeccIni").hide();
+			$(".navRelSICvsSist").hide();
+			$("#asociaSIC").show();
+			$(".SIAR").hide();
+			$('.menuBotones[target="regresarBusqSoli"]').show();
+		});
+		
+		/**
+		 * Evento que esconde la seccion del detalle del SIC al elegir un nuevo SIC.
+		 * @event module:comunE~#dataNumsSIC
+		 * @type {object}
+		 * @listens change
+		 */
+		$("#dataNumsSIC").unbind("change");
+		$("#dataNumsSIC").on("change", function(){
+			if($("#detalleSIC").is(":visible")){
+				$("#detalleSIC").hide();
+				$("#guardaSICorigCEF").hide();
+			}
+		});
+		
+		/**
+		 * Evento que esconde la seccion del detalle del SIC asociado al elegir un nuevo SIC.
+		 * @event module:comunE~#numsSICAso
+		 * @type {object}
+		 * @listens change
+		 */
+		$("#numsSICAso").unbind("change");
+		$("#numsSICAso").on("change", function(){
+			if($("#detalleSICAso").is(":visible")){
+				$("#detalleSICAso").hide();
+				fComun.refrescaTabla("#tablaDetSICAso", []);
+			}
+		});
+		
+		/**
+		 * Evento que muestra el detalle del numero SIC.
+		 * @event module:comunE~#cargaInfSIC
+		 * @type {object}
+		 * @listens click
+		 */
+		$("#cargaInfSIC").unbind("click");
+		$("#cargaInfSIC").on("click", function(){
+			let valSIC = Number($("#dataNumsSIC").val());
+			if(valSIC != -1)
+				fGen.pintaDetalleSIC(valSIC);
+		});
+		
+		/**
+		 * Evento que muestra el detalle del numero SIC.
+		 * @event module:comunE~#cargaInfSICAso
+		 * @type {object}
+		 * @listens click
+		 */
+		$("#cargaInfSICAso").unbind("click");
+		$("#cargaInfSICAso").on("click", function(){
+			let valSIC = Number($("#numsSICAso").val());
+			if(valSIC != -1){
+				fGen.pintaDetalleSICAsociado(valSIC);
+				comunE.eventosElemTablas();
+			}
+		});
+		
+		/**
+		 * Evento que guarda la asociacion del SIC con el sistema.
+		 * @event module:comunE~#bRelSICvsSistema
+		 * @type {object}
+		 * @listens click
+		 */
+		$("#bRelSICvsSistema").unbind("click");
+		$("#bRelSICvsSistema").on("click", function(){
+			fGen.validaCheckSolSistema();
+		});
+		
+		/**
+		 * Evento que muestra o esconde opcion de escala de calificacion
+		 * @event module:comunE~#tipoCalif
+		 * @type {object}
+		 * @listens change
+		 */
+		$("#tipoCalif").unbind("change");
+		$("#tipoCalif").on("change", function(){
+			if($(this).val() == "CA"){
+				$(".opcTCA").show();
+			}else{
+				$(".opcTCA").hide();
+			}
+			fGen.pintaDetalleSICAsociado($("#numsSICAso").val());
+		});
+		
+		/**
+		 * Evento que muestra o esconde opcion de escala de calificacion
+		 * @event module:comunE~#escalaCalif
+		 * @type {object}
+		 * @listens change
+		 */
+		$("#escalaCalif").unbind("change");
+		$("#escalaCalif").on("change", function(){
+			fGen.pintaDetalleSICAsociado($("#numsSICAso").val());
+		});
+		
+		/**
+		 * Evento que valida el detalle del SIC asociado.
+		 * @event module:comunE~#bGuardaDetSIC
+		 * @type {object}
+		 * @listens click
+		 */
+		$("#bGuardaDetSIC").unbind("click");
+		$("#bGuardaDetSIC").on("click", function(){
+			fGen.validaDetalleSICAso();
+		});
+		
+		/**
+		 * Evento necesario para arreglar tamaño de columnas en tabla del detalle de SICs Asociados.
+		 * @event module:comunE~#modalDetSICAso
+		 * @type {object}
+		 * @listens shown.bs.modal
+		 */
+		$("#modalDetSICAso").unbind("shown.bs.modal");
+		$('#modalDetSICAso').on('shown.bs.modal', function () {
+			$("#tablaDetSICAsoSecRes").DataTable().rows().draw();
+		});
+		
+		/**
+		 * Evento que ayuda a guardar SIC como originacion de un CEF.
+		 * @event module:comunE~#guardaSICorigCEF
+		 * @type {object}
+		 * @listens click
+		 */
+		$("#guardaSICorigCEF").unbind("click");
+		$("#guardaSICorigCEF").on("click", function(){
+			let valSIC = $("#dataNumsSIC").val();
+			let txtH = "Mensaje de alerta";
+			let txtB = "&#191;Confirmas que el n&uacute;mero SIC " + String(valSIC) + " se origino por un CEF&#63;"
+			let funcD = fGen.guardaSICOrigCEF;
+			let param1 = [valSIC];
+			let numParam = 2;
+			fComun.creaModalAlerta(txtH, txtB, funcD, numParam, param1, 3);
+		});
+	};
+	
+	/**
+	 * Funcion que ayuda a crear evento especial a los modales de tipo alerta.
+	 * @param {Object} objB Nodo del elemento al que se le desea asignar el evento.
+	 * @param {Object} objM Nodo del modal donde se estara trabajando.
+	 * @param {int} opc Parametro que indica si sera necesario realizar una accion adicional al cerrar el modal.
+	 * @param {Object} accion Parametro que indica la accion que se desea realizar tras cerrar el modal.
+	 * @return {void} 
+	 * @method eventoAlerta
+	 * @static
+	 */
+	const eventoAlerta = (objB, objM, opc, accion) => {
+		/**
+		 * Evento que ayuda a realizar alguna accion especial del boton de cerrar de un modal de tipo alerta.
+		 * @event module:comunE~#botonAlerta
+		 * @type {object}
+		 * @listens click
+		 */
+		$(objB).unbind("click");
+		$(objB).on('click', function () {
+			$(objM).modal('hide');
+			opc==1?cefPD.procesaSolicitud(accion):"";
+		});
+	};
+	
+	/**
+	 * Funcion que ayuda a crear eventos especiales a algun elemento contenido en un modal.
+	 * @param {Object} elemento Nodo del elemento al que se le desea asignar el evento.
+	 * @param {Object} modal Nodo del modal donde se estara trabajando.
+	 * @param {Boolean} especial Booleano que indica si se desea hacer un trato especial al elemento al dar click.
+	 * @param {Object} funcionDest Funcion que sera aplicada al dar click.
+	 * @param {int} numEl Parametro que indica el numero de elementos de la funcion destino que se desea aplicar.
+	 * @param {Object} param1 Objecto de la primera entrada a la funcion destino.
+	 * @param {Object} param2 Objecto de la segunda entrada a la funcion destino.
+	 * @return {void} 
+	 * @method eventoEspecial
+	 * @static
+	 */
+	const eventoEspecial = (elemento, modal, especial, funcionDest, numEl, param1, param2) => {
+		numEl = parseInt(numEl);
+		/**
+		 * Evento que ayuda a realizar alguna accion especial de algun elemento.
+		 * @event module:comunE~#elementoEspecial
+		 * @type {object}
+		 * @listens click
+		 */
+		$(elemento).unbind("click");
+		$(elemento).on('click', function () {
+			$(modal).modal('hide');
+			if(especial){
+				if(numEl == 0){
+					funcionDest();
+				}else if(numEl == 1){
+					funcionDest(param1);
+				}else if(numEl == 2){
+					funcionDest(param1,param2);
+				}else if(numEl == -1){
+					location.reload();
+				}
+			}
+		});
+	};
+	
+	/**
+	 * Funcion que ayuda a crear eventos a los elementos contenidos en un datatable
+	 * que fueron creados de manera dinamica.
+	 * @return {void} 
+	 * @method eventosElemTablas
+	 * @static
+	 */
+	const eventosElemTablas = () => {
+		/**
+		 * Evento que habilita o deshabilita textarea para especificar
+		 * el tipo de ingreso elegido.
+		 * @event module:comunE~select2:select
+		 * @type {object}
+		 * @listens change
+		 */
+		$(".opcTipoIngSIC").unbind("select2:select");
+		$(".opcTipoIngSIC").on("select2:select", function(){
+			let valTIng = Number($(this).val());
+			let elemTxtarea = $(this).parents().eq(1).find(".detTipIng");
+			let elemPFX = $(this).parents().eq(3).find(".valPFBaseX");
+			let elemBaseXPF = $(this).parents().eq(3).find(".baseXPF");
+			let tIngBX = [1, 3, 6, 8, 9, 10, 11, 12, 13];
+			$(elemTxtarea).prop("disabled", ((valTIng > 7)?false:true)).val('');
+			$(elemPFX).prop("disabled", (($.inArray(valTIng, tIngBX) !== -1)?false:true)).val('');
+			$(elemBaseXPF).prop("disabled", (($.inArray(valTIng, tIngBX) !== -1)?false:true)).val('');
+		});
+		
+		/**
+		 * Evento que realiza la eliminacion de un registro 
+		 * en la tabla del detalle de los SIC asociados.
+		 * @event module:epf~.deleteRegSICAso
+		 * @type {object}
+		 * @listens click
+		 */
+		$(".deleteRegSICAso").unbind("click");
+		$(".deleteRegSICAso").on("click", function(){
+			let txtH = "Mensaje de alerta";
+			let txtB = "&#191;Estas seguro de eliminar el registro&#63;"
+			let funcD = fGen.eliminaRegistroTabla;
+			let param1 = this;
+			let numParam = 1;
+			fComun.creaModalAlerta(txtH, txtB, funcD, numParam, param1, "");
+		});
+		
+		/**
+		 * Evento que muestra modal con el detalle del SIC elegido
+		 * @event module:epf~.verDetSIC
+		 * @type {object}
+		 * @listens click
+		 */
+		$(".verDetSIC").unbind("click");
+		$(".verDetSIC").on("click", function(){
+			let valSIC = $(this).parents().eq(1).find("td:first-child").text();
+			$("#numSICDetMod").html(valSIC);
+			fGen.cargaTablaDetalleSIC(valSIC);
+		});
+		
+		/**
+		 * Evento que agrega un nuevo elemento a la tabla del detalle de SICs asociados
+		 * @event module:comunE~#addRDSIC
+		 * @type {object}
+		 * @listens click
+		 */
+		$("#addRDSIC").unbind("click");
+		$("#addRDSIC").on("click", function(){
+			let elemTbody = $(this).parents().eq(3).next();
+			fGen.creaRegistroTDetSIC(elemTbody);
+		});
+	};
+	
+	return{
+		cargaEventoSesion:	cargaEventoSesion,
+		cargaEventosPrincipales:	cargaEventosPrincipales,
+		eventoAlerta:	eventoAlerta,
+		eventoEspecial:	eventoEspecial,
+		eventosElemTablas:	eventosElemTablas
+	}
+}();

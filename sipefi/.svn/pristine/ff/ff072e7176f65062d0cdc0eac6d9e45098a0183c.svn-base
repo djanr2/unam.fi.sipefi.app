@@ -1,0 +1,28 @@
+{% load static %}
+
+<!-- Carga de Librerias/frameworks -->
+<script src="{% static "js/jquery/jquery-3.7.1.min.js" %}"></script>
+<script src="{% static "js/jqueryui/jquery-ui.min.js" %}"></script>
+<script src="{% static "js/bootstrap/js/bootstrap.bundle.min.js" %}"></script>
+<script src="{% static "js/datatables/datatables.min.js" %}"></script>
+<script src="{% static "js/DatePicker/js/datepicker.min.js" %}"></script>
+<script src="{% static "js/DatePicker/locales/datepicker.es-ES.js" %}"></script>
+<script src="{% static "js/jsCookie/js.cookie.min.js" %}"></script>
+<script src="{% static "js/select2/select2.min.js" %}"></script>
+<script src="{% static "js/tooltipster/js/tooltipster.bundle.min.js" %}"></script>
+<script src="{% static "js/lineControlE/js/editor.js" %}"></script>
+<script src="{% static "js/fontawesome/js/all.min.js" %}"></script>
+
+<!-- Carga de scripts para aplicacion CPR -->	
+<script src="{% static "js/cpr/iniFuncLibreria.js" %}?v={{ token }}"></script>
+<script src="{% static "js/cpr/funCargaSolicitud.js" %}?v={{ token }}"></script>
+<script src="{% static "js/cpr/eventos.js" %}?v={{ token }}"></script>
+<script src="{% static "js/cpr/solicitudCPR.js" %}?v={{ token }}"></script>
+<script src="{% static "js/cpr/funcionComun.js" %}?v={{ token }}"></script>
+<script src="{% static "js/cpr/funCalculoSolicitud.js" %}?v={{ token }}"></script>
+
+<!-- Carga de scripts para secciones compartidas entre sistemas -->	
+<script src="{% static "js/comun/funcionGeneral.js" %}?v={{ token }}"></script>
+<script src="{% static "js/comun/funcionComun.js" %}?v={{ token }}"></script>
+<script src="{% static "js/comun/iniTablasComun.js" %}?v={{ token }}"></script>
+<script src="{% static "js/comun/eventosComun.js" %}?v={{ token }}"></script>

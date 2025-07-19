@@ -1,0 +1,503 @@
+<!-- Modal espera -->
+<div class="modal espera modalStatic" tabindex="-1" role="dialog" aria-hidden="true">
+	  <div class="modal-dialog modal-sm modal-dialog-centered" role="document">
+	    <div class="modal-content contenidoModEspera">
+	    	<span><strong>Cargando informaci&oacute;n...</strong></span>
+	    	<br>
+	      	<div class="d-flex justify-content-center">
+				<div class="spinner-border text-primary" role="status">
+					<span class="sr-only">Cargando informaci&oacute;n...</span>
+				</div>
+			</div>
+	    </div>
+	  </div>
+</div>
+
+<!-- Modal Busqueda-->
+<div class="modal fade modalStatic" id="modalBusqSolicitud" tabindex="-1" role="dialog" aria-hidden="true">
+	  <div class="modal-dialog modal-dialog-centered" role="document">
+	    <div class="modal-content">
+	      <div class="modal-header">
+	        <h5 class="modal-title" >Solicitud encontrada</h5>
+	        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+	          <span aria-hidden="true">&times;</span>
+	        </button>
+	      </div>
+	      <div class="modal-body">
+	        <table id="tablaBusqSoli" class="table table-striped table-bordered display compact" style="width:100%">
+	        		<thead>
+			            <tr>
+			                <th class="centrar">N&uacute;m. solicitud</th>
+			                <th class="centrar">Usuario modific&oacute;</th>
+			                <th class="centrar">Nombre acreditado</th>
+			                <th class="centrar">N&uacute;m. escenarios</th>
+			                <th class="centrar">Estatus</th>
+			                <th class="esconder"></th>
+			            </tr>
+			        </thead>
+			        <tbody>
+			        </tbody>
+			     </table>
+	      </div>
+	      <div class="modal-footer">
+	        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+	        <button type="button" id="copiarSolicitud" class="btn btn-primary esconder">Copiar solicitud</button>
+	      </div>
+	    </div>
+	  </div>
+</div>
+
+<!-- Modal escenarios especificos-->
+<div class="modal fade modalStatic" id="modalEE" tabindex="-1" role="dialog" aria-hidden="true">
+	  <div class="modal-dialog modal-dialog-centered" role="document">
+	    <div class="modal-content">
+	      <div class="modal-header">
+	        <h5 class="modal-title" >Esquema espec&iacute;fico</h5>
+	        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+	          <span aria-hidden="true">&times;</span>
+	        </button>
+	      </div>
+	      <div class="modal-body">
+	        <table id="tablaEE" class="stripe row-border order-column nowrap" style="width:100%">
+	        		<thead>
+			            <tr>
+			                <th>Plazo</th>
+			                <th>Monto</th>
+			            </tr>
+			        </thead>
+			        <tbody>
+			        </tbody>
+			</table>
+	      </div>
+	      <div class="modal-footer">
+	        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+	      </div>
+	    </div>
+	  </div>
+</div>
+
+<!-- Modal escenarios especificos PF-->
+<div class="modal fade modalStatic" id="modalEEPF" tabindex="-1" role="dialog" aria-hidden="true">
+	  <div class="modal-dialog modal-dialog-centered" role="document">
+	    <div class="modal-content">
+	      <div class="modal-header">
+	        <h5 class="modal-title" >Esquema espec&iacute;fico</h5>
+	        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+	          <span aria-hidden="true">&times;</span>
+	        </button>
+	      </div>
+	      <div class="modal-body">
+	        <table id="tablaEEPF" class="stripe row-border order-column nowrap" style="width:100%">
+	        		<thead>
+			            <tr>
+			                <th>Plazo</th>
+			                <th>Monto</th>
+			                <th>Amortizaci&oacute;n</th>
+			            </tr>
+			        </thead>
+			        <tbody>
+			        </tbody>
+			</table>
+	      </div>
+	      <div class="modal-footer">
+	        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+	      </div>
+	    </div>
+	  </div>
+</div>
+
+		    <!-- Modal respuesta al cargar una solicitud-->
+<div class="modal fade modalStatic" id="modalCargaSoli" tabindex="-1" role="dialog" aria-hidden="true">
+	  <div class="modal-dialog modal-dialog-centered" role="document">
+	    <div class="modal-content">
+	      <div class="modal-header">
+	        <h5 class="modal-title" ></h5>
+	        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+	          <span aria-hidden="true" style="color: #fff;">&times;</span>
+	        </button>
+	      </div>
+	      <div class="modal-body">
+	      	<center>
+	        	<span class="textoBody"></span>
+	        	<br><br>
+	        	<button type="button" class="btn btn-danger" data-dismiss="modal">Cerrar</button>
+	        </center>
+	      </div>
+	    </div>
+	  </div>
+</div>
+
+		    <!-- Modal respuesta al guardar/actualizar Solicitud-->
+<div class="modal fade modalStatic" id="modalRespGuardar" tabindex="-1" role="dialog" aria-hidden="true">
+	  <div class="modal-dialog modal-dialog-centered" role="document">
+	    <div class="modal-content">
+	      <div class="modal-header">
+	        <h5 class="modal-title" ></h5>
+	        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+	          <span aria-hidden="true" style="color: #fff;">&times;</span>
+	        </button>
+	      </div>
+	      <div class="modal-body">
+	      	<center>
+	        	<span class="textoBody"></span>
+	        	<br><br>
+	        	<button type="button" class="btn btn-danger" data-dismiss="modal">Cerrar</button>
+	        </center>
+	      </div>
+	    </div>
+	  </div>
+</div>
+
+<!-- Modal para seleccionar rol -->
+<div class="modal fade modalStatic" id="modalSelectRol" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" role="document">
+    <div class="modal-content shadow rounded-3">
+      <div class="modal-header bg-info text-white">
+        <h5 class="modal-title">Selecciona un perfil</h5>
+      </div>
+      <div class="modal-body px-4">
+        <p class="text-center mb-3">¿Qué perfil deseas utilizar en esta sesión?</p>
+        
+        <select id="selectRol" style="width: 100%"></select>
+
+        <div class="d-grid gap-2 mt-4">
+          <button type="button" class="btn btn-info btn-lg cierraRol">Continuar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+		    <!-- Modal procesa solicitud aprobada por estatus -->
+<div class="modal fade modalStatic" id="modalAprobSoliEstatus" tabindex="-1" role="dialog" aria-hidden="true">
+	  <div class="modal-dialog modal-dialog-centered" role="document">
+	    <div class="modal-content">
+	      <div class="modal-header headerModalSucess">
+	        <h5 class="modal-title" >Mensaje de confirmaci&oacute;n</h5>
+	        <button type="button" class="close cierraModalAprob" aria-label="Close">
+	          <span aria-hidden="true" style="color: #fff;">&times;</span>
+	        </button>
+	      </div>
+	      <div class="modal-body">
+	      	<center>
+	        	<span class="textoBody">
+	        	</span>
+	        	<br><br>
+	        	<button type="button" class="btn btn-success cierraModalAprob">Cerrar</button>
+	        </center>
+	        <br>
+	      </div>
+	    </div>
+	  </div>
+</div>
+
+
+<!-- Modal de alertas -->
+<div class="modal fade modalStatic" id="modalAlerta" tabindex="-1" role="dialog" aria-hidden="true">
+	  <div class="modal-dialog modal-dialog-centered" role="document">
+	    <div class="modal-content">
+	      <div class="modal-header headerModalAlerta">
+	        <h5 class="modal-title" >Mensaje de alerta</h5>
+	      </div>
+	      <div class="modal-body">
+	      	<center>
+	        	<span class="textoBody">
+	        	</span>
+	        	<br>
+	        	<button type="button" class="BtnCance btn btn-secondary"></button>
+	        	<button type="button" class="BtnProc btn btn-warning letraBlanca"></button>
+	        </center>
+	        <br>
+	      </div>
+	    </div>
+	  </div>
+</div>
+
+<div id="contModComent">
+	<!-- Modal para guardar comentarios-->
+	<div class="modal draggable fade" id="modalComentarios" tabindex="-1" role="dialog" aria-hidden="true">
+		  <div class="modal-dialog modal-dialog-centered" role="document">
+		    <div class="modal-content">
+		      <div class="modal-header headerModalInfo">
+		        <h5 class="modal-title" >Secci&oacute;n de comentarios</h5>
+		        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+	          		<span aria-hidden="true" style="color: #fff;"><i class="fa-solid fa-minus" style="color: white;"></i></span>
+	        	</button>
+		      </div>
+		      <div class="modal-body">
+		        <div id="comentarios"></div>
+		        <br>
+		      </div>
+		    </div>
+		  </div>
+	</div>
+</div>
+
+<!-- Modal detalle de ingresos-->
+<div class="modal fade modalStatic" id="modalDetIng" tabindex="-1" role="dialog" aria-hidden="true">
+	  <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+	    <div class="modal-content">
+	      <div class="modal-header">
+	        <h5 class="modal-title" >Detalle de ingresos</h5>
+	        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+	          <span aria-hidden="true">&times;</span>
+	        </button>
+	      </div>
+	      <div class="modal-body">
+	        <table id="tablaDetIng" class="display cell-border compact table table-striped table-bordered" style="width:100%">
+	        		<thead>
+			            <tr>
+			            	<th class="esconder"></th>
+			            	<th>Fuente informaci&oacute;n</th>
+			                <th>Tipo ingreso</th>
+			                <th>Periodo</th>
+			                <th>Monto</th>
+			                <th>Monto etiquetado</th>
+			                <th>% etiquetado acum</th>
+			                <th class="esconder"></th>
+			                <th class="esconder"></th>
+			                <th class="esconder"></th>
+			                <th class="esconder"></th>
+			            </tr>
+			        </thead>
+			        <tbody>
+			        </tbody>
+			</table>
+	      </div>
+	      <div class="modal-footer">
+	        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+	      </div>
+	    </div>
+	  </div>
+</div>
+
+<!-- Modal carga ingresos-->
+<div class="modal fade modalStatic" id="modalCargaIng" tabindex="-1" role="dialog" aria-hidden="true">
+	  <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+	    <div class="modal-content">
+	      <div class="modal-header headerModalInfo">
+	        <h5 class="modal-title" >Ingresos</h5>
+	        <button type="button" class="close regresarEspe letraBlanca" data-dismiss="modal" aria-label="Close">
+	          <span aria-hidden="true">&times;</span>
+	        </button>
+	      </div>
+	      <div class="modal-body">
+	      	<div>
+		      	<strong>Selecciona los ingresos a cargar en el sistema:</strong>
+	      	</div>
+	        <table id="tablaCargaIng" class="table table-striped table-bordered display compact" style="width:100%">
+	        		<thead>
+			            <tr>
+			            	<th><input type="checkbox" id="checkCargIng"  value=""></th>
+			            	<th>Fuente informaci&oacute;n</th>
+			                <th>Tipo ingreso</th>
+			                <th>Periodo</th>
+			                <th>Monto</th>
+			                <th>Monto etiquetado</th>
+			                <th>% etiquetado acum</th>
+			                <th class="esconder"></th>
+			                <th class="esconder"></th>
+			                <th class="esconder"></th>
+			                <th class="esconder"></th>
+			            </tr>
+			        </thead>
+			        <tbody>
+			        </tbody>
+			</table>
+			<br>
+			<strong class='text-danger'>
+				<span>* Ser&aacute;n actualizados los ingresos del cr&eacute;dito en la secci&oacute;n de Cr&eacute;ditos al confirmar la carga.</span><br>
+				<span>* Solo se presenta la informaci&oacute;n v&aacute;lida cargada en el Layout de Ingresos, favor de revisar con detalle los ingresos mostrados.</span>
+			</strong>
+			<br>
+	      </div>
+	      <div class="modal-footer">
+	      	<button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+	        <button type="button" class="btn btn-info" id="validaCargaIng">Confirmar carga</button>
+	      </div>
+	    </div>
+	  </div>
+</div>
+
+<!-- Modal respuesta procesamiento de calculos PF -->
+<div class="modal fade modalStatic" id="modalProcCalPF" tabindex="-1" role="dialog" aria-hidden="true">
+	  <div class="modal-dialog modal-dialog-centered" role="document">
+	    <div class="modal-content">
+	      <div class="modal-header headerModalSucess">
+	        <h5 class="modal-title" >Respuesta de c&aacute;lculo</h5>
+	        <button type="button" class="close pintaPF" data-dismiss="modal" aria-label="Close">
+	          <span aria-hidden="true" style="color: #fff;">&times;</span>
+	        </button>
+	      </div>
+	      <div class="modal-body">
+	      	<center>
+	        	<span class="textoBody">Se proces&oacute; correctamente la solicitud de c&aacute;lculo.</span>
+	        	<br><br>
+	        	<button type="button" class="btn btn-success pintaPF" data-dismiss="modal">Cerrar</button>
+	        </center>
+	      </div>
+	    </div>
+	  </div>
+</div>
+
+<!-- Modal que muestra detalle del credito en seccion de escenarios -->
+<div class="modal fade modalStatic" id="modalDetCred" tabindex="-1" role="dialog" aria-hidden="true">
+	  <div class="modal-dialog modal-dialog-centered" role="document">
+	    <div class="modal-content">
+	      <div class="modal-header bg-primary text-white">
+	        <h5 class="modal-title" >Detalle del cr&eacute;dito</h5>
+	        <button type="button" class="close letraBlanca" data-dismiss="modal" aria-label="Close">
+	          <span aria-hidden="true">&times;</span>
+	        </button>
+	      </div>
+	      <div class="modal-body">
+	      </div>
+	      <div class="modal-footer d-flex justify-content-center">
+	        <button type="button" class="btn btn-outline-secondary" data-dismiss="modal">Cerrar</button>
+	      </div>
+	    </div>
+	  </div>
+</div>
+
+<!-- Modal carga entidades CEF-->
+<div class="modal fade modalStatic" id="modalEntCEF" tabindex="-1" role="dialog" aria-hidden="true">
+	  <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+	    <div class="modal-content">
+	      <div class="modal-header headerModalInfo">
+	        <h5 class="modal-title" >Carga de entidades</h5>
+	        <button type="button" class="close letraBlanca" data-dismiss="modal" aria-label="Close">
+	          <span aria-hidden="true">&times;</span>
+	        </button>
+	      </div>
+	      <div class="modal-body">
+	      	<div>
+		      	<strong>Selecciona las entidades a cargar en el sistema:</strong>
+	      	</div>
+	        <table id="tablaCargaEntCEF" class="table table-striped table-bordered display compact" style="width:100%">
+	        		<thead>
+			            <tr>
+			            	<th><input type="checkbox" id="checkCargaEntCEF"></th>
+			            	<th>CLAVE INEGI</th>
+			                <th>Entidad</th>
+			                <th>Fecha fin administraci&oacute;n</th>
+			                <th class="esconder">Info</th>
+			            </tr>
+			        </thead>
+			        <tbody>
+			        </tbody>
+			</table>
+			<br>
+			<strong class='text-danger'>
+				<span></span><br>
+			</strong>
+			<br>
+	      </div>
+	      <div class="modal-footer">
+	      	<button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+	        <button type="button" class="btn btn-info" id="validaCargaEntCEF">Confirmar carga</button>
+	      </div>
+	    </div>
+	  </div>
+</div>
+
+<!-- Modal vista tabla amortizacion-->
+<div class="modal fade modalStatic" id="modalTAmortCEF" tabindex="-1" role="dialog" aria-hidden="true">
+	  <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+	    <div class="modal-content">
+	      <div class="modal-header headerModalInfo">
+	        <h5 class="modal-title" >Tabla de amortizaci&oacute;n</h5>
+	        <button type="button" class="close letraBlanca" data-dismiss="modal" aria-label="Close">
+	          <span aria-hidden="true">&times;</span>
+	        </button>
+	      </div>
+	      <div class="modal-body">
+	        <table id="tablaAmortModCEF" class="table table-striped table-bordered display compact" style="width:100%">
+	        		<thead>
+			            <tr>
+			            	<th># Periodo</th>
+			                <th>Fecha de pago</th>
+			                <th>Saldo</th>
+			                <th>Interes periodo</th>
+			                <th>Pago a capital</th>
+			                <th>Pago total</th>
+			            </tr>
+			        </thead>
+			        <tbody>
+			        </tbody>
+			</table>
+	      </div>
+	      <div class="modal-footer d-flex justify-content-center">
+	        <button type="button" class="btn btn-outline-secondary" data-dismiss="modal">Cerrar</button>
+	      </div>
+	    </div>
+	  </div>
+</div>
+
+<!-- Modal detalle flujo solicitud-->
+<div class="modal fade modalStatic" id="modalDetFlujoSol" tabindex="-1" role="dialog" aria-hidden="true">
+	  <div class="modal-dialog modal-dialog-centered" role="document">
+	    <div class="modal-content">
+	      <div class="modal-header">
+	        <h5 class="modal-title" >Detalle flujo de estatus de solicitud</h5>
+	        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+	          <span aria-hidden="true">&times;</span>
+	        </button>
+	      </div>
+	      <div class="modal-body">
+	        <table id="TFlujoSolicitudes" class="table table-striped table-bordered display compact" style="width:100%">
+	        		<thead>
+			            <tr>
+			                <th class="centrar">N&uacute;m. solicitud</th>
+			                <th class="centrar">Estatus origen</th>
+			                <th class="centrar">Estatus destino</th>
+			                <th class="centrar">Usuario</th>
+			                <th class="centrar">Perfil</th>
+			                <th class="centrar">Fecha</th>
+			                <th class="centrar">Comentario</th>
+			            </tr>
+			        </thead>
+			        <tbody>
+			        </tbody>
+			     </table>
+	      </div>
+	      <div class="modal-footer">
+	        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+	      </div>
+	    </div>
+	  </div>
+</div>
+
+<!-- Modal detalle de SICs asociados: Muestra porcentajes o primas por riesgo-->
+<div class="modal fade modalStatic" id="modalDetSICAso" tabindex="-1" role="dialog" aria-hidden="true">
+	  <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+	    <div class="modal-content">
+	      <div class="modal-header">
+	        <h5 class="modal-title" >Detalle del n&uacute;mero SIC <span id="numSICDetMod"></span></h5>
+	        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+	          <span aria-hidden="true">&times;</span>
+	        </button>
+	      </div>
+	      <div class="modal-body">
+	        <table id="tablaDetSICAsoSecRes" class="display cell-border compact table table-striped table-bordered" style="width:100%">
+	        		<thead>
+			            <tr>
+			            	<th>No. SIC</th>
+			                <th>{% if universo == 2 %}Fuente de ingreso{% else %}Calificaci&oacute;n{% endif %}</th>
+			                <th>{% if universo == 2 %}Detalle fuente de ingreso{% else %}Escala{% endif %}</th>
+			                <th>{% if universo == 2 %}Porcentaje fideicomitido{% else %}Prima por riesgo{% endif %}</th>
+			                <th>Porcentaje fideicomitido excluyendo participaciones a municipios</th>
+			                <th>Base del porcentaje</th>
+			                <th>Usuario</th>
+			                <th>Fecha</th>
+			            </tr>
+			        </thead>
+			        <tbody>
+			        </tbody>
+			</table>
+	      </div>
+	      <div class="modal-footer">
+	        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+	      </div>
+	    </div>
+	  </div>
+</div>

@@ -1,0 +1,66 @@
+		<div id="tituloCapSoli" class="clearfix">
+			<div>
+	    		<h1>Captura de solicitud</h1>
+	    		<h5>
+	    			SIPEFI-<span id='numSolicitud'>xxxx</span>
+	    			(<span id='estatusSoli'>-----</span><span class="esconder" id='idES'></span>)
+	    		</h5>
+    		</div>
+    		<!--Notificacion de comentarios-->
+			<div class="toast float-right notifComent esconder" data-autohide='false' role="alert" aria-live="assertive" aria-atomic="true">
+			    <div class="toast-header bg-info">
+			      <strong class="mr-auto text-light">Notificaci&oacute;n de comentarios</strong>
+			      <button type="button" class="ml-2 mb-1 close text-light" data-dismiss="toast" aria-label="Close">
+			        <span aria-hidden="true">&times;</span>
+			      </button>
+			    </div>
+			    <div class="toast-body">
+			     La solicitud cuenta con comentarios,<br> favor de revisar/atender &eacute;stos.
+			    </div>
+			 </div>
+    	</div>
+    	<nav class="navbar navbar-expand-lg navbar-light">
+		  <div class="container contSections">
+		    <div class="nav flex-column nav-pills optionSections" id="v-pills-tab" role="tablist" aria-orientation="vertical">
+			  <a class="nav-link active colorOS" id="s-1-tab" data-toggle="pill" href="#s-1" role="tab" aria-controls="s-1" aria-selected="true">
+			  	<strong><i class="fas fa-info-circle"></i>  Secci&oacute;n 1</strong>
+			  </a>
+			  <a class="nav-link colorOS" id="s-2-tab" data-toggle="pill" href="#s-2" role="tab" aria-controls="s-2" aria-selected="false">
+			  	<strong><i class="fas fa-file-alt"></i>  Secci&oacute;n 2</strong>
+			  </a>
+			  <a class="nav-link colorOS" id="s-3-tab" data-toggle="pill" href="#s-3" role="tab" aria-controls="s-3" aria-selected="false">
+			  	<strong><i class="fas fa-book-open"></i>  Secci&oacute;n 3</strong>
+			  </a>
+			  <a class="nav-link colorOS" id="s-4-tab" data-toggle="pill" href="#s-4" role="tab" aria-controls="s-4" aria-selected="false">
+			  	<strong><i class="fas fa-chalkboard-teacher"></i>  Secci&oacute;n 4</strong>
+			  </a>
+			  <a class="nav-link colorOS" id="s-comentarios-tab" data-toggle="pill" href="#s-comentarios" role="tab" aria-controls="s-comentarios" aria-selected="false">
+			  	<strong><i class="fas fa-comment-dots" style="color: white;"></i>  Comentarios</strong>
+			  </a>
+			  <button target="cancelarSolicitud" type="button" class="btn btn-danger mt-auto esconder bCancelarSol"><strong><i class="fa-solid fa-file-circle-xmark"></i> Cancelar solicitud</strong></button>
+			</div>
+			<div class="tab-content infoSections" id="v-pills-tabContent">
+			  <div class="tab-pane fade show active" id="s-1" role="tabpanel" aria-labelledby="s-1-tab">
+			  		{% include "tomo_ii/Seccion_1.html" %}
+			  </div>
+			  <div class="tab-pane fade" id="s-2" role="tabpanel" aria-labelledby="s-2-tab">
+			  		{% include "tomo_ii/Seccion_2.html" %}
+			  </div>
+			  <div class="tab-pane fade" id="s-3" role="tabpanel" aria-labelledby="s-3-tab">
+			  		{% include "tomo_ii/Seccion_3.html" %}
+			  </div>
+			  <div class="tab-pane fade" id="s-4" role="tabpanel" aria-labelledby="s-4-tab">
+			  		{% include "tomo_ii/Seccion_4.html" %}
+			  </div>
+			  <div class="tab-pane fade" id="s-comentarios" role="tabpanel" aria-labelledby="s-comentarios-tab">
+			  		<div class="card">
+						  <div class="card-header panelHeader">
+						    <i class="fas fa-bars" style="color: white;"></i><strong> Comentarios de la solicitud</strong>
+						  </div>
+						  <div class="card-body" id="seccionComentarios">
+						  </div>
+					</div>
+			  </div>
+			</div>
+		  </div>
+		</nav>

@@ -1,0 +1,19 @@
+{% load static %}
+
+<!-- Carga de estilos de librerias/frameworks/etc-->
+<link rel="stylesheet" type="text/css" href="{% static "js/jqueryui/jquery-ui.min.css" %}" />
+<link rel="stylesheet" type="text/css" href="{% static "js/jqueryui/jquery-ui.theme.min.css" %}" />
+<link rel="stylesheet" type="text/css" href="{% static "js/bootstrap/css/bootstrap.min.css" %}" />
+<link rel="stylesheet" type="text/css" href="{% static "js/datatables/datatables.min.css" %}" />
+<link rel="stylesheet" type="text/css" href="{% static "js/select2/select2.min.css" %}" />
+<link rel="stylesheet" type="text/css" href="{% static "js/DatePicker/css/datepicker.css" %}" />
+<link rel="stylesheet" type="text/css" href="{% static "js/tooltipster/css/tooltipster.bundle.min.css" %}" />
+<link rel="stylesheet" type="text/css" href="{% static "js/tooltipster/css/plugins/tooltipster/sideTip/themes/tooltipster-sideTip-punk.min.css" %}" />
+<link rel="stylesheet" type="text/css" href="{% static "js/tooltipster/css/plugins/tooltipster/sideTip/themes/tooltipster-sideTip-shadow.min.css" %}" />
+<link rel="stylesheet" type="text/css" href="{% static "js/tooltipster/css/plugins/tooltipster/sideTip/themes/tooltipster-sideTip-noir.min.css" %}" />
+<link rel="stylesheet" type="text/css" href="{% static "js/lineControlE/css/editor.css" %}" />
+<link rel="stylesheet" type="text/css" href="{% static "js/fontawesome/css/all.min.css" %}" />
+
+<!-- Carga de estilos necesarios para aplicacion-->
+<link rel="stylesheet" type="text/css" href="{% static "estilos/principal.css" %}?v={{ token }}" />
+<link rel="stylesheet" type="text/css" href="{% static "estilos/cpr.css" %}?v={{ token }}" />

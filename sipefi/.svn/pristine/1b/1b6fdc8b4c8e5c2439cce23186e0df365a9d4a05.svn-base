@@ -1,0 +1,18 @@
+from django import forms
+  
+class OpcionSolicitud(forms.Form):
+    """
+        Clase que ayuda a crear un formulario en el DOM del front de tipo radio select. 
+    """
+    OPCION_SOLICITUD = [
+        ('1', 'a) En blanco'),
+        ('2', 'b) A partir de solicitud existente'),
+        ]
+    opcSolicitud= forms.ChoiceField(choices=OPCION_SOLICITUD, widget=forms.RadioSelect(),initial=1)
+    
+class UploadFileForm(forms.Form):
+    """
+        Clase que ayuda a crear un formulario en el DOM del front de tipo upload file. 
+    """
+    title = forms.CharField(max_length=50)
+    file = forms.FileField()

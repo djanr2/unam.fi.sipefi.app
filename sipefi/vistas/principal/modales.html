@@ -1,0 +1,141 @@
+<!-- Modal espera -->
+<div class="modal espera modalStatic" tabindex="-1" role="dialog" aria-hidden="true">
+	  <div class="modal-dialog modal-sm modal-dialog-centered" role="document">
+	    <div class="modal-content contenidoModEspera">
+	    	<span><strong>Cargando informaci&oacute;n...</strong></span>
+	    	<br>
+	      	<div class="d-flex justify-content-center">
+				<div class="spinner-border text-primary" role="status">
+					<span class="sr-only">Cargando informaci&oacute;n...</span>
+				</div>
+			</div>
+	    </div>
+	  </div>
+</div>
+
+<!-- Modal respuesta al cargar una solicitud-->
+<div class="modal fade modalStatic" id="modalCargaSoli" tabindex="-1" role="dialog" aria-hidden="true">
+	  <div class="modal-dialog modal-dialog-centered" role="document">
+	    <div class="modal-content">
+	      <div class="modal-header">
+	        <h5 class="modal-title" ></h5>
+	        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+	          <span aria-hidden="true" style="color: #fff;">&times;</span>
+	        </button>
+	      </div>
+	      <div class="modal-body">
+	      	<center>
+	        	<span class="textoBody"></span>
+	        	<br><br>
+	        	<button type="button" class="btn btn-danger" data-dismiss="modal">Cerrar</button>
+	        </center>
+	      </div>
+	    </div>
+	  </div>
+</div>
+
+<!-- Modal respuesta al guardar/actualizar Solicitud-->
+<div class="modal fade modalStatic" id="modalRespGuardar" tabindex="-1" role="dialog" aria-hidden="true">
+	  <div class="modal-dialog modal-dialog-centered" role="document">
+	    <div class="modal-content">
+	      <div class="modal-header">
+	        <h5 class="modal-title" ></h5>
+	        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+	          <span aria-hidden="true" style="color: #fff;">&times;</span>
+	        </button>
+	      </div>
+	      <div class="modal-body">
+	      	<center>
+	        	<span class="textoBody"></span>
+	        	<br><br>
+	        	<button type="button" class="btn btn-danger" data-dismiss="modal">Cerrar</button>
+	        </center>
+	      </div>
+	    </div>
+	  </div>
+</div>
+
+<!-- Modal para seleccionar rol -->
+<div class="modal fade modalStatic" id="modalSelectRol" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" role="document">
+    <div class="modal-content shadow rounded-3">
+      <div class="modal-header bg-info text-white">
+        <h5 class="modal-title">Selecciona un perfil</h5>
+      </div>
+      <div class="modal-body px-4">
+        <p class="text-center mb-3">¿Qué perfil deseas utilizar en esta sesión?</p>
+        
+        <select id="selectRol" style="width: 100%"></select>
+
+        <div class="d-grid gap-2 mt-4">
+          <button type="button" class="btn btn-info btn-lg cierraRol">Continuar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal procesa solicitud aprobada por estatus -->
+<div class="modal fade modalStatic" id="modalAprobSoliEstatus" tabindex="-1" role="dialog" aria-hidden="true">
+	  <div class="modal-dialog modal-dialog-centered" role="document">
+	    <div class="modal-content">
+	      <div class="modal-header headerModalSucess">
+	        <h5 class="modal-title" >Mensaje de confirmaci&oacute;n</h5>
+	        <button type="button" class="close cierraModalAprob" aria-label="Close">
+	          <span aria-hidden="true" style="color: #fff;">&times;</span>
+	        </button>
+	      </div>
+	      <div class="modal-body">
+	      	<center>
+	        	<span class="textoBody">
+	        	</span>
+	        	<br><br>
+	        	<button type="button" class="btn btn-success cierraModalAprob">Cerrar</button>
+	        </center>
+	        <br>
+	      </div>
+	    </div>
+	  </div>
+</div>
+
+
+<!-- Modal de alertas -->
+<div class="modal fade modalStatic" id="modalAlerta" tabindex="-1" role="dialog" aria-hidden="true">
+	  <div class="modal-dialog modal-dialog-centered" role="document">
+	    <div class="modal-content">
+	      <div class="modal-header headerModalAlerta">
+	        <h5 class="modal-title" >Mensaje de alerta</h5>
+	      </div>
+	      <div class="modal-body">
+	      	<center>
+	        	<span class="textoBody">
+	        	</span>
+	        	<br>
+	        	<button type="button" class="BtnCance btn btn-secondary"></button>
+	        	<button type="button" class="BtnProc btn btn-warning letraBlanca"></button>
+	        </center>
+	        <br>
+	      </div>
+	    </div>
+	  </div>
+</div>
+
+<!-- Modal para guardar comentarios-->
+<div id="contModComent">
+	<div class="modal draggable fade" id="modalComentarios" tabindex="-1" role="dialog" aria-hidden="true">
+		  <div class="modal-dialog modal-dialog-centered" role="document">
+		    <div class="modal-content">
+		      <div class="modal-header headerModalInfo">
+		        <h5 class="modal-title" >Secci&oacute;n de comentarios</h5>
+		        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+	          		<span aria-hidden="true" style="color: #fff;"><i class="fa-solid fa-minus" style="color: white;"></i></span>
+	        	</button>
+		      </div>
+		      <div class="modal-body">
+		        <div id="comentarios"></div>
+		        <br>
+		      </div>
+		    </div>
+		  </div>
+	</div>
+</div>

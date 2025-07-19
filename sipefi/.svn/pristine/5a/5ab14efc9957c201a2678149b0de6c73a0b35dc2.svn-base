@@ -1,0 +1,790 @@
+/**
+ * fl es un modulo que hace el trabajo de una Clase, es decir, funciona como Clase.
+ * Esta clase nos apoya con la inicializacion de los objetos que provienen de alguna libreria,
+ * como por ejemplo DataTables.
+ * @module fl
+ */
+const fl = function(){
+	
+	/**
+	 * Funcion que ayuda a inicializar las tablas de tipo DataTable que se usaran en la primera vista,
+	 * donde se presentan las tablas de las solicitudes en proceso o procesadas, para busqueda de solicitudes, inicializacion por default parametros datatables.
+	 * @return {void} 
+	 * @method cargaTablasP1
+	 * @static
+	 */
+	const cargaTablasP1 = () => {
+		/****
+		 * inicializacion por default datatables
+		 ****/
+		$.extend( true, $.fn.dataTable.defaults, {
+			"fixedHeader": true,
+			"colReorder": false,
+			"ordering": false,
+            "lengthMenu": [ [5, 10, 25, 50, -1], [5, 10, 25, 50, "Todos"] ],
+			"dom": '<"tituloTablas esconder">frtlip',
+			"info":     false,
+			"language": {
+				"url": rutaIdiomaDT
+			}
+		} );
+		
+		$('#tablaBusqSoli').DataTable({
+			"dom": "t",
+			"columnDefs": [
+				{
+					"className": "centrar",
+	                "targets": "_all"
+	            },
+	            {
+	                "targets": [ 5 ],
+	                "visible": false,
+	                "searchable": false
+	            }
+	         ],
+	         "rowCallback": function( row, data ) {
+	        	    if ( String(data[2]).length > 20 ) {
+	        	      $('td:eq(2)', row).html( String(data[2]).substr(0,20) + " . .");
+	        	      if(!$('td:eq(2)', row).hasClass("tooltipstered")){
+							$('td:eq(2)', row).tooltipster({
+									side: 'top',
+									//theme: 'tooltipster-shadow',
+									theme: 'tooltipster-noir',
+									animation: 'fade',
+									contentAsHTML: 'true',
+						            content: '<strong>'+data[2]+'</strong>',
+						            trigger: 'custom',
+									triggerOpen: {
+									        mouseenter: true,
+									        tap: true
+									},
+									triggerClose: {
+									        mouseleave: true,
+									        tap: true
+									}
+							});
+						}
+	        	    }
+	          }
+		});
+		
+		$('#tablaSoliUsuario').DataTable({
+			"pageLength": 5,
+			"columnDefs": [
+				{
+					"className": "centrar",
+	                "targets": "_all"
+	            },
+	            {
+	                "targets": [ 8 ],
+	                "visible": false,
+	                "searchable": false
+	            },
+	            {
+	            	 "width": "15%", 
+	            	 "targets": [3] 
+	            },
+	            {
+	            	 "width": "10%", 
+	            	 "targets": [0,2,4,5,6] 
+	            },
+	            {
+	            	"render": function ( data, type, row ) {
+	            		let rolSol = parseInt(row[8].split("#@@#")[6]);
+	            		let rol = parseInt($("#rol").html());
+	            		let estatusSoli = parseInt(row[8].split("#@@#")[1]);
+	            		let minusRol =  rol - rolSol;
+	            		let canEdit = (minusRol==0||minusRol==1)?true:false;
+	            		let infoExtra = (canEdit)?"__1":"";
+	            		let selectItem = "<select class='accionSolicitud'>"+
+	            							"<option value='0' selected>Elige acci&oacute;n..</option>"+
+	            							"<option value='1__"+row[8]+(estatusSoli==3?"__1":infoExtra)+"'>Visualizar</option>"+
+	            							((canEdit)?"<option value='2__"+row[8]+infoExtra+"'>Editar</option>":"")+
+	            						"</select>";
+	                    return selectItem;
+	                },
+	                "targets": 7
+	            }
+	         ],
+	         "fnCreatedRow": function( nRow, aData, iDataIndex ) {
+	        	    if ( String(aData[1]).length > 20 ) {
+	        	      $('td:eq(1)', nRow).html( String(aData[1]).substr(0,20) + " . .");
+	        	      if(!$('td:eq(1)', nRow).hasClass("tooltipstered")){
+							$('td:eq(1)', nRow).tooltipster({
+									side: 'top',
+									theme: 'tooltipster-noir',
+									animation: 'fade',
+									contentAsHTML: 'true',
+						            content: '<strong>'+aData[1]+'</strong>',
+						            trigger: 'custom',
+									triggerOpen: {
+									        mouseenter: true,
+									        tap: true
+									},
+									triggerClose: {
+									        mouseleave: true,
+									        tap: true
+									}
+							});
+						}
+	        	    }
+	          },
+	          "rowCallback": function( row, data ) {
+	        	    if ( String(data[1]).length > 20 ) {
+	        	      $('td:eq(1)', row).html( String(data[1]).substr(0,20) + " . .");
+	        	      if(!$('td:eq(1)', row).hasClass("tooltipstered")){
+							$('td:eq(1)', row).tooltipster({
+									side: 'top',
+									theme: 'tooltipster-noir',
+									animation: 'fade',
+									contentAsHTML: 'true',
+						            content: '<strong>'+data[1]+'</strong>',
+						            trigger: 'custom',
+									triggerOpen: {
+									        mouseenter: true,
+									        tap: true
+									},
+									triggerClose: {
+									        mouseleave: true,
+									        tap: true
+									}
+							});
+						}
+	        	    }
+	          }
+		});
+		
+		$('#tablaSoliAvanzadas').DataTable({
+			"pageLength": 5,
+			"columnDefs": [
+				{
+					"className": "centrar",
+	                "targets": "_all"
+	            },
+	            {
+	                "targets": [ 8 ],
+	                "visible": false,
+	                "searchable": false
+	            },
+	            {
+	            	 "width": "15%", 
+	            	 "targets": [3] 
+	            },
+	            {
+	            	 "width": "10%", 
+	            	 "targets": [0,2,4,5,6] 
+	            },
+	            {
+	            	"render": function ( data, type, row ) {
+	            		let ESoli = String(row[8]).split("#@@#");
+	            		let opSelect ="<option value='0' selected>Elige estatus..</option>";
+	            		for(i in ESoli){
+	            			let obj = String(ESoli[i]).split("||");
+	            			let val = "1__" + String(obj[0]).replace("-","#@@#");
+	            			let text = obj[1];
+	            			opSelect += "<option value='"+val+"'>"+text+"</option>";
+	            		}
+	            		let selectItem = "<select class='accionSolicitud'>"+
+	            							opSelect+
+	            						"</select>";
+	                    return selectItem;
+	                },
+	                "targets": 7
+	            }
+	         ],
+	         "fnCreatedRow": function( nRow, aData, iDataIndex ) {
+	        	    if ( String(aData[1]).length > 20 ) {
+	        	      $('td:eq(1)', nRow).html( String(aData[1]).substr(0,20) + " . .");
+	        	      if(!$('td:eq(1)', nRow).hasClass("tooltipstered")){
+							$('td:eq(1)', nRow).tooltipster({
+									side: 'top',
+									theme: 'tooltipster-noir',
+									animation: 'fade',
+									contentAsHTML: 'true',
+						            content: '<strong>'+aData[1]+'</strong>',
+						            trigger: 'custom',
+									triggerOpen: {
+									        mouseenter: true,
+									        tap: true
+									},
+									triggerClose: {
+									        mouseleave: true,
+									        tap: true
+									}
+							});
+						}
+	        	    }
+	          },
+	          "rowCallback": function( row, data ) {
+	        	    if ( String(data[1]).length > 20 ) {
+	        	      $('td:eq(1)', row).html( String(data[1]).substr(0,20) + " . .");
+	        	      if(!$('td:eq(1)', row).hasClass("tooltipstered")){
+							$('td:eq(1)', row).tooltipster({
+									side: 'top',
+									theme: 'tooltipster-noir',
+									animation: 'fade',
+									contentAsHTML: 'true',
+						            content: '<strong>'+data[1]+'</strong>',
+						            trigger: 'custom',
+									triggerOpen: {
+									        mouseenter: true,
+									        tap: true
+									},
+									triggerClose: {
+									        mouseleave: true,
+									        tap: true
+									}
+							});
+						}
+	        	    }
+	          }
+		});
+		
+		$('#tablaSoliRecientes').DataTable({
+			"pageLength": 5,
+			"columnDefs": [
+				{
+					"className": "centrar",
+	                "targets": "_all"
+	            },
+	            {
+	                "targets": [ 8 ],
+	                "visible": false,
+	                "searchable": false
+	            },
+	            {
+	            	 "width": "15%", 
+	            	 "targets": [3] 
+	            },
+	            {
+	            	 "width": "10%", 
+	            	 "targets": [0,2,4,5,6] 
+	            },
+	            {
+	            	"render": function ( data, type, row ) {
+	            		let selectItem = "<select class='accionSolicitud'>"+
+	            							"<option value='0' selected>Elige acci&oacute;n..</option>"+
+	            							"<option value='1__"+row[8]+"'>Visualizar</option>"+
+	            						"</select>";
+	                    return selectItem;
+	                },
+	                "targets": 7
+	            }
+	         ],
+	         "fnCreatedRow": function( nRow, aData, iDataIndex ) {
+	        	    if ( String(aData[1]).length > 20 ) {
+	        	      $('td:eq(1)', nRow).html( String(aData[1]).substr(0,20) + " . .");
+	        	      if(!$('td:eq(1)', nRow).hasClass("tooltipstered")){
+							$('td:eq(1)', nRow).tooltipster({
+									side: 'top',
+									theme: 'tooltipster-noir',
+									animation: 'fade',
+									contentAsHTML: 'true',
+						            content: '<strong>'+aData[1]+'</strong>',
+						            trigger: 'custom',
+									triggerOpen: {
+									        mouseenter: true,
+									        tap: true
+									},
+									triggerClose: {
+									        mouseleave: true,
+									        tap: true
+									}
+							});
+						}
+	        	    }
+	          },
+	          "rowCallback": function( row, data ) {
+	        	    if ( String(data[1]).length > 20 ) {
+	        	      $('td:eq(1)', row).html( String(data[1]).substr(0,20) + " . .");
+	        	      if(!$('td:eq(1)', row).hasClass("tooltipstered")){
+							$('td:eq(1)', row).tooltipster({
+									side: 'top',
+									theme: 'tooltipster-noir',
+									animation: 'fade',
+									contentAsHTML: 'true',
+						            content: '<strong>'+data[1]+'</strong>',
+						            trigger: 'custom',
+									triggerOpen: {
+									        mouseenter: true,
+									        tap: true
+									},
+									triggerClose: {
+									        mouseleave: true,
+									        tap: true
+									}
+							});
+						}
+	        	    }
+	          }
+		});
+	};
+	
+	/**
+	 * Funcion que ayuda a inicializar las tablas de tipo DataTable que se usaran en la segunda vista,
+	 * donde se presentan las tablas de escenarios, creditos a evaluar, ingresos, deuda servir, deuda vigente, etc.
+	 * @return {void} 
+	 * @method cargaTablasP2
+	 * @static
+	 */
+	const cargaTablasP2 = () => {
+		/*DataTables escenarios*/
+		$('#escenariosPF').DataTable({
+			"dom": 't',
+			"columnDefs": [
+				{
+					"className": "centrar",
+	                "targets": "_all"
+	            },
+	            {
+	            	"targets": "_all",
+	                "orderable": false
+	            },
+	            {
+	            	"width": "10%",
+	                "targets": 0
+	            },
+	            {
+	            	"width": "40%",
+	                "targets": 1
+	            },
+	            {
+	            	"width": "40%",
+	                "targets": 2
+	            },
+	            {
+	            	"width": "10%",
+	                "targets": 3
+	            },
+	            {
+	            	"render": function ( data, type, row , meta) {
+	            		let accion = Number(fComun.getVarLocalS("accionSoli"));
+	            		let numEsc = (parseInt(meta.row) + 1);
+	            		let html = 	((accion==1)?"":"<span class='deleteEsc text-danger puntero'><i class='fa fa-trash'></i></span>") + " Escenario "+ numEsc + "<br>" +
+	            					"<button target='generaCalculoEsc' type='button' class='botonCalcEsc btn btn-success'>Calcular</button> <span class='esconder idEscenario'>"+ numEsc +"</span>";
+	                    return html;
+	                },
+	                "targets": 0
+	            }
+	         ],         
+	         "rowCallback": function( row, data, displayIndex ) {
+	        	 let accion = Number(fComun.getVarLocalS("accionSoli"));
+	        	 let numEsc = (parseInt(displayIndex) + 1);
+	        	 let html = ((accion==1)?"":"<span class='deleteEsc text-danger puntero'><i class='fa fa-trash'></i></span>") + " Escenario "+ numEsc + "<br>" +
+					"<button target='generaCalculoEsc' type='button' class='botonCalcEsc btn btn-success'>Calcular</button> <span class='esconder idEscenario'>"+ numEsc +"</span>";
+	        	 $('td:eq(0)', row).html(html);	    
+		     },
+		     "responsive":	true,
+		     "scrollCollapse": true,
+		     "paging":    false,
+		     "deferRender":    true
+		});
+		
+		/*DataTables ingresos*/
+		$('#tablaIngresos').DataTable({
+			"fixedHeader": false,
+			"dom": 'ftpir',
+			"pageLength": 10,
+			"ordering": true,
+		    "order": [[ 4, "desc" ]],
+			"columnDefs": [
+				{
+					"className": "centrar",
+	                "targets": "_all"
+	            },
+	            {
+	                "targets": [4],
+	                "visible": false
+	            },
+	            {
+	            	"targets": "_all",
+	                "orderable": false
+	            },
+	            {
+	            	"width": "15%",
+	                "targets": [2,3]
+	            },
+	            {
+	            	"render": function ( data, type, row ) {
+	            		let valores = String(row[2]).split("-");
+	            		let html = ((Number(valores[1]) == 12)?"<i class='fa fa-check-circle text-success'></i>":
+						  										"<i class='fa fa-exclamation-triangle text-warning'></i>") 
+						  		   + " " + valores[0];
+	                    return html;
+	                },
+	                "targets": 2
+	            },
+	            {
+	            	"render": function ( data, type, row ) {
+	            		let accion = Number(fComun.getVarLocalS("accionSoli"));
+	            		let html = "<span class='viewIng px-2 puntero'><i class='fa fa-eye'></i></span>";
+	            		html += (accion != 1)?("<span class='deleteIng text-danger px-2 puntero'><i class='fa fa-trash'></i></span>"):"";
+	                    return html;
+	                },
+	                "targets": 3
+	            }
+	         ]
+		});
+		
+		/*DataTables Relacion de ingresos con credito para mecanismo de pago*/
+		$('#tablaRelIngCred').DataTable({
+			"fixedHeader": false,
+			"dom": 't',
+			"pageLength": 10,
+			"columnDefs": [
+				{
+					"className": "centrar",
+	                "targets": "_all"
+	            },
+	            {
+	            	"targets": "_all",
+	                "orderable": false
+	            },
+	            {
+	            	"width": "30%",
+	                "targets": [0,1,2,3]
+	            },
+	            {
+	            	"width": "10%",
+	                "targets": [4]
+	            },
+	            {
+	            	"render": function ( data, type, row ) {
+	            		let html = "<span class='deleteRIngCred text-danger px-2 puntero'><i class='fa fa-trash'></i></span>";
+	                    return html;
+	                },
+	                "targets": 4
+	            }
+	         ]
+		});
+		
+		$('#tablaCredEval').DataTable({
+			"dom": 'ftipr',
+			"pageLength": 10,
+			"info": true,
+			"columnDefs": [
+				{
+					"className": "centrar",
+	                "targets": "_all"
+	            },
+	            {
+	            	"width": "15%",
+	                "targets": 4
+	            },
+	            {
+	                "targets": [ 5 ],
+	                "visible": false,
+	                "searchable": false
+	            },
+	            {
+	            	"targets": "_all",
+	                "orderable": false
+	            },
+	            {
+	            	"render": function ( data, type, row ) {
+	            		let accion = Number(fComun.getVarLocalS("accionSoli"));
+	            		let html = "<span class='viewCE px-2 puntero' data-toggle='tooltip' title='Visualizar'><i class='fa fa-eye'></i></span>";
+	            		html += (accion != 1)? (
+	            								"<span class='editCE text-success px-2 puntero' data-toggle='tooltip' title='Editar'><i class='fa fa-edit'></i></span>" +
+	            								"<span class='copyCE text-secondary px-2 puntero' data-toggle='tooltip' title='Copiar'><i class='fa fa-copy'></i></span>" +
+	            								"<span class='deleteCE text-danger px-2 puntero' data-toggle='tooltip' title='Eliminar'><i class='fa fa-trash'></i></span>"
+	            								):"";
+	                    return html;
+	                },
+	                "targets": 4
+	            },
+	            {
+	            	"render": function ( data, type, row ) {
+	            		let plazo = String(row[1]);
+	            		let nomPeriod = String(row[5]).split("_-_")[2];
+	            		let html = (plazo != '99.99')?(plazo + " " + nomPeriod):"";						  
+	                    return html;
+	                },
+	                "targets": 1
+	            }
+	         ],
+	         "fnCreatedRow": function( nRow, aData, iDataIndex ) {
+	        	let nombreCred = aData[0].replace("#@@#","_");
+         		let estatusReg = String(aData[5]).split("_-_")[0];
+         		let estCred = ((estatusReg == 'true')?"<i class='fa fa-check-circle text-success'></i>":
+         										  "<i class='fa fa-exclamation-triangle text-warning'></i>");
+         		$('td:eq(0)', nRow).html(estCred + " " + nombreCred);
+        	    if ( String(nombreCred).length > 35 ) {
+        	    	let nodoNomCred = $('td:eq(0)', nRow);
+        	    	$(nodoNomCred).html( estCred + " " + String(nombreCred).substr(0,35) + " . .");
+        	    	$(nodoNomCred).hasClass("tooltipstered") ? fComun.destruyeTooltip(nodoNomCred):"";
+					$(nodoNomCred).tooltipster({
+							side: 'top',
+							theme: 'tooltipster-noir',
+							animation: 'fade',
+							contentAsHTML: 'true',
+				            content: '<strong>'+nombreCred+'</strong>',
+				            trigger: 'custom',
+							triggerOpen: {
+							        mouseenter: true,
+							        tap: true
+							},
+							triggerClose: {
+							        mouseleave: true,
+							        tap: true
+							}
+					});
+        	    }
+	         },
+	         "rowCallback": function( row, data ) {
+	        	let nombreCred = data[0].replace("#@@#","_");
+	         	let estatusReg = String(data[5]).split("_-_")[0];
+	         	let estCred = ((estatusReg == 'true')?"<i class='fa fa-check-circle text-success'></i>":
+	         										  "<i class='fa fa-exclamation-triangle text-warning'></i>");
+	         	$('td:eq(0)', row).html(estCred + " " + nombreCred);
+        	    if ( String(nombreCred).length > 35 ) {
+        	    	let nodoNomCred = $('td:eq(0)', row);
+        	    	$(nodoNomCred).html( estCred + " " + String(nombreCred).substr(0,35) + " . .");
+        	    	$(nodoNomCred).hasClass("tooltipstered") ? fComun.destruyeTooltip(nodoNomCred):"";
+					$(nodoNomCred).tooltipster({
+							side: 'top',
+							theme: 'tooltipster-noir',
+							animation: 'fade',
+							contentAsHTML: 'true',
+				            content: '<strong>'+nombreCred+'</strong>',
+				            trigger: 'custom',
+							triggerOpen: {
+							        mouseenter: true,
+							        tap: true
+							},
+							triggerClose: {
+							        mouseleave: true,
+							        tap: true
+							}
+					});
+        	    }
+	         }
+		});
+		
+		let tableEE = $('#tablaEE').DataTable({
+			"sDom": "t",
+			"deferRender":    true,
+			"scrollY":        "400px",
+			"scrollX": true,
+		    "scrollCollapse": true,
+		    "responsive":	true,
+		    "scroller":       true,
+			"columnDefs": [
+				{
+					"className": "centrar",
+	                "targets": "_all"
+	            },
+	            {
+	            	"targets": "_all",
+	                "orderable": false
+	            },
+	            {
+	            	"render": function ( data, type, row ) {
+	                    return "$ " + String(fComun.moneyFormat(row[1],2));
+	                },
+	                "targets": 1
+	            }
+	         ]
+		});
+		
+		$("#tablaEE").DataTable().rows().draw();
+		
+		let tableEEPF = $('#tablaEEPF').DataTable({
+			"sDom": "t",
+			"deferRender":    true,
+			"scrollY":        "400px",
+			"scrollX": true,
+		    "scrollCollapse": true,
+		    "responsive":	true,
+		    "scroller":       true,
+			"columnDefs": [
+				{
+					"className": "centrar",
+	                "targets": "_all"
+	            },
+	            {
+	            	"targets": "_all",
+	                "orderable": false
+	            },
+	            {
+	            	"render": function ( data, type, row ) {
+	                    return "$ " + String(fComun.moneyFormat(row[1],2));
+	                },
+	                "targets": 1
+	            },
+	            {
+	            	"render": function ( data, type, row ) {
+	                    return "$ " + String(fComun.moneyFormat(row[2],2));
+	                },
+	                "targets": 2
+	            }
+	         ]
+		});
+		
+		$("#tablaEEPF").DataTable().rows().draw();
+		
+		let tableDetIng = $('#tablaDetIng').DataTable({
+			"sDom": "t",
+			"deferRender":    true,
+			"scrollY":        "500px",
+			"scrollX": true,
+		    "scrollCollapse": true,
+		    "responsive":	false,
+		    "scroller":       true,
+		    "ordering": true,
+		    "order": [[ 8, "desc" ]],
+			"columnDefs": [
+				{
+					"className": "centrar",
+	                "targets": "_all"
+	            },
+	            { 
+	            	"width": "20%", 
+	            	"targets": [1,2,4,5]
+	            },
+	            {
+	            	"targets": "_all",
+	                "orderable": false
+	            },
+	            {
+	                "targets": [ 0,7,8,9,10],
+	                "visible": false,
+	                "searchable": false
+	            },
+	            {
+	            	"render": function ( data, type, row ) {
+	                    return "$ " + String(fComun.moneyFormat(row[4],2));
+	                },
+	                "targets": 4
+	            },
+	            {
+	            	"render": function ( data, type, row ) {
+	                    return "$ " + String(fComun.moneyFormat(row[5],2));
+	                },
+	                "targets": 5
+	            }
+	            
+	         ]
+		});
+		
+		$("#tablaDetIng").DataTable().rows().draw();
+		
+		$('#tablaCargaIng').DataTable({
+			"dom": "ft",
+			"deferRender":    false,
+			"scrollY":        "400px",
+			"scrollX": true,
+		    "scrollCollapse": true,
+		    "responsive":	false,
+		    "scroller":   false,
+		    "ordering": true,
+		    "paging": false,
+		    "order": [[ 8, "desc" ]],
+			"columnDefs": [
+				{
+					"className": "centrar",
+	                "targets": "_all"
+	            },
+	            { 
+	            	"width": "20%", 
+	            	"targets": [1,2,4,5]
+	            },
+	            {
+	            	"targets": "_all",
+	                "orderable": false
+	            },
+	            {
+	                "targets": [7,8,9,10],
+	                "visible": false,
+	                "searchable": false
+	            },
+	            {
+	            	"render": function ( data, type, row ) {
+	                    return "<input type='checkbox' class='checkBoxCargaIng'  value=''>";
+	                },
+	                "targets": 0
+	            },
+	            {
+	            	"render": function ( data, type, row ) {
+	                    return "$ " + String(fComun.moneyFormat(row[4],2));
+	                },
+	                "targets": 4
+	            },
+	            {
+	            	"render": function ( data, type, row ) {
+	                    return "$ " + String(fComun.moneyFormat(row[5],2));
+	                },
+	                "targets": 5
+	            }
+	            
+	         ]
+		});
+		
+	};
+	
+	/**
+	 * Funcion que ayuda a inicializar las caracteristicas por default de los elementos de tipo Tooltipster.
+	 * @return {void} 
+	 * @method defaultTooltipster
+	 * @static
+	 */
+	const defaultTooltipster = () => {
+		//Inicializamos los valores default para los Tooltip
+		$.tooltipster.setDefaults({
+					theme: 'tooltipster-punk',
+					animation: 'fade',
+					contentAsHTML: 'true',
+					side: 'right',
+					trigger: 'custom',
+					triggerOpen: {
+					        click: true,
+					        tap: true
+					},
+					triggerClose: {
+					        click: true,
+					        tap: true
+					}
+				});	
+	};
+	
+	/**
+	 * Funcion que ayuda a inicializar las caracteristicas por default de los elementos de tipo Select2, y crear elementos select2.
+	 * @param {Object} obj Parametro que contiene el elemento que se desea inicializar como tipo Select2.
+	 * @param {Object} datos Parametro que contiene la lista de datos que se presentaran en el elemento select.
+	 * @param {int} search Parametro que indica el numero minimo de letras que se requieren para realizar la busqueda de elementos entre la lista.
+	 * @return {void} 
+	 * @method select2
+	 * @static
+	 */
+	const select2 = (obj, datos, search) => {
+	  const $element = $(obj);
+	  $element.empty();
+
+	  const $parentModal = $element.closest('.modal');
+
+	  const config = {
+	    data: datos,
+	    minimumResultsForSearch: search,
+	    dropdownAutoWidth: true,
+	    width: '100%',
+	    language: {
+	      noResults: function() { return "Sin coincidencias =("; },
+	      searching: function() { return "Buscando..."; }
+	    }
+	  };
+
+	  // Solo agrega dropdownParent si está dentro de un modal
+	  if ($parentModal.length) {
+	    config.dropdownParent = $parentModal;
+	  }
+
+	  $element.select2(config);
+	};
+	
+	return{
+		cargaTablasP1:	cargaTablasP1,
+		defaultTooltipster: defaultTooltipster,
+		select2:	select2,
+		cargaTablasP2: cargaTablasP2
+	}
+}();

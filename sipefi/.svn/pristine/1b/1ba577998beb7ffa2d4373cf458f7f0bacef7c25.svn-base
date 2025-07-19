@@ -1,0 +1,73 @@
+<div class="container">
+			<div class="creaSolicitud">
+	  			<h2 id="tinicioSol"><i class="fas fa-clipboard" style="color: black;"></i> Crea nueva solicitud</h2>
+	  			{% csrf_token %}
+	  			{{ form.opcSolicitud }}
+	  		</div>
+  			<div id="mostrarBusqueda" class="esconder">
+  				<center>
+		  			<div class="input-group mb-3">
+		  				<div class="input-group-prepend">
+					    		<span class="input-group-text"><strong>SIPEFI-</strong></span>
+						</div>
+		  				<input type="text" class="form-control inputNumber SIBA" placeholder="No. solicitud" aria-label="No. solicitud" aria-describedby="basic-addon2">
+		  				<div class="input-group-append">
+		    				<button id="buscaSolicitud" class="btn btn-outline-secondary" type="button">Buscar</button>
+		 				</div>
+					</div>
+				</center>
+			</div>
+  			<div id="seccionTSU">
+	  			<table id="tablaSoliUsuario" class="table table-striped table-bordered display compact" style="width:100%">
+	        		<thead>
+			            <tr>
+			                <th>N&uacute;m. solicitud</th>
+			                <th>Nombre acreditado</th>
+			                <th>N&uacute;m. escenarios</th>
+			                <th>Estatus</th>
+			                <th>Usuario creador</th>
+			                <th>Usuario modific&oacute;</th>
+			                <th>Fecha modificaci&oacute;n</th>
+			                <th>Acci&oacute;n</th>
+			                <th class="esconder">infoUtil</th>
+			            </tr>
+			        </thead>
+			        <tbody>
+			        </tbody>
+			     </table>
+			     <table id="tablaSoliAvanzadas" class="table table-striped table-bordered display compact" style="width:100%">
+	        		<thead>
+			            <tr>
+			                <th>N&uacute;m. solicitud</th>
+			                <th>Nombre acreditado</th>
+			                <th>N&uacute;m. escenarios</th>
+			                <th>Estatus</th>
+			                <th>Usuario creador</th>
+			                <th>Usuario modific&oacute;</th>
+			                <th>Fecha modificaci&oacute;n</th>
+			                <th>Ver estatus</th>
+			                <th class="esconder">infoUtil</th>
+			            </tr>
+			        </thead>
+			        <tbody>
+			        </tbody>
+			     </table>
+			     <table id="tablaSoliRecientes" class="table table-striped table-bordered display compact" style="width:100%">
+	        		<thead>
+			            <tr>
+			                <th>N&uacute;m. solicitud</th>
+			                <th>Nombre acreditado</th>
+			                <th>N&uacute;m. escenarios</th>
+			                <th>Estatus</th>
+			                <th>Usuario creador</th>
+			                <th>Usuario modific&oacute;</th>
+			                <th>Fecha modificaci&oacute;n</th>
+			                <th>Acci&oacute;n</th>
+			                <th class="esconder">infoUtil</th>
+			            </tr>
+			        </thead>
+			        <tbody>
+			        </tbody>
+			     </table>
+			</div>
+</div>
