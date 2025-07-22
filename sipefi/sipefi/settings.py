@@ -79,13 +79,14 @@ WSGI_APPLICATION = 'sipefi.wsgi.application'
 f = open(os.path.join(BASE_DIR,"connectionDjango.txt"), "r") 
 dataDB = f.read().split("*##@@##*")
 key = dataDB[0]
+host = desencripta(dataDB[2], key)
+port = desencripta(dataDB[3], key)
+service = desencripta(dataDB[1], key)
 
 DATABASES = {
     'default': {
     'ENGINE':   'django.db.backends.oracle',
-    'NAME':     desencripta(dataDB[1],key),
-    'HOST':     desencripta(dataDB[2],key),
-    'PORT':     desencripta(dataDB[3],key),
+    'NAME':     f"{host}:{port}/{service}",
     'USER':     desencripta(dataDB[4],key),
     'PASSWORD': desencripta(dataDB[5],key),
     'CONN_MAX_AGE': 1800,  # 30 minutos despues de conexion inactiva

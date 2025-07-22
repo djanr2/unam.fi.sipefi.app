@@ -29,45 +29,6 @@ const fl = function(){
 			}
 		} );
 		
-		$('#tablaBusqSoli').DataTable({
-			"dom": "t",
-			"columnDefs": [
-				{
-					"className": "centrar",
-	                "targets": "_all"
-	            },
-	            {
-	                "targets": [ 5 ],
-	                "visible": false,
-	                "searchable": false
-	            }
-	         ],
-	         "rowCallback": function( row, data ) {
-	        	    if ( String(data[2]).length > 20 ) {
-	        	      $('td:eq(2)', row).html( String(data[2]).substr(0,20) + " . .");
-	        	      if(!$('td:eq(2)', row).hasClass("tooltipstered")){
-							$('td:eq(2)', row).tooltipster({
-									side: 'top',
-									//theme: 'tooltipster-shadow',
-									theme: 'tooltipster-noir',
-									animation: 'fade',
-									contentAsHTML: 'true',
-						            content: '<strong>'+data[2]+'</strong>',
-						            trigger: 'custom',
-									triggerOpen: {
-									        mouseenter: true,
-									        tap: true
-									},
-									triggerClose: {
-									        mouseleave: true,
-									        tap: true
-									}
-							});
-						}
-	        	    }
-	          }
-		});
-		
 		$('#tablaSoliUsuario').DataTable({
 			"pageLength": 5,
 			"columnDefs": [
@@ -76,7 +37,7 @@ const fl = function(){
 	                "targets": "_all"
 	            },
 	            {
-	                "targets": [ 8 ],
+	                "targets": [ 7 ],
 	                "visible": false,
 	                "searchable": false
 	            },
@@ -90,20 +51,20 @@ const fl = function(){
 	            },
 	            {
 	            	"render": function ( data, type, row ) {
-	            		let rolSol = parseInt(row[8].split("#@@#")[6]);
+	            		let rolSol = parseInt(row[7].split("#@@#")[6]);
 	            		let rol = parseInt($("#rol").html());
-	            		let estatusSoli = parseInt(row[8].split("#@@#")[1]);
+	            		let estatusSoli = parseInt(row[7].split("#@@#")[1]);
 	            		let minusRol =  rol - rolSol;
 	            		let canEdit = (minusRol==0||minusRol==1)?true:false;
 	            		let infoExtra = (canEdit)?"__1":"";
 	            		let selectItem = "<select class='accionSolicitud'>"+
 	            							"<option value='0' selected>Elige acci&oacute;n..</option>"+
-	            							"<option value='1__"+row[8]+(estatusSoli==3?"__1":infoExtra)+"'>Visualizar</option>"+
-	            							((canEdit)?"<option value='2__"+row[8]+infoExtra+"'>Editar</option>":"")+
+	            							"<option value='1__"+row[7]+(estatusSoli==3?"__1":infoExtra)+"'>Visualizar</option>"+
+	            							((canEdit)?"<option value='2__"+row[7]+infoExtra+"'>Editar</option>":"")+
 	            						"</select>";
 	                    return selectItem;
 	                },
-	                "targets": 7
+	                "targets": 6
 	            }
 	         ],
 	         "fnCreatedRow": function( nRow, aData, iDataIndex ) {
@@ -162,7 +123,7 @@ const fl = function(){
 	                "targets": "_all"
 	            },
 	            {
-	                "targets": [ 8 ],
+	                "targets": [ 7 ],
 	                "visible": false,
 	                "searchable": false
 	            },
@@ -176,7 +137,7 @@ const fl = function(){
 	            },
 	            {
 	            	"render": function ( data, type, row ) {
-	            		let ESoli = String(row[8]).split("#@@#");
+	            		let ESoli = String(row[7]).split("#@@#");
 	            		let opSelect ="<option value='0' selected>Elige estatus..</option>";
 	            		for(i in ESoli){
 	            			let obj = String(ESoli[i]).split("||");
@@ -189,7 +150,7 @@ const fl = function(){
 	            						"</select>";
 	                    return selectItem;
 	                },
-	                "targets": 7
+	                "targets": 6
 	            }
 	         ],
 	         "fnCreatedRow": function( nRow, aData, iDataIndex ) {
@@ -248,7 +209,7 @@ const fl = function(){
 	                "targets": "_all"
 	            },
 	            {
-	                "targets": [ 8 ],
+	                "targets": [ 7 ],
 	                "visible": false,
 	                "searchable": false
 	            },
@@ -264,11 +225,11 @@ const fl = function(){
 	            	"render": function ( data, type, row ) {
 	            		let selectItem = "<select class='accionSolicitud'>"+
 	            							"<option value='0' selected>Elige acci&oacute;n..</option>"+
-	            							"<option value='1__"+row[8]+"'>Visualizar</option>"+
+	            							"<option value='1__"+row[7]+"'>Visualizar</option>"+
 	            						"</select>";
 	                    return selectItem;
 	                },
-	                "targets": 7
+	                "targets": 6
 	            }
 	         ],
 	         "fnCreatedRow": function( nRow, aData, iDataIndex ) {

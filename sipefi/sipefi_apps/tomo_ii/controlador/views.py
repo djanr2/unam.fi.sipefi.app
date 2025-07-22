@@ -49,20 +49,20 @@ class Vista_Principal_TomoII(TemplateView):
             :return: Regresa la pagina principal del sistema o impide el acceso a la aplicacion.
         """
         self.token = request.GET.get("t",'')
-        resp = CBD().validaTokenAcceso(self.token,1)
+        resp = CBD().validaTokenAcceso(self.token)
         if resp['estatus'] == 200: #Token correcto
             self.usuario = resp['acceso'][0][1]
-            respMap = CBD().mapeoRolUsuario(resp['acceso'][0][2],7)
+            respMap = CBD().mapeoRolUsuario(resp['acceso'][0][2])
             if respMap['estatus'] == 200: #Rol correcto y habilitado
                 self.rol = respMap
-                self.urlSIAR = resp['badAccess']
+                self.urlSIPEFI = resp['badAccess']
                 response = TemplateResponse(request, self.template_name, self.get_context_data())
                 CBD().quemaTokenAcceso(self.token)
-                CBD().cierraSesionUsuario(self.token, self.usuario, 2)
+                CBD().cierraSesionUsuario(self.token, resp['acceso'][0][3], 2)
             else:
                 response = HttpResponsePermanentRedirect(resp['badAccess'])
-                CBD().cierraSesionUsuario(self.token, self.usuario, 1)
+                CBD().cierraSesionUsuario(self.token, resp['acceso'][0][3], 1)
         else:
             response = HttpResponsePermanentRedirect(resp['badAccess'])
-            CBD().cierraSesionUsuario(self.token, self.usuario, 1)
+            CBD().cierraSesionUsuario(self.token, resp['acceso'][0][3], 1)
         return response

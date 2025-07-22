@@ -19,7 +19,7 @@ class ConexionBD(object):
             cls._instance = super(ConexionBD, cls).__new__(cls, *args, **kwargs)
         return cls._instance
 
-    def cursorBDR(self):
+    def cursorBD(self):
         """
             Funcion que ayuda a crear el cursor que apunta a la base de datos de riesgos de credito.
             
