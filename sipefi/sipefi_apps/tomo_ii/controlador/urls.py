@@ -8,9 +8,15 @@
     **path** : en la seccion de path se debe de poner el nombre de la url del sistema inicial.
 """
 from django.urls import path
-from sipefi_apps.tomo_ii.controlador.views import Vista_Principal_TomoII
-from sipefi_apps.tomo_ii.controlador import views
+from sipefi_apps.tomo_ii.controlador.views import (
+    Vista_Principal_TomoII,
+    requestTablasSoli
+)
+
+from sipefi_apps.principal.controlador.views import LoginSipefi
 
 urlpatterns = [
     path("Tomo_II", Vista_Principal_TomoII.as_view(), name="indexTomoII"),
+    path("llenaTablasSoli", requestTablasSoli, name='tablasSoli'),
+    path("login/", LoginSipefi.as_view(), name="login")
 ]

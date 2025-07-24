@@ -35,7 +35,7 @@ class ConsultasBD():
             """
             return sql
             
-        def buscaSolicitudesUsuario(self, usuario, rol, universo):
+        def buscaSolicitudesUsuario(self, usuario, rol):
             """
                 Funcion que busca todas las solicitudes pendientes de concluir por el usuario logueado.
                 
@@ -46,8 +46,7 @@ class ConsultasBD():
                 :return: Objeto que contiene la informacion de las solicitudes procesadas por el usuario logueado.  
             """
             cursor = conBD().cursorBD()
-            idUniverso = universo
-            subQueryR = self.subConsultaRechazo(universo, "")
+            subQueryR = self.subConsultaRechazo()
             id_usuario = self.getIdUsuario(usuario)
             idsV = self.buscaRolXNombre("Validador")
             rol = int(rol)
@@ -217,27 +216,9 @@ class ConsultasBD():
                 """)
                 resp = [app for app in data]
                 url = self.getUrlBadAccess()
-                resp = {#'acceso': resp,
-                        #'estatus': 200 if len(resp) >= 1 else 204,
-                        #'acceso': [["","usrsupervisor","ADMINISTRADOR"]],
-                        #'acceso': [["","operadorPF","EADMR_MRLC"]],
-                        #'acceso': [["","operadorRiesgos","EADMR_MRLC"]],
-                        #'acceso': [["","usrsupergemQA","EADMR_MRLC"]],
-                        #'acceso': [["","usroperadorQA","EADMR_MRLC"]],
-                        #'acceso': [["","operadorGEM","EADMR_MRLC"]],
-                        #'acceso': [["","usropergemQA","EADMR_MRLC"]],
-                        #'acceso': [["","validadorGEM","EADMR_MRLC"]],
-                        #'acceso': [["","dsanchlu","ADMINISTRADOR"]],
-                        #'acceso': [["","usrmadm","ADMINISTRADOR"]],
-                        #'acceso': [["","validadorPF","EADMR_MRLC"]],
-                        #'acceso': [["","validadorRiesgos","EADMR_MRLC"]],
-                        #'acceso': [["","jmayaarr","ADMINISTRADOR"]],
-                        #'acceso': [["","MesaControl","ADMINISTRADOR"]],
-                        #'acceso': [["","usrsupergem","ADMINISTRADOR"]],
-                        #'acceso': [["","usrmadm","ADMINISTRADOR"]],
-                        'acceso': [["","sipefi_user", 1, 1]],
-                        'estatus': 200,
-                        'badAccess': url[0][0]
+                resp = {'acceso': resp,
+                        'estatus': 200 if len(resp) >= 1 else 204,
+                        'badAccess': url[0][0],
                         }
             finally:
                 cursor.close()
@@ -319,7 +300,7 @@ class ConsultasBD():
             cursor = conBD().cursorBD()
             try:
                 cursor.execute("""
-                   update parametro.TP_ACCESOS set estatus_acceso = 'I'
+                   update parametro.TP_ACCESOS set estatus_acceso = 'A'
                    where estatus_acceso = 'E' and token = '""" + str(token) + """'
                 """)
             finally:
@@ -345,7 +326,10 @@ class ConsultasBD():
                     WHERE USUARIO_SISTEMA = :usuario 
                       AND CLAVE_ACCESO = :clave  
                       AND ACTIVO = 0
-                """, usuario=usuario_sistema, clave=clave_acceso)
+                """, {
+                    'usuario': usuario_sistema,
+                    'clave': clave_acceso
+                })
                 row = cursor.fetchone()
                 if row:
                     id_usuario = row[0]

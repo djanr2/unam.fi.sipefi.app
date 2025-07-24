@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
     Este archivo funciona para conectar al modelo con el controlador y asi poder dar
     respuesta a la peticion solicitada al servidor desde el cliente.
@@ -5,6 +6,8 @@
 
 from django.template.response import TemplateResponse
 from django.http.response import HttpResponsePermanentRedirect
+from django.http import JsonResponse
+from django.http import HttpResponse
 
 from sipefi_apps.tomo_ii.modelo.ConsultasBD import ConsultasBD as CBD
 
@@ -50,19 +53,33 @@ class Vista_Principal_TomoII(TemplateView):
         """
         self.token = request.GET.get("t",'')
         resp = CBD().validaTokenAcceso(self.token)
+        id_usuario = ""
         if resp['estatus'] == 200: #Token correcto
             self.usuario = resp['acceso'][0][1]
+            id_usuario = resp['acceso'][0][3]
             respMap = CBD().mapeoRolUsuario(resp['acceso'][0][2])
             if respMap['estatus'] == 200: #Rol correcto y habilitado
                 self.rol = respMap
                 self.urlSIPEFI = resp['badAccess']
                 response = TemplateResponse(request, self.template_name, self.get_context_data())
                 CBD().quemaTokenAcceso(self.token)
-                CBD().cierraSesionUsuario(self.token, resp['acceso'][0][3], 2)
+                CBD().cierraSesionUsuario(self.token, id_usuario, 2)
             else:
                 response = HttpResponsePermanentRedirect(resp['badAccess'])
-                CBD().cierraSesionUsuario(self.token, resp['acceso'][0][3], 1)
+                CBD().cierraSesionUsuario(self.token, id_usuario, 1)
         else:
             response = HttpResponsePermanentRedirect(resp['badAccess'])
-            CBD().cierraSesionUsuario(self.token, resp['acceso'][0][3], 1)
+            CBD().cierraSesionUsuario(self.token, id_usuario, 1)
         return response
+ 
+def requestTablasSoli(request):
+    """
+        La funcion sirve para conectar la peticion cliente - servidor, 
+        en este caso consulta informacion de las solicitudes en las que ha participado
+        el usuario logueado.
+        
+        :return: Nos da como respuesta una estructura JSON con la informacion solicitada en la peticion.
+    """
+    usuario = request.POST.get('user','')
+    rol = request.POST.get('rol','')
+    return JsonResponse(CBD().buscaSolicitudesUsuario(usuario,rol))

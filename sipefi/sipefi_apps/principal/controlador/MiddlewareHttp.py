@@ -13,10 +13,9 @@ class MiddlewareHttpReqResp:
 
     def __call__(self, request):
         # Ejecutar la funcion antes de procesar la solicitud
-        #resp = ""
-        #if not self.es_url_excluida(request.path):
-        #    resp = self.ejecutar_antes_peticion(request)
-        resp = "OK"
+        resp = ""
+        if not self.es_url_excluida(request.path):
+            resp = self.ejecutar_antes_peticion(request)
         if resp == "NOK":
             response = HttpResponse()
             response["AccesoSistema"] = "NOK"
@@ -40,8 +39,9 @@ class MiddlewareHttpReqResp:
     def es_url_excluida(self, url: str) -> bool:
         # URLs que se desean excluir
         urls_excluidas = [
+            "/SIPEFI/login/",
             "/SIPEFI/Tomo_II",
-            "/cerrarSesion/",
-            "/recargaPagina/"
+            "/SIPEFI/cerrarSesion/",
+            "/SIPEFI/recargaPagina/"
         ]
         return url in urls_excluidas
