@@ -14,9 +14,8 @@ const soltii = function(){
 	 * @method inicio
 	 * @static
 	 */
-	const inicio = (idsValidador, idsEstados, columnsTP) => {
+	const inicio = (idsValidador) => {
 		fComun.guardaVarLocal("idsValidador",idsValidador);
-		//variable necesaria iniciar en null para deuda vigente
 		fComun.guardaVarLocal("objSoli",{accion: 0});
 		let roles = JSON.parse(String($("#rol").html()).replace(new RegExp("'",'g'),"\""));
 		let tamRol = roles.resp.length;
@@ -39,6 +38,7 @@ const soltii = function(){
 		//Quitamos opcion de crear solicitudes nuevas al validador
 		let idRV = fComun.getVarLocalJ("idsValidador");
 		$("button[target|='aprobarSolicitud']").html("Solicitar aprobaci&oacute;n");
+		$(".creaSolicitud").show();
 		if($.inArray(valor,idRV) != -1){
 			$(".creaSolicitud").hide();
 			$("#tablaSoliUsuario").parent().css("margin-top", "100px");
@@ -129,10 +129,9 @@ const soltii = function(){
     const cargaInfoTablasP1 = () => {
     	let param = {
     			user: $("#usuario").html(),
-    			rol: $("#rol").html(),
-    			universo: $("#universo").html()
+    			rol: $("#rol").html()
     	}
-    	fComun.post("/llenaTablasSoli/",param, function(resp){
+    	fComun.post("/SIPEFI/llenaTablasSoli",param, function(resp){
 			try{
 				let obj = resp;
 				fComun.guardaVarLocal("catalogos",obj.catalogos)

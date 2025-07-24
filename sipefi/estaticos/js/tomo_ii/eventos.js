@@ -145,6 +145,7 @@ const etii = function(){
 			let valor = parseInt($("#selectRol").val());
 			if(valor != 0){
 				soltii.iniciaComponentes(valor);
+				if (document.activeElement) document.activeElement.blur(); // evitar warning accesibilidad
 				$(objM).modal('hide');
 			}
 		});
