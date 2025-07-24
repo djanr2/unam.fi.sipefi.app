@@ -3,6 +3,7 @@
 body {
     width: 100%;
     height: auto;
+    padding-bottom: 50px;
 }
 
 html {
@@ -11,43 +12,105 @@ html {
     overflow-x: auto; 
 }
 
-#encabezado{
-	background-color: white;
-    padding: 10px 40px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    border-bottom: 2px solid #ccc;
+/* ==== Estilos del login*/
+.contenedor-login {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	min-height: 100vh;
+	background: #ffffff;
+	padding: 20px;
 }
 
-#logoFI{
-	height: 100px;
-    width: auto;
-    margin-right: 20px;
+.login-card {
+	background: #f9f9f9;
+	border: 1px solid #ddd;
+	padding: 30px;
+	border-radius: 8px;
+	width: 100%;
+	max-width: 400px;
+	text-align: center;
+	box-shadow: 0 6px 20px rgba(0,0,0,0.08);
 }
 
-.tituloProyecto{
-	color: black;
-    font-size: 24px;
-    font-weight: bold;
-    line-height: 1.2;
+.login-wrapper {
+    max-width: 450px;
+    width: 100%;
+    margin: auto;
 }
 
-.textInfTitulo{
-	color: #555;
-    font-size: 14px;
-    font-style: italic;
+#logoLogin {
+    max-width: 150px;
+    height: auto;
+    margin: 0 auto 15px auto;
+    display: block;
 }
 
-#datosAcceso{
-	background-color: #E03A3E;
-    color: white;
-    padding: 10px 20px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-family: sans-serif;
-    font-size: 14px;
+.tituloLogin {
+	font-size: 18px;
+	font-weight: 600;
+	margin-bottom: 5px;
+	color: #333;
+}
+
+.subtituloLogin {
+	font-size: 13px;
+	color: #777;
+	margin-bottom: 15px;
+}
+
+.formLogin input {
+	font-size: 14px;
+}
+
+.formLogin button {
+	font-size: 15px;
+}
+/* ==== fin estilos del login */
+
+#encabezado {
+	background: linear-gradient(to right, #9e1b32, #b71c1c);
+	color: white;
+	padding: 20px 40px;
+	display: flex;
+	align-items: center;
+	gap: 30px;
+	border-bottom: none;
+	box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+#logoFI {
+	height: 120px;
+	width: auto;
+	margin: 0;
+}
+
+.tituloProyecto {
+	font-size: 26px;
+	font-weight: 600;
+	color: white;
+}
+
+.textInfTitulo {
+	font-size: 13px;
+	color: #f0f0f0;
+	font-style: italic;
+}
+
+#datosAcceso {
+	background: #d32f2f;
+	color: white;
+	padding: 10px 30px;
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	font-size: 14px;
+	border-bottom: 2px solid #b71c1c;
+}
+
+#botonesBarraAccion button {
+	font-size: 13px;
+	padding: 5px 12px;
 }
 
 #nomFac{
@@ -55,22 +118,16 @@ html {
     line-height: 1.2;
 }
 
-#infoDer{
+#infoDer {
 	display: flex;
-    align-items: center;
-    gap: 15px;
+	align-items: center;
+	gap: 20px;
 }
 
-#infoDer>span{
+#infoDer span {
 	display: flex;
-    align-items: center;
-    gap: 5px;
-}
-
-#botonesBarraAccion{
-	display: flex;
-    gap: 8px; /* espacio entre botones */
-    flex-wrap: wrap; /* para que no se desborden si hay muchos */;
+	align-items: center;
+	gap: 5px;
 }
 
 #modViewParam{
@@ -93,6 +150,10 @@ html {
 
 .esconder{
 	display: none;
+}
+
+.esconderDatos{
+	display: none !important;
 }
 
 .centrar{
