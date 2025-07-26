@@ -13,8 +13,8 @@ const fComun = function(){
 	 * @default
 	 */
 	let urlsAjax = ['/buscaSolicitud/', '/accionSolicitud/',
-					'/llenaTablasSoli/', '/cargaSolicitud/', 
-					'/recargaPagina/','/cancelarSolicitud/'
+					'/SIPEFI/llenaTablasSoli/', '/cargaSolicitud/', 
+					'/SIPEFI/recargaPagina/','/cancelarSolicitud/'
 					];
 	
 	/**
@@ -630,7 +630,7 @@ const fComun = function(){
 		let param = {
 				token: $("#token").html()
 		}
-		post("/recargaPagina/",param, function(resp){
+		post("/SIPEFI/recargaPagina/",param, function(resp){
 				location.reload(true);
 				solTomoII.cargaMenuIniBotones();
 		});
@@ -741,6 +741,30 @@ const fComun = function(){
 		table.row(renglon).remove().draw();
 	};
 	
+	/**
+	 * Muestra un tooltip de advertencia sobre un campo y le aplica estilo visual.
+	 * @param {string} selector - ID del campo (con #)
+	 * @param {string} mensaje - Mensaje que se mostrará en el tooltip
+	 */
+	const mostrarTooltipCampo = (selector, mensaje) => {
+	  const $campo = $(selector);
+	  $campo.addClass("estiloWarning")
+	        .attr("data-bs-toggle", "tooltip")
+	        .attr("data-bs-placement", "top")
+	        .attr("title", mensaje);
+
+	  const tip = new bootstrap.Tooltip($campo[0]);
+	  tip.show();
+
+	  setTimeout(() => {
+	    tip.dispose();
+	    $campo.removeClass("estiloWarning")
+	          .removeAttr("data-bs-toggle")
+	          .removeAttr("data-bs-placement")
+	          .removeAttr("title");
+	  }, 4000); // Tooltip visible por 4 segundos
+	};
+	
 	return{
 		post: post,
 		refrescaTabla: refrescaTabla,
@@ -772,6 +796,7 @@ const fComun = function(){
 		creaModalSuccesError: creaModalSuccesError,
 		creaModalAlerta: creaModalAlerta,
 		iniciaModalComentarios: iniciaModalComentarios,
-		eliminaRegTabla: eliminaRegTabla
+		eliminaRegTabla: eliminaRegTabla,
+		mostrarTooltipCampo: mostrarTooltipCampo
 	}
 }();

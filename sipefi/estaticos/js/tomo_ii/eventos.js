@@ -86,9 +86,65 @@ const etii = function(){
 			fcs.creaModalAlerta(txtH, body, fcs.realizaCancelacionSolicitud, 0, "", "");
 		});
 		
+		/**
+		 * Asigna automáticamente el tipo de modalidad según la modalidad seleccionada
+		 * @event module:etii~#modalidad
+		 * @listens change
+		 */
+		$("#modalidad").unbind("change");
+		$("#modalidad").on("change", function () {
+			try {
+				const idModalidad = parseInt($(this).val());
+				const catRel = fComun.getVarLocalJ("catalogos").catRelMod || [];
+
+				// Buscar la relación
+				const encontrado = catRel.find(([idMod]) => idMod === idModalidad);
+				if (encontrado) {
+					const idTipoMod = encontrado[1];
+					$("#tipo_modalidad").val(idTipoMod);
+				} else {
+					$("#tipo_modalidad").val(0); 
+				}
+			} catch (e) {
+				console.error("Error al asignar tipo modalidad:", e);
+			}
+		});
+
+		$("#h_sem_teo").on("input", actualizaCreditos);
+		$("#h_sem_pra").on("input", actualizaCreditos);
+		
+		/**
+		 * Evento que activa la función agregarRelacion al hacer clic en el botón.
+		 * Solo se ejecuta si el botón con ID #btnAgregarRelacion está presente en la vista.
+		 * @event module:etii~#btnAgregarRelacion
+		 * @type {object}
+		 * @listens click
+		 */
+		$("#btnAgregarRelLicAsig").unbind("click");
+		$("#btnAgregarRelLicAsig").on("click", function () {
+		  fcs.agregarRelacionLicAsig();
+		});
+		
 		//Eventos de modal y dataTables complementarios
 		eventosModalDTable();
 		
+	};
+	
+	/**
+	 * Calcula los créditos automáticamente con base en horas semana teóricas y prácticas
+	 * @event module:etii~#h_sem_teo
+	 * @event module:etii~#h_sem_pra
+	 * @listens input
+	 */
+	const actualizaCreditos = () => {
+		try {
+			const hTeo = parseFloat($("#h_sem_teo").val()) || 0;
+			const hPra = parseFloat($("#h_sem_pra").val()) || 0;
+			const creditos = (hTeo * 2) + hPra;
+			$("#creditos").val(creditos);
+		} catch (e) {
+			console.error("Error al calcular créditos:", e);
+		}
 	};
 	
 	/**
@@ -113,13 +169,28 @@ const etii = function(){
 		
 		/**
 		 * Evento que sirve para poder manipular el modal de comentarios draggable por toda la pagina eliminando el bloqueo de la pantalla inferior.
-		 * @event module:epf~#modalComentarios
+		 * @event module:etii~#modalComentarios
 		 * @type {object}
 		 * @listens shown.bs.modal
 		 */
 		$("#modalComentarios").unbind("shown.bs.modal");
 		$('#modalComentarios').on('shown.bs.modal', function () {
 			 $('body').removeClass('modal-open');
+		});
+		
+		/**
+		 * Evento que permite minimizar el modal de comentarios sin destruir su contenido.
+		 * Oculta el modal visualmente sin eliminar la instancia de Bootstrap ni perder los datos.
+		 * @event module:etii~#btnMinimizarComentarios
+		 * @type {object}
+		 * @listens click
+		 */
+		$("#btnMinimizarComentarios").unbind("click");
+		$("#btnMinimizarComentarios").on("click", function () {
+		  const modalInstance = bootstrap.Modal.getInstance(document.getElementById("modalComentarios"));
+		  if (modalInstance) {
+		    modalInstance.hide(); // Oculta sin cerrar ni destruir
+		  }
 		});
 		
 	};

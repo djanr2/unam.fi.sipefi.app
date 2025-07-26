@@ -20,7 +20,7 @@ const comunE = function(){
 		    let param = {
 				token: $("#token").html()
 	    	}
-		    fComun.post("/cerrarSesion/",param, function(resp){});
+		    fComun.post("/SIPEFI/cerrarSesion/",param, function(resp){});
 		});
 	};
 	
