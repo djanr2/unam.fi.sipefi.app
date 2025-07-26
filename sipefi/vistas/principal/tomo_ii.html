@@ -35,7 +35,7 @@
 				</strong>
 			</div>
 			<div id="botonesBarraAccion">
-				<a href= {{sipefi_login}} ><button type="button" class="btn btn-outline-light btn-sm SIPEFI_LOGIN">Salir</button></a>
+				<a href= {{sipefi_login}} ><button type="button" class="btn btn-secondary SIPEFI_LOGIN">Salir</button></a>
 				<button target="regresarBusqSoli" type="button" class="menuBotones esconder btn btn-secondary">Regresar</button>
 				<button target="regresarLlenaSoli" type="button" class="menuBotones esconder btn btn-secondary">Regresar</button>
 				<button target="cargarSolicitud" type="button" class="menuBotones esconder btn btn-primary btn-sm creaSolicitud">Continuar</button>
@@ -59,6 +59,7 @@
 		<div id='cuerpoPrincipal'>
 	        {% block content %}{% endblock %}
 		</div>
+		{{ idsValidador|json_script:"ids-validador-data" }}
 		<script>
 			$(document).ready(function(){
 				const actualizarHora = () => {
@@ -74,7 +75,10 @@
 
 				// Actualizar cada segundo
 				setInterval(actualizarHora, 1000);
-		 		soltii.inicio({{idsValidador}});
+				
+				//iniciamos funcion inicial
+				const idsValidador = JSON.parse(document.getElementById('ids-validador-data').textContent);
+				soltii.inicio(idsValidador);
 			});
 		</script>
 	</body>

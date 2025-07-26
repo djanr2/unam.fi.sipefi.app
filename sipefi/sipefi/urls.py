@@ -16,8 +16,12 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
+from sipefi_apps.principal.controlador import views
+from sipefi_apps.principal.controlador.views import LoginSipefi
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('SIPEFI/', include('sipefi_apps.tomo_ii.controlador.urls')),
+    path("SIPEFI/login/", LoginSipefi.as_view(), name="login"),
+    path('SIPEFI/cerrarSesion/', views.cerrarSesionUsuarioSistema, name='logOut'),
 ]

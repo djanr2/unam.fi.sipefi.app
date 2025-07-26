@@ -121,20 +121,20 @@
 
 <!-- Modal para guardar comentarios-->
 <div id="contModComent">
-	<div class="modal draggable fade" id="modalComentarios" tabindex="-1" role="dialog" aria-hidden="true">
-		  <div class="modal-dialog modal-dialog-centered" role="document">
-		    <div class="modal-content">
-		      <div class="modal-header headerModalInfo">
-		        <h5 class="modal-title" >Secci&oacute;n de comentarios</h5>
-		        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-	          		<span aria-hidden="true" style="color: #fff;"><i class="fa-solid fa-minus" style="color: white;"></i></span>
-	        	</button>
-		      </div>
-		      <div class="modal-body">
-		        <div id="comentarios"></div>
-		        <br>
-		      </div>
-		    </div>
-		  </div>
+	<div class="modal draggable fade" id="modalComentarios" tabindex="-1" aria-hidden="true">
+		<div class="modal-dialog modal-dialog-centered" role="document">
+			<div class="modal-content">
+		    	<div class="modal-header headerModalInfo d-flex justify-content-between align-items-center"">
+		      		<h5 class="modal-title mb-0">Secci&oacute;n de comentarios</h5>
+	             	<button type="button" id="btnMinimizarComentarios" class="btn btn-sm btn-minimizar" title="Minimizar">
+	            		<i class="fa-solid fa-minus"></i>
+	          	 	</button>
+		      	</div>
+		      	<div class="modal-body">
+		        	<div id="comentarios"></div>
+		        	<br>
+		      	</div>
+			</div>
+		</div>
 	</div>
 </div>

@@ -96,7 +96,7 @@ class ConsultasBD():
                              'estatusTSA': 200 if len(res2) >= 1 else 204,
                              'TSR': res3,
                              'estatusTSR': 200 if len(res3) >= 1 else 204,
-                             'catalogos': ''#self.dameCatalogosIni(rol,idUniverso)
+                             'catalogos': self.dameCatalogosIni()
                              }
             finally:
                 cursor.close()
@@ -194,6 +194,231 @@ class ConsultasBD():
             finally:
                 cursor.close()
             return res
+        
+        def dameCatalogosIni(self):
+            """
+                Funcion principal que obtiene los catalogos iniciales del sistema SIPEFI - TOMO II.
+                :return: Regresa objeto de tipo JSON con todos los catalogos iniciales.
+            """
+            catAreaCon = self.catalogoAreaConocimiento()
+            catCarAsig = self.catalogoCaracterAsig()
+            catEstDid = self.catalogoEstrategiaDidactica()
+            catTipoBib = self.catalogoTipoBibliografia()
+            catFormEval = self.catalogoFormasEvaluacion()
+            catLic = self.catalogoLicenciaturas()
+            catModalidad = self.catalogoModalidad()
+            catTipoMod = self.catalogoTipoModalidad()
+            catRelMod = self.catalogoRelacionModalidad()
+            catAsig = self.catalogoAsignaturas()
+            res =   {'catAreaCon': catAreaCon, 'catCarAsig': catCarAsig,
+                     'catEstDid': catEstDid, 'catTipoBib': catTipoBib,
+                     'catFormEval': catFormEval, 'catLic': catLic,
+                     'catModalidad': catModalidad, 'catTipoMod': catTipoMod,
+                     'catRelMod': catRelMod, 'catAsig': catAsig,
+                     'estatusACon': 200 if len(catAreaCon) >= 1 else 204,
+                     'estatusCarAsig': 200 if len(catCarAsig) >= 1 else 204,
+                     'estatusEstDid': 200 if len(catEstDid) >= 1 else 204,
+                     'estatusTBib': 200 if len(catTipoBib) >= 1 else 204,
+                     'estatusFEval': 200 if len(catFormEval) >= 1 else 204,
+                     'estatusLic': 200 if len(catLic) >= 1 else 204,
+                     'estatusMod': 200 if len(catModalidad) >= 1 else 204,
+                     'estatusTMod': 200 if len(catTipoMod) >= 1 else 204,
+                     'estatusRelMod': 200 if len(catRelMod) >= 1 else 204,
+                     'estatusAsig': 200 if len(catAsig) >= 1 else 204
+                    }
+            return res
+        
+        def catalogoAreaConocimiento(self):
+            """
+                Funcion que obtiene el catalogo de las areas de conocimiento.
+                
+                :return: Regresa objeto con el catalogo de los posibles valores para el area de conocmiento.
+            """
+            cursor = conBD().cursorBD()
+            try:
+                data = cursor.execute("""
+                    select id_area_conocimiento, area_conocimiento 
+                    from catalogo.tc_area_conocimiento
+                    order by 1
+                """)
+                res = [app for app in data]
+            finally:
+                cursor.close()
+            return res
+        
+        def catalogoAsignaturas(self):
+            """
+                Funcion que obtiene el catalogo de las asignaturas.
+                
+                :return: Regresa objeto con el catalogo de los posibles valores para las asignaturas.
+            """
+            cursor = conBD().cursorBD()
+            try:
+                data = cursor.execute("""
+                    select distinct id_asignatura, asignatura 
+                    from sipefi.td_asignatura
+                    order by 2
+                """)
+                res = [app for app in data]
+            finally:
+                cursor.close()
+            return res
+        
+        def catalogoRelacionModalidad(self):
+            """
+                Funcion que obtiene el catalogo de la relacion entre la modalidad y el tipo de modalidad.
+                
+                :return: Regresa objeto con el catalogo de los valores de la relacion entre la modalidad y el tipo de modalidad.
+            """
+            cursor = conBD().cursorBD()
+            try:
+                data = cursor.execute("""
+                    select id_modalidad, id_tipo_modalidad 
+                    from catalogo.tc_relacion_modalidad
+                    order by 1
+                """)
+                res = [app for app in data]
+            finally:
+                cursor.close()
+            return res
+        
+        def catalogoTipoModalidad(self):
+            """
+                Funcion que obtiene el catalogo de los tipos de modalidades.
+                
+                :return: Regresa objeto con el catalogo de los posibles valores para los tipos de modalidad.
+            """
+            cursor = conBD().cursorBD()
+            try:
+                data = cursor.execute("""
+                    select id_tipo_modalidad, tipo_modalidad 
+                    from catalogo.tc_tipo_modalidad
+                    order by 1
+                """)
+                res = [app for app in data]
+            finally:
+                cursor.close()
+            return res
+        
+        def catalogoModalidad(self):
+            """
+                Funcion que obtiene el catalogo de las modalidades.
+                
+                :return: Regresa objeto con el catalogo de los posibles valores para las modalidades.
+            """
+            cursor = conBD().cursorBD()
+            try:
+                data = cursor.execute("""
+                    select id_modalidad, modalidad 
+                    from catalogo.tc_modalidad
+                    order by 1
+                """)
+                res = [app for app in data]
+            finally:
+                cursor.close()
+            return res
+        
+        def catalogoLicenciaturas(self):
+            """
+                Funcion que obtiene el catalogo de las licenciaturas de la FI.
+                
+                :return: Regresa objeto con el catalogo de los posibles valores para las licenciaturas.
+            """
+            cursor = conBD().cursorBD()
+            try:
+                data = cursor.execute("""
+                    select id_licenciatura, licenciatura 
+                    from catalogo.tc_licenciatura
+                    order by 1
+                """)
+                res = [app for app in data]
+            finally:
+                cursor.close()
+            return res
+        
+        def catalogoFormasEvaluacion(self):
+            """
+                Funcion que obtiene el catalogo de las formas de evaluacion.
+                
+                :return: Regresa objeto con el catalogo de los posibles valores para las formas de evaluacion.
+            """
+            cursor = conBD().cursorBD()
+            try:
+                data = cursor.execute("""
+                    select id_forma_eval, forma_evaluacion
+                    from catalogo.tc_formas_evaluacion
+                    order by 1
+                """)
+                res = [app for app in data]
+            finally:
+                cursor.close()
+            return res
+        
+        def catalogoTipoBibliografia(self):
+            """
+                Funcion que obtiene el catalogo de los tipos de bibliografias.
+                
+                :return: Regresa objeto con el catalogo de los posibles valores para los tipos de bibliografias.
+            """
+            cursor = conBD().cursorBD()
+            try:
+                data = cursor.execute("""
+                    select id_tipo_bibliografia, tipo_bibliografia 
+                    from catalogo.tc_tipo_bibliografia
+                    order by 1
+                """)
+                res = [app for app in data]
+            finally:
+                cursor.close()
+            return res
+        
+        def catalogoEstrategiaDidactica(self):
+            """
+                Funcion que obtiene el catalogo de las estrategias didacticas.
+                
+                :return: Regresa objeto con el catalogo de los posibles valores para las estrategias didacticas.
+            """
+            cursor = conBD().cursorBD()
+            try:
+                data = cursor.execute("""
+                    select id_estrategia_didact, estrategia_didactica 
+                    from catalogo.tc_estrategias_didacticas
+                    order by 1
+                """)
+                res = [app for app in data]
+            finally:
+                cursor.close()
+            return res
+        
+        def catalogoCaracterAsig(self):
+            """
+                Funcion que obtiene el catalogo del caracter de la asignatura.
+                
+                :return: Regresa objeto con el catalogo de los posibles valores para el caracter de la asignatura.
+            """
+            cursor = conBD().cursorBD()
+            try:
+                data = cursor.execute("""
+                    select id_caracter_asig, caracter_asignatura 
+                    from catalogo.tc_caracter_asignatura
+                    order by 1
+                """)
+                res = [app for app in data]
+            finally:
+                cursor.close()
+            return res
+        
+        def actualizaEstatusToken(self, token):
+            """
+                Funcion que actualiza el estatus del token que se esta usando para la sesion del usuario y asi pueda continuar trabajando.
+                
+                :param token: Numero de token necesario para ingresar a la sesion de la aplicacion SIPEFI.
+            """
+            sql = """
+                update PARAMETRO.TP_ACCESOS set estatus_acceso = 'E', fecha_acceso = sysdate 
+                where token = '"""+str(token)+"""'
+            """
+            self.insertaQuery(sql)
         
         def validaTokenAcceso(self, token):
             """

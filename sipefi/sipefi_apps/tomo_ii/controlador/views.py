@@ -7,7 +7,6 @@
 from django.template.response import TemplateResponse
 from django.http.response import HttpResponsePermanentRedirect
 from django.http import JsonResponse
-from django.http import HttpResponse
 
 from sipefi_apps.tomo_ii.modelo.ConsultasBD import ConsultasBD as CBD
 
@@ -83,3 +82,14 @@ def requestTablasSoli(request):
     usuario = request.POST.get('user','')
     rol = request.POST.get('rol','')
     return JsonResponse(CBD().buscaSolicitudesUsuario(usuario,rol))
+
+def requestRecargaPagina(request):
+    """
+        La funcion sirve para conectar la peticion cliente - servidor, 
+        en este caso se desea actualizar la pagina, por lo cual se reinicia token de acceso.
+        
+        :return: Nos da como respuesta una estructura JSON con la informacion solicitada en la peticion.
+    """
+    token = request.POST.get('token', '')
+    CBD().actualizaEstatusToken(token)
+    return JsonResponse({"resp": "OK" }) 

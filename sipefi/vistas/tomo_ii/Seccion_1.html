@@ -1,88 +1,130 @@
 <div class="card">
-	<div class="card-header panelHeader">
-		<i class="fas fa-bars" style="color: white;"></i><strong> Informaci&oacute;n de la secci&oacute;n 1 del Tomo II</strong>
-	</div>
-	<div class="card-body">
-	 	<div class="row">
-	 		<div class="col-5">
-		      <div class="input-group mb-3">
-		        <div class="input-group-prepend">
-		          <div class="input-group-text"><strong>Asignatura</strong></div>
-		        </div>
-		        <select class="custom-select form-control input-sm" id="Asignatura">
-		    	</select>
-		      </div>
+  <div class="card-header panelHeader">
+    <i class="fas fa-bars text-white"></i>
+    <strong> Informaci&oacute;n de la asignatura</strong>
+  </div>
+
+  <div class="card-body">
+    <ul class="nav nav-tabs custom-tabs" id="tabsAsignatura" role="tablist">
+      <li class="nav-item">
+        <button class="nav-link active" id="datos-tab" data-bs-toggle="tab" data-bs-target="#datos" type="button" role="tab">
+          Datos Generales
+        </button>
+      </li>
+      <li class="nav-item">
+        <button class="nav-link" id="relacion-tab" data-bs-toggle="tab" data-bs-target="#relacion" type="button" role="tab">
+          Relaci&oacute;n con Licenciaturas
+        </button>
+      </li>
+    </ul>
+
+    <div class="tab-content p-3 border border-top-0 rounded-bottom">
+      <!-- TAB: DATOS GENERALES -->
+      <div class="tab-pane fade show active" id="datos" role="tabpanel" aria-labelledby="datos-tab">
+        <div class="row">
+        	<div class="col-md-10 mb-3">
+		      <label><strong>Asignatura</strong></label>
+		      <input id="asignatura" type="text" class="form-control" placeholder="Nombre de la asignatura">
 		    </div>
-		    <div class="col-3">
-		      <div class="input-group mb-3" style="padding-left: 20px !important;">
-		        <div class="input-group-prepend">
-		          <div class="input-group-text"><strong>Licenciatura</strong></div>
-		        </div>
-		        <select class="custom-select form-control input-sm" id="licenciatura">
-		    	</select>
-		      </div>
+		    <div class="col-md-2 mb-3">
+		      <label><strong>Clave</strong></label>
+		      <input id="clave" type="text" class="form-control" readonly value="CXXXXXX">
 		    </div>
-		    <div class="col-2">
-		      <div class="input-group mb-2">
-		        <div class="input-group-prepend">
-		          <div class="input-group-text"><strong>Clave</strong></div>
-		        </div>
-		        <input type="text" class="form-control" id="clave" value="CXXXXXX" readonly>
-		      </div>
-		    </div>
-		</div>
-		<div class="row">
-			<div class="col-8">
-		      <div class="input-group mb-2">
-		        <div class="input-group-prepend">
-		          <div class="input-group-text"><strong>Area conocimiento</strong></div>
-		        </div>
-		        <select id="area_con" class="form-control input-sm"></select>
-		      </div>
-		    </div> 
-		</div>
-	</div>
-	<div class="card-header panelHeader">
-	  <i class="fas fa-bars" style="color: white;"></i><strong> Informaci&oacute;n de la solicitud</strong>
-	</div>
-	<div class="card-body">
-	  	<div class="row">
-		    <div class="col-6">
-		      <div class="input-group mb-3">
-		        <div class="input-group-prepend">
-		          <div class="input-group-text"><strong>Semestre</strong></div>
-		        </div>
-		        <select class="custom-select form-control input-sm" id="semestre">
-		    	</select>
-		      </div>
-		    </div>
-		    <div class="col">
-		      <div class="input-group mb-3">
-		        <div class="input-group-prepend">
-		          <div class="input-group-text"><strong>Modalidad</strong></div>
-		        </div>
-		        <select class="custom-select form-control input-sm" id="modalidad" >
-		    	</select>
-		      </div>
-		    </div>
-		</div>
-		<div class="row">
-		    <div class="col">
-		      <div class="input-group mb-3">
-		        <div class="input-group-prepend">
-		          <div class="input-group-text"><strong>Creditos teoricos</strong></div>
-		        </div>
-		        <input type="text" class="form-control inputNumber" id="creditos_teo" value="" placeholder="Creditos Teoricos" disabled>
-		      </div>
-		    </div>
-		    <div class="col">
-		      <div class="input-group mb-3">
-		        <div class="input-group-prepend">
-		          <div class="input-group-text"><strong>Creditos practicos</strong></div>
-		        </div>
-		        <input type="text" class="form-control inputNumber " id="Creditos_prac" value="" placeholder="Creditos practicos" disabled>
-		      </div>
-		    </div>
-		</div>
-	</div>
+        </div>
+
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label><strong>&Aacute;rea de conocimiento</strong></label>
+            <select id="area_con" class="form-select"></select>
+          </div>
+          <div class="col-md-3 mb-3">
+            <label><strong>Modalidad</strong></label>
+            <select id="modalidad" class="form-select"></select>
+          </div>
+          <div class="col-md-3 mb-3">
+            <label><strong>Tipo modalidad</strong></label>
+            <select id="tipo_modalidad" class="form-select" disabled></select>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col-md-4 mb-3">
+            <label><strong>Car&aacute;cter</strong></label>
+            <select id="caracter" class="form-select"></select>
+          </div>
+          <div class="col-md-4 mb-3">
+            <label><strong>Horas semana (te&oacute;rica)</strong></label>
+            <input type="number" id="h_sem_teo" class="form-control">
+          </div>
+          <div class="col-md-4 mb-3">
+            <label><strong>Horas semana (pr&aacute;ctica)</strong></label>
+            <input type="number" id="h_sem_pra" class="form-control">
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col-md-4 mb-3">
+            <label><strong>Horas semestre (te&oacute;rica)</strong></label>
+            <input type="number" id="h_semestre_teo" class="form-control">
+          </div>
+          <div class="col-md-4 mb-3">
+            <label><strong>Horas semestre (pr&aacute;ctica)</strong></label>
+            <input type="number" id="h_semestre_pra" class="form-control">
+          </div>
+          <div class="col-md-4 mb-3">
+            <label><strong>Cr&eacute;ditos</strong></label>
+            <input type="number" id="creditos" class="form-control" readonly>
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <label><strong>Objetivo general de la asignatura</strong></label>
+          <textarea id="objetivo" class="form-control" rows="3"></textarea>
+        </div>
+      </div>
+
+      <!-- TAB: RELACIÓN CON LICENCIATURAS -->
+      <div class="tab-pane fade" id="relacion" role="tabpanel" aria-labelledby="relacion-tab">
+        <div class="row">
+          <div class="col-md-4 mb-3">
+            <label><strong>Licenciatura</strong></label>
+            <select id="rel_licenciatura" class="form-select"></select>
+          </div>
+          <div class="col-md-2 mb-3">
+            <label><strong>Semestre Asignatura</strong></label>
+            <select id="rel_semestre" class="form-select"></select>
+          </div>
+          <div class="col-md-3 mb-3">
+            <label><strong>Seriaci&oacute;n anterior</strong></label>
+            <select id="ser_anterior" class="form-select"></select>
+          </div>
+          <div class="col-md-3 mb-3">
+            <label><strong>Seriaci&oacute;n consecuente</strong></label>
+            <select id="ser_consecuente" class="form-select"></select>
+          </div>
+        </div>
+
+        <div class="d-flex justify-content-end mb-3">
+          <button class="btn btn-primary" id="btnAgregarRelLicAsig">
+            <i class="fas fa-plus"></i> Agregar relaci&oacute;n
+          </button>
+        </div>
+
+        <table class="table table-sm table-bordered text-center">
+          <thead class="table-light">
+            <tr>
+              <th>Licenciatura</th>
+              <th>Semestre asignatura</th>
+              <th>Ser. anterior</th>
+              <th>Ser. consecuente</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="tablaRelaciones">
+            <!-- Filas din&aacute;micas -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
 </div>

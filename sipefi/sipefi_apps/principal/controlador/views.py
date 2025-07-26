@@ -26,7 +26,7 @@ class LoginSipefi(View):
             token = resultado['token']
             return redirect(f'/SIPEFI/Tomo_II?t={token}')
         else:
-            messages.error(request, 'Usuario o contraseÒa inv·lidos.')
+            messages.error(request, 'Usuario o contrase√±a inv√°lidos.')
             return render(request, 'principal/login.html')
         
 @never_cache
