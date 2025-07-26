@@ -1,41 +1,213 @@
-.estiloWarning{
+/* === Estilo para campos con advertencia === */
+.estiloWarning {
 	border: solid #ffc107 !important;
 }
 
-/*Contenedor de secciones de carga de solicitud*/
+/* === Menú título (TOMO II) con azul institucional === */
+.menuTitulo {
+	background: linear-gradient(90deg, #004080, #0066cc);
+	font-size: 15px;
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: 0.7px;
+	border-radius: 12px 12px 0 0;
+	box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+	color: white;
+}
+
+/* === Contenedor principal de secciones === */
 .contSections {
-	margin-left: 0% !important;
-    margin-right: 0% !important;
-    max-width: 100% !important;
+	display: flex;
+	flex-direction: row;
+	gap: 30px;
+	margin: 0 auto;
+	padding: 0 20px;
+	max-width: 1500px;
+	width: 100%;
 }
 
-.optionSections{
-	background-color: lightgray !important;
-    border-radius: 10px !important;
-    width: 250px !important;
-    height: 500px !important;
+/* === Panel lateral izquierdo (menú de secciones) === */
+.optionSections {
+	background-color: #f8f9fa !important;
+	border-radius: 12px;
+	width: 250px;
+	min-height: 500px;
+	padding-top: 0;
+	box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+	display: flex;
+	flex-direction: column;
+	justify-content: space-between;
 }
 
+/* === Enlaces del menú lateral === */
+.optionSections .nav-link {
+	color: #212529 !important;
+	border-radius: 0.5rem;
+	margin: 5px 10px;
+	font-weight: 500;
+	text-align: left;
+	position: relative;
+	padding: 12px 16px 12px 40px;
+	font-size: 14px;
+	transition: all 0.25s ease-in-out;
+}
+
+/* === Iconos de los nav-link === */
+.optionSections .nav-link i {
+	color: #6c757d;
+	transition: color 0.3s;
+	margin-right: 8px;
+	position: absolute;
+	left: 16px;
+	top: 50%;
+	transform: translateY(-50%);
+}
+
+/* === Hover === */
+.optionSections .nav-link:hover {
+	background-color: rgba(13, 110, 253, 0.15) !important;
+	color: #0d6efd !important;
+}
+.optionSections .nav-link:hover i {
+	color: #0d6efd;
+}
+
+/* === Activo === */
+.optionSections .nav-link.active {
+	background-color: #0d6efd !important;
+	color: white !important;
+}
+.optionSections .nav-link.active i {
+	color: white !important;
+}
+.optionSections .nav-link.active::before {
+	content: '';
+	position: absolute;
+	left: 0;
+	top: 10px;
+	bottom: 10px;
+	width: 3px;
+	background-color: white;
+	border-radius: 0 3px 3px 0;
+}
+
+/* === Contenido de pestañas === */
 .infoSections {
-    padding-left: 2% !important;
-    width: 100% !important;
-    height: 500px !important;
+	background-color: #ffffff;
+	border-radius: 12px;
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+	overflow-y: auto;
+	height: 500px;
+	width: 100%;
+}
+.infoSections:hover {
+	box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
 }
 
-.colorOS{
+/* === Encabezado dentro de la sección === */
+.panelHeader {
+	background-color: #004080;
+	color: white;
+	font-weight: bold;
+	border-radius: 0.5rem 0.5rem 0 0;
+	padding: 10px 20px;
+	font-size: 15px;
+	display: flex;
+	align-items: center;
+}
+
+/* === Cards internas === */
+.card {
+	border-radius: 12px;
+	box-shadow: 0 3px 12px rgba(0, 0, 0, 0.06);
+	margin-bottom: 30px;
+}
+
+/* === Labels y campos === */
+.form-label {
+	font-size: 14px;
+	color: #212529;
+	font-weight: 600;
+	margin-bottom: 6px;
+}
+
+.input-group-text {
+	background-color: #f0f0f0;
+	font-weight: 600;
+	border-radius: 0.375rem 0 0 0.375rem;
+}
+
+.form-control,
+.custom-select,
+.form-select {
+	border-radius: 0.375rem;
+	font-size: 14px;
+}
+
+/* === Input solo lectura === */
+input[readonly] {
+	background-color: #e9ecef;
+	color: #495057;
+}
+
+/* === Transición entre tabs === */
+.tab-pane {
+	transition: opacity 0.4s ease-in-out;
+}
+
+/* === Texto blanco general === */
+.letraBlanca {
 	color: white !important;
-	height: 80px !important;
-    padding-top: 25px !important;
 }
 
-.letraBlanca{
-	color: white !important;
+/* === Contenedor del botón cancelar (ocupa siempre espacio) === */
+.contenedor-cancelar {
+	height: 65px;
+	display: flex;
+	align-items: flex-end;
+	justify-content: center;
+	padding: 10px 0;
 }
 
+/* === Botón de cancelar solicitud === */
+.bCancelarSol {
+	width: 100%;
+	border-radius: 8px;
+	font-weight: 600;
+}
 
-/*Estilo de boton para cancelacion de solicitud**/
-.bCancelarSol{
-	border-radius: 10px;
-	padding: 2px;
-    margin: 10px;
+/* === Alineación horizontal === */
+.row {
+	margin-bottom: 8px;
+}
+
+.panelHeader strong {
+  margin-left: 8px;
+}
+
+/* === Estilo para tabs de secciones (Datos generales / Relación con Licenciaturas) === */
+.custom-tabs {
+  border-bottom: 2px solid #dee2e6;
+  margin-bottom: 20px;
+}
+
+.custom-tabs .nav-link {
+  background-color: #f0f0f0;
+  color: #004080;
+  font-weight: 600;
+  border: 1px solid #dee2e6;
+  margin-right: 5px;
+  border-radius: 0.5rem 0.5rem 0 0;
+  transition: all 0.3s ease;
+}
+
+.custom-tabs .nav-link:hover {
+  background-color: #e2e6ea;
+  color: #00264d;
+}
+
+.custom-tabs .nav-link.active {
+  background-color: #004080;
+  color: white;
+  border-bottom: 2px solid white;
 }

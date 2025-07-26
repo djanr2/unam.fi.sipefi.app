@@ -109,8 +109,37 @@ html {
 }
 
 #botonesBarraAccion button {
-	font-size: 13px;
-	padding: 5px 12px;
+    font-size: 13px;
+    padding: 5px 12px;
+    color: white;
+    border-color: white;
+    box-shadow: 1px 1px 4px rgba(0,0,0,0.3);
+}
+
+#botonesBarraAccion .btn-outline-light {
+    background-color: transparent;
+    border: 1px solid white;
+    color: white;
+}
+
+#botonesBarraAccion .btn-primary,
+#botonesBarraAccion .btn-danger,
+#botonesBarraAccion .btn-info,
+#botonesBarraAccion .btn-secondary {
+    color: white;
+    border: none;
+}
+
+#botonesBarraAccion .btn-info {
+    background-color: #00cfff;
+}
+
+#botonesBarraAccion .btn-danger {
+    background-color: #dc3545;
+}
+
+#botonesBarraAccion .btn-secondary {
+    background-color: #6c757d;
 }
 
 #nomFac{
@@ -196,7 +225,7 @@ html {
 }
 
 #tituloCapSoli{
-	margin: 60px 0px 20px 0px;
+	margin: 30px 0px 20px 0px;
     text-align: center;
 }
 
@@ -245,6 +274,19 @@ html {
     background-color: #ffc107;
     border-color: #ffc107;
     height: 50px;
+}
+
+.btn-minimizar {
+  background: transparent;
+  color: white;
+  border: none;
+  font-size: 16px;
+  padding: 4px 8px;
+  line-height: 1;
+}
+.btn-minimizar:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: #ccc;
 }
 
 .contenidoModEspera{
