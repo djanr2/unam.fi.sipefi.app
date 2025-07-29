@@ -196,7 +196,7 @@ const soltii = function(){
     	infoUtil = String(infoSelect).split("__")[1];
     	let eSoli = parseInt(String(infoUtil).split("#@@#")[1]); 
     	canAffect = $.isNumeric(String(infoSelect).split("__")[2]);
-    	canAffect = canAffect * ((eSoli == 4)?false:true);
+    	canAffect = canAffect * ((eSoli == 3)?false:true);
     	canAffect = canAffect==1?true:false;
     	fComun.guardaVarLocal("canAffect",canAffect);
     	fComun.guardaVarLocalS("accionSoli",accion);

@@ -282,6 +282,35 @@ const fl = function(){
 	};
 	
 	/**
+	 * Funcion que ayuda a inicializar las tablas de tipo DataTable que se usaran en la vista de solicitud,
+	 * donde se presentan las tablas de cada seccion de solicitudes
+	 * @return {void} 
+	 * @method cargaTablasSolicitud
+	 * @static
+	 */
+	const cargaTablasSolicitud = () => {
+		$('#tablaTemas').DataTable({
+			"dom": 'ftpir',
+			"pageLength": 6
+		  });
+
+		  $('#tablaContenidos').DataTable({
+			"dom": 'ftpir',
+			"pageLength": 6
+		  });
+		  
+		  $('#tablaRelacionesLic').DataTable({
+  			"dom": 'ftpir',
+  			"pageLength": 6
+  		  });
+		  
+		  $('#tablaBibliografia').DataTable({
+			"dom": 'ftpir',
+			"pageLength": 6
+		  });
+	};		
+	
+	/**
 	 * Funcion que ayuda a inicializar las caracteristicas por default de los elementos de tipo Tooltipster.
 	 * @return {void} 
 	 * @method defaultTooltipster
@@ -343,6 +372,7 @@ const fl = function(){
 	return{
 		cargaTablasP1:	cargaTablasP1,
 		defaultTooltipster: defaultTooltipster,
-		select2:	select2
+		select2:	select2,
+		cargaTablasSolicitud:	cargaTablasSolicitud
 	}
 }();

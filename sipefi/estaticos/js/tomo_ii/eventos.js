@@ -6,6 +6,10 @@
 
 const etii = function(){
 	
+	let listaTemas = [];       // [{ id, nombre, horas, objetivo }]
+	let listaContenidos = [];  // [{ idTema, texto }]
+	let contadorTemas = 1;
+	
 	/**
 	 * 
 	 * Funcion que inicializa los eventos principales a usar en el sistema SIPEFI-TOMO II.
@@ -41,7 +45,7 @@ const etii = function(){
 				    break;
 			  case 'guardarSolicitud':
 				  	$("#usuarioSol").html($("#usuario").html());
-				  	//fcs.accionSolicitud(1);
+				  	fcs.accionSolicitud(1);
 				    break;
 			  case 'aprobarSolicitud':
 				  	//fcs.validaSoliRiesgos(1);
@@ -124,10 +128,180 @@ const etii = function(){
 		$("#btnAgregarRelLicAsig").on("click", function () {
 		  fcs.agregarRelacionLicAsig();
 		});
+
+		/**
+		 * Evento para agregar un tema con nombre, horas y objetivo específico.
+		 * Valida los campos, actualiza las estructuras internas y agrega el tema a la tabla de temas.
+		 * También agrega una opción al <select> de temas y actualiza la numeración global.
+		 */
+		$("#btnAgregarTema").on("click", agregarTema);
 		
-		//Eventos de modal y dataTables complementarios
-		eventosModalDTable();
+		/**
+		 * Evento para agregar contenido a un tema previamente seleccionado.
+		 * Valida el contenido, actualiza el contador, agrega una fila a la tabla de contenidos
+		 * y actualiza la numeración global de contenidos.
+		 */
+		$("#btnAgregarContenido").on("click", agregarContenido);
+	   
+	   $("#tablaRelacionesLic").on("click", ".btnEliminarRelacion", function () {
+		 let tablaRelacionesDT = $('#tablaRelacionesLic').DataTable();
+	     tablaRelacionesDT.row($(this).closest("tr")).remove().draw();
+	   });
+	   
+	   // Evento: cambiar tipo de bibliografía
+	   $('#tipo_bibliografia').on('change', function () {
+	       fcs.actualizarCamposExtra();
+	   });
+	   
+	   /**
+	    * Evento delegado para eliminar una fila de la tabla de bibliografía.
+	    * Se adjunta al contenedor y aplica solo a botones con clase 'btn-eliminar-biblio'.
+	    */
+	   $('#tablaBibliografia tbody').on('click', '.btn-eliminar-biblio', function () {
+	     $('#tablaBibliografia').DataTable().row($(this).closest('tr')).remove().draw();
+	   });
+	   
+	   /**
+	    * Evento que se ejecuta al hacer clic en el botón de agregar bibliografía.
+	    * Valida campos mínimos y agrega la fila a la tabla.
+	    */
+	   $('#btnAgregarBibliografia').on('click', function () {
+	     fcs.validaCamposReqBiblio();
+	   });
 		
+	   //Eventos de modal y dataTables complementarios
+	   eventosModalDTable();
+		
+	};
+	
+	  /**
+	   * Agrega un nuevo tema a la lista y actualiza la vista.
+	   */
+	  const agregarTema = () => {
+	    const nombre = $("#nombreTema").val().trim();
+	    const horas = $("#horasTema").val().trim();
+	    const objetivo = $("#objetivoTema").val().trim();
+	
+	    if (!nombre) return fComun.mostrarTooltipCampo("#nombreTema", "El nombre del tema es requerido");
+	    if (!horas || isNaN(horas) || parseInt(horas) <= 0)
+	      return fComun.mostrarTooltipCampo("#horasTema", "Ingresa las horas del tema (mayor a 0)");
+	    if (!objetivo) return fComun.mostrarTooltipCampo("#objetivoTema", "El objetivo del tema es requerido");
+	
+	    listaTemas.push({ id: contadorTemas++, nombre, horas, objetivo });
+	
+	    $("#nombreTema, #horasTema, #objetivoTema").val(""); // Limpiar campos
+	    reconstruirDesdeEstructuras();
+	  };
+	
+	  /**
+	   * Agrega un contenido relacionado a un tema.
+	   */
+	  const agregarContenido = () => {
+	    const idTema = parseInt($("#temaContenido").val());
+	    const texto = $("#contenidoTema").val().trim();
+	
+	    if (!idTema || !texto)
+	      return fComun.mostrarTooltipCampo("#contenidoTema", "Selecciona un tema y escribe el contenido");
+	
+	    listaContenidos.push({ idTema, texto });
+	
+	    $("#contenidoTema").val(""); // Limpiar campo
+	    reconstruirDesdeEstructuras();
+	  };
+	
+	  /**
+	   * Reconstruye las tablas y el select desde las estructuras de datos.
+	   */
+	  const reconstruirDesdeEstructuras = () => {
+	    const tablaTemasDT = $('#tablaTemas').DataTable();
+	    const tablaContenidosDT = $('#tablaContenidos').DataTable();
+	
+	    tablaTemasDT.clear().draw(false);
+	    tablaContenidosDT.clear().draw(false);
+	    $("#temaContenido").empty();
+	
+	    let mapIdTemaToNumero = {};
+	    let mapIdTemaToNombre = {};
+	
+	    // === Renderizar temas y construir mapa ===
+	    listaTemas.forEach((tema, idx) => {
+	      const numero = idx + 1;
+	      const fila = [
+	        numero,
+	        tema.nombre,
+	        tema.horas,
+	        tema.objetivo,
+	        `<button class="btn btn-danger btn-sm" onclick="etii.eliminarTema(${tema.id})">
+	           <i class="fas fa-trash-alt"></i>
+	         </button>`
+	      ];
+	      const row = tablaTemasDT.row.add(fila).draw(false);
+	      $(row.node()).attr("data-idtema", tema.id);
+	
+	      mapIdTemaToNumero[tema.id] = numero;
+	      mapIdTemaToNombre[tema.id] = tema.nombre;
+	
+	      $("#temaContenido").append(`<option value="${tema.id}">${numero}. ${tema.nombre}</option>`);
+	    });
+	
+	    // === Renderizar contenidos ===
+	    const contadorPorTema = {};
+	    listaContenidos = listaContenidos.filter(contenido => mapIdTemaToNumero[contenido.idTema]); // eliminar huérfanos
+	
+	    listaContenidos.forEach(contenido => {
+	      const numTema = mapIdTemaToNumero[contenido.idTema];
+	      const nombreTema = mapIdTemaToNombre[contenido.idTema];
+	      const numContenido = contadorPorTema[contenido.idTema] = (contadorPorTema[contenido.idTema] || 1);
+	
+	      const fila = [
+	        `${numTema}. ${nombreTema}`,
+	        `${numTema}.${numContenido}`,
+	        contenido.texto,
+			`<button class="btn btn-danger btn-sm" onclick="etii.eliminarContenido(this)">
+			     <i class="fas fa-trash-alt"></i>
+			   </button>`
+	      ];
+	
+	      const row = tablaContenidosDT.row.add(fila).draw(false);
+	      $(row.node()).attr("data-idtema", contenido.idTema);
+	
+	      contadorPorTema[contenido.idTema]++;
+	    });
+	  };
+	
+	  /**
+	   * Elimina un tema si no tiene contenido asociado.
+	   * @param {number} id - ID del tema a eliminar
+	   */
+	  const eliminarTema = (id) => {
+	    const tieneContenido = listaContenidos.some(c => c.idTema === id);
+	    if (tieneContenido) {
+	      fComun.mostrarModalAdvertencia("No puedes eliminar este tema porque tiene contenido asociado.");
+	      return;
+	    }
+	
+	    listaTemas = listaTemas.filter(t => t.id !== id);
+	    reconstruirDesdeEstructuras();
+	  };
+	  
+	 /**
+	 * Elimina el contenido asociado al botón presionado.
+	 * @param {HTMLElement} boton - Referencia al botón dentro de la fila
+	 */
+	const eliminarContenido = (boton) => {
+	  const tabla = $('#tablaContenidos').DataTable();
+	  const fila = $(boton).closest('tr');
+	  tabla.row(fila).remove().draw(false);
+	
+	  // También remover de la estructura
+	  const idTema = parseInt(fila.attr("data-idtema"));
+	  const texto = fila.find('td:eq(2)').text().trim(); // Tercer columna (contenido)
+	
+	  // Eliminar solo la primera coincidencia (por si hay duplicados)
+	  const idx = listaContenidos.findIndex(c => c.idTema === idTema && c.texto === texto);
+	  if (idx >= 0) listaContenidos.splice(idx, 1);
+	
+	  reconstruirDesdeEstructuras();
 	};
 	
 	/**
@@ -337,6 +511,8 @@ const etii = function(){
 		eventoRol:	eventoRol,
 		eventoEspecial:	eventoEspecial,
 		eventoAlerta:	eventoAlerta,
-		eventoAprobSoli:	eventoAprobSoli
+		eventoAprobSoli:	eventoAprobSoli,
+		eliminarTema:	eliminarTema,
+		eliminarContenido:	eliminarContenido
 	}
 }();

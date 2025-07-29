@@ -12,7 +12,7 @@ const fComun = function(){
 	 * @constant urlsAjax
 	 * @default
 	 */
-	let urlsAjax = ['/buscaSolicitud/', '/accionSolicitud/',
+	let urlsAjax = ['/buscaSolicitud/', '/SIPEFI/accionSolicitud/',
 					'/SIPEFI/llenaTablasSoli/', '/cargaSolicitud/', 
 					'/SIPEFI/recargaPagina/','/cancelarSolicitud/'
 					];
@@ -765,6 +765,23 @@ const fComun = function(){
 	  }, 4000); // Tooltip visible por 4 segundos
 	};
 	
+	/**
+	 * Muestra un modal de advertencia con título y mensaje.
+	 * @param {string} mensaje - Mensaje principal del modal.
+	 * @param {string} titulo - Título opcional (default: 'Acción no permitida').
+	 */
+	const mostrarModalAdvertencia = (mensaje, titulo = "Acción no permitida") => {
+	  $("#tituloErrorGenerico").text(titulo);
+	  $("#mensajeErrorGenerico").html(mensaje);
+	  const modal = new bootstrap.Modal(document.getElementById("modalErrorGenerico"));
+	  modal.show();
+	}
+	
+	// Funcion para normalizar y quitar acentos
+	const quitarAcentos = (texto) => {
+	  return texto.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+	};
+	
 	return{
 		post: post,
 		refrescaTabla: refrescaTabla,
@@ -797,6 +814,8 @@ const fComun = function(){
 		creaModalAlerta: creaModalAlerta,
 		iniciaModalComentarios: iniciaModalComentarios,
 		eliminaRegTabla: eliminaRegTabla,
-		mostrarTooltipCampo: mostrarTooltipCampo
+		mostrarTooltipCampo: mostrarTooltipCampo,
+		mostrarModalAdvertencia:	mostrarModalAdvertencia,
+		quitarAcentos:	quitarAcentos
 	}
 }();
