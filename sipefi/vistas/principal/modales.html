@@ -35,24 +35,20 @@
 </div>
 
 <!-- Modal respuesta al guardar/actualizar Solicitud-->
-<div class="modal fade modalStatic" id="modalRespGuardar" tabindex="-1" role="dialog" aria-hidden="true">
-	  <div class="modal-dialog modal-dialog-centered" role="document">
-	    <div class="modal-content">
-	      <div class="modal-header">
-	        <h5 class="modal-title" ></h5>
-	        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-	          <span aria-hidden="true" style="color: #fff;">&times;</span>
-	        </button>
-	      </div>
-	      <div class="modal-body">
-	      	<center>
-	        	<span class="textoBody"></span>
-	        	<br><br>
-	        	<button type="button" class="btn btn-danger" data-dismiss="modal">Cerrar</button>
-	        </center>
-	      </div>
-	    </div>
-	  </div>
+<div class="modal fade modalStatic" id="modalRespGuardar" tabindex="-1" aria-labelledby="tituloModal" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header bg-danger text-white">
+        <h5 class="modal-title" id="tituloModal"></h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+      </div>
+      <div class="modal-body text-center">
+        <span class="textoBody"></span>
+        <br><br>
+        <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Cerrar</button>
+      </div>
+    </div>
+  </div>
 </div>
 
 <!-- Modal para seleccionar rol -->
@@ -63,7 +59,7 @@
         <h5 class="modal-title">Selecciona un perfil</h5>
       </div>
       <div class="modal-body px-4">
-        <p class="text-center mb-3 fw-bold">¿Qué perfil deseas utilizar en esta sesión?</p>
+        <p class="text-center mb-3 fw-bold">&#191;Qu&eacute; perfil deseas utilizar en esta sesi&oacute;n&#63;</p>
         
         <div class="d-flex align-items-center gap-2 mt-3 justify-content-center">
 		  <select id="selectRol" style="width: 160px;"></select>
@@ -137,4 +133,32 @@
 			</div>
 		</div>
 	</div>
+</div>
+
+<!-- Modal de advertencia -->
+<div class="modal fade" id="modalErrorGenerico" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content shadow border-0 rounded-3">
+
+      <!-- Header  -->
+      <div class="modal-header bg-warning text-white d-flex align-items-center justify-content-between rounded-top">
+        <div class="d-flex align-items-center">
+          <i class="fas fa-exclamation-triangle me-2 fs-4"></i>
+          <h5 class="modal-title m-0 fw-bold" id="tituloErrorGenerico">Acci&oacute;n no permitida</h5>
+        </div>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+      </div>
+
+      <!-- Cuerpo -->
+      <div class="modal-body text-dark">
+        <p id="mensajeErrorGenerico" class="fw-semibold mb-0">
+        </p>
+      </div>
+
+      <!-- Footer  -->
+      <div class="modal-footer border-0 pt-0">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Aceptar</button>
+      </div>
+    </div>
+  </div>
 </div>

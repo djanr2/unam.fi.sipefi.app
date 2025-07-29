@@ -1,12 +1,66 @@
 <div class="card">
-	<div class="card-header panelHeader">
-		<i class="fas fa-bars" style="color: white;"></i><strong> Informaci&oacute;n de la secci&oacute;n 4 del Tomo II</strong>
-	</div>
-	<div class="card-body">
-			<div class="row">
-				<div class="col align-self-end">
-					
-				</div>
-			</div>
-	</div>
+  <div class="card-header panelHeader">
+    <i class="fas fa-chalkboard-teacher text-white"></i>
+    <strong> Estrategias did&aacute;cticas y evaluaci&oacute;n</strong>
+  </div>
+
+  <div class="card-body">
+    <div class="row">
+      <!-- Estrategias Didacticas -->
+      <div class="col-md-12 mb-3">
+        <label class="form-label fw-bold">
+          Estrategias did&aacute;cticas <span class="text-danger">*</span>
+        </label>
+        <select id="estrategias_didacticas" class="form-select select2" multiple>
+        </select>
+        <small class="text-muted danger">Puedes seleccionar m&aacute;s de una estrategia.</small>
+      </div>
+
+      <!-- Formas de Evaluacion -->
+      <div class="col-md-12">
+        <label class="form-label fw-bold">
+          Formas de evaluaci&oacute;n <span class="text-danger">*</span>
+        </label>
+        <div class="row">
+          <!-- Diagnostica -->
+          <div class="col-md-4 mb-3">
+            <label class="form-label">Diagn&oacute;stica</label>
+            <select id="eval_diagnostica" class="form-select" multiple>
+            </select>
+          </div>
+
+          <!-- Formativa -->
+          <div class="col-md-4 mb-3">
+            <label class="form-label">Formativa</label>
+            <select id="eval_formativa" class="form-select" multiple>
+            </select>
+          </div>
+
+          <!-- Sumativa -->
+          <div class="col-md-4 mb-3">
+            <label class="form-label">Sumativa</label>
+            <select id="eval_sumativa" class="form-select" multiple>
+            </select>
+          </div>
+          <small class="text-muted danger">Puedes seleccionar m&aacute;s de una forma de evaluaci&oacute;n por secci&oacute;n.</small>
+        </div>
+      </div>
+
+      <!-- Formacion Integral -->
+      <div class="col-md-6 mb-3">
+        <label for="formacion_integral" class="form-label fw-bold">
+          Formaci&oacute;n integral que se fomenta <span class="text-danger">*</span>
+        </label>
+        <textarea id="formacion_integral" class="form-control" rows="4" placeholder="Describe la formaci&oacute;n integral..."></textarea>
+      </div>
+
+      <!-- Perfil Profesiografico -->
+      <div class="col-md-6 mb-3">
+        <label for="perfil_profesiografico" class="form-label fw-bold">
+          Perfil profesiogr&aacute;fico sugerido <span class="text-danger">*</span>
+        </label>
+        <textarea id="perfil_profesiografico" class="form-control" rows="4" placeholder="Describe el perfil profesiogr&aacute;fico..."></textarea>
+      </div>
+    </div>
+  </div>
 </div>

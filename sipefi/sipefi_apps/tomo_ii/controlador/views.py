@@ -7,8 +7,11 @@
 from django.template.response import TemplateResponse
 from django.http.response import HttpResponsePermanentRedirect
 from django.http import JsonResponse
+from django.views.decorators.cache import never_cache
+import json
 
 from sipefi_apps.tomo_ii.modelo.ConsultasBD import ConsultasBD as CBD
+from sipefi_apps.tomo_ii.modelo.Solicitud import Solicitud
 
 from django.views.generic import (
     TemplateView,
@@ -93,3 +96,15 @@ def requestRecargaPagina(request):
     token = request.POST.get('token', '')
     CBD().actualizaEstatusToken(token)
     return JsonResponse({"resp": "OK" }) 
+
+@never_cache
+def requestAccionSolicitud(request):
+    """
+        La funcion sirve para conectar la peticion cliente - servidor, 
+        en este caso realiza la accion solicitada por el usuario hacia la solicitud trabajada.
+        
+        :return: Nos da como respuesta una estructura JSON con la informacion solicitada en la peticion.
+    """
+    obj = json.loads(request.POST.get("obj",""))
+    print(obj)
+    return JsonResponse(Solicitud().accionSolicitud(obj),safe=False)  

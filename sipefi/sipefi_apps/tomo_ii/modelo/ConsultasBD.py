@@ -345,8 +345,9 @@ class ConsultasBD():
             cursor = conBD().cursorBD()
             try:
                 data = cursor.execute("""
-                    select id_forma_eval, forma_evaluacion
+                    select id_forma_eval, forma_evaluacion, tipo_evaluacion
                     from catalogo.tc_formas_evaluacion
+                    where id_forma_eval != 0
                     order by 1
                 """)
                 res = [app for app in data]
@@ -383,6 +384,7 @@ class ConsultasBD():
                 data = cursor.execute("""
                     select id_estrategia_didact, estrategia_didactica 
                     from catalogo.tc_estrategias_didacticas
+                    where id_estrategia_didact != 0
                     order by 1
                 """)
                 res = [app for app in data]

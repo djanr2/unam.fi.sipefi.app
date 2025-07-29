@@ -1,8 +1,90 @@
 <div class="card">
-	<div class="card-header panelHeader">
-		<i class="fas fa-bars" style="color: white;"></i><strong> Informaci&oacute;n de la secci&oacute;n 2 del Tomo II</strong>
-	</div>
-	<div class="card-body">
+  <div class="card-header panelHeader">
+    <i class="fas fa-book-open text-white"></i>
+    <strong> Temario de la asignatura</strong>
+  </div>
+
+  <div class="card-body">
+    <ul class="nav nav-tabs custom-tabs" id="tabsTemario" role="tablist">
+      <li class="nav-item">
+        <button class="nav-link active" id="temas-tab" data-bs-toggle="tab" data-bs-target="#temas" type="button" role="tab">
+          Temas
+        </button>
+      </li>
+      <li class="nav-item">
+        <button class="nav-link" id="contenido-tab" data-bs-toggle="tab" data-bs-target="#contenido" type="button" role="tab">
+          Contenido
+        </button>
+      </li>
+    </ul>
+
+    <div class="tab-content p-3 border border-top-0 rounded-bottom">
+      <!-- TAB: TEMAS -->
+      <div class="tab-pane fade show active" id="temas" role="tabpanel" aria-labelledby="temas-tab">
+		  <div class="row">
+		    <div class="col-md-5 mb-3">
+		      <label><strong>Nombre del tema</strong></label>
+		      <input type="text" id="nombreTema" class="form-control">
+		    </div>
+		    <div class="col-md-3 mb-3">
+		      <label><strong>Horas tema</strong></label>
+		      <input type="number" id="horasTema" class="form-control" min="0">
+		    </div>
+		    <div class="col-md-4 mb-3">
+		      <label><strong>Objetivo espec&iacute;fico</strong></label>
+		      <textarea id="objetivoTema" class="form-control areaTemario" rows="3" placeholder="Redacta el objetivo del tema..."></textarea>
+		    </div>
+		  </div>
 		
-	</div>
+		  <div class="d-flex justify-content-end mb-3">
+		    <button class="btn btn-primary" id="btnAgregarTema">
+		      <i class="fas fa-plus"></i> Agregar tema
+		    </button>
+		  </div>
+		
+		  <table id="tablaTemas" class="table table-sm table-bordered table-hover table-striped text-center align-middle">
+		    <thead class="table-light">
+		      <tr>
+		        <th class="text-center">No.</th>
+		        <th class="text-center">Nombre del tema</th>
+		        <th class="text-center">Horas</th>
+		        <th class="text-center">Objetivo espec&iacute;fico</th>
+		        <th class="text-center">Acciones</th>
+		      </tr>
+		    </thead>
+		    <tbody></tbody>
+		  </table>
+	  </div>
+
+      <!-- TAB: CONTENIDO -->
+      <div class="tab-pane fade" id="contenido" role="tabpanel" aria-labelledby="contenido-tab">
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label><strong>Selecciona el tema</strong></label>
+            <select id="temaContenido" class="form-select"></select>
+          </div>
+          <div class="col-md-6 mb-3">
+            <label><strong>Contenido del tema</strong></label>
+            <textarea id="contenidoTema" class="form-control areaTemario" rows="3" placeholder="Escribe el contenido correspondiente al tema..."></textarea>
+          </div>
+        </div>
+        <div class="d-flex justify-content-end mb-3">
+          <button class="btn btn-primary" id="btnAgregarContenido">
+            <i class="fas fa-plus"></i> Agregar contenido
+          </button>
+        </div>
+        <table id="tablaContenidos" class="table table-sm table-bordered table-hover table-striped text-center align-middle">
+          <thead class="table-light">
+            <tr>
+              <th class="text-center">Tema</th>
+              <th class="text-center">No. contenido</th>
+              <th class="text-center">Contenido</th>
+              <th class="text-center">Acciones</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
 </div>
