@@ -3,7 +3,7 @@
 	border: solid #ffc107 !important;
 }
 
-/* === MenÃº tÃ­tulo (TOMO II) con azul institucional === */
+/* === Menú título (TOMO II) con azul institucional === */
 .menuTitulo {
 	background: linear-gradient(90deg, #004080, #0066cc);
 	font-size: 15px;
@@ -26,7 +26,7 @@
 	width: 100%;
 }
 
-/* === Panel lateral izquierdo (menÃº de secciones) === */
+/* === Panel lateral izquierdo (menú de secciones) === */
 .optionSections {
 	background-color: #f8f9fa !important;
 	border-radius: 12px;
@@ -39,7 +39,7 @@
 	justify-content: space-between;
 }
 
-/* === Enlaces del menÃº lateral === */
+/* === Enlaces del menú lateral === */
 .optionSections .nav-link {
 	color: #212529 !important;
 	border-radius: 0.5rem;
@@ -91,7 +91,7 @@
 	border-radius: 0 3px 3px 0;
 }
 
-/* === Contenido de pestaÃ±as === */
+/* === Contenido de pestañas === */
 .infoSections {
 	background-color: #ffffff;
 	border-radius: 12px;
@@ -104,7 +104,7 @@
 	box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
 }
 
-/* === Encabezado dentro de la secciÃ³n === */
+/* === Encabezado dentro de la sección === */
 .panelHeader {
 	background-color: #004080;
 	color: white;
@@ -150,7 +150,7 @@ input[readonly] {
 	color: #495057;
 }
 
-/* === TransiciÃ³n entre tabs === */
+/* === Transición entre tabs === */
 .tab-pane {
 	transition: opacity 0.4s ease-in-out;
 }
@@ -160,7 +160,7 @@ input[readonly] {
 	color: white !important;
 }
 
-/* === Contenedor del botÃ³n cancelar (ocupa siempre espacio) === */
+/* === Contenedor del botón cancelar (ocupa siempre espacio) === */
 .contenedor-cancelar {
 	height: 65px;
 	display: flex;
@@ -169,14 +169,14 @@ input[readonly] {
 	padding: 10px 0;
 }
 
-/* === BotÃ³n de cancelar solicitud === */
+/* === Botón de cancelar solicitud === */
 .bCancelarSol {
 	width: 100%;
 	border-radius: 8px;
 	font-weight: 600;
 }
 
-/* === AlineaciÃ³n horizontal === */
+/* === Alineación horizontal === */
 .row {
 	margin-bottom: 8px;
 }
@@ -185,7 +185,7 @@ input[readonly] {
   margin-left: 8px;
 }
 
-/* === Estilo para tabs de secciones (Datos generales / RelaciÃ³n con Licenciaturas) === */
+/* === Estilo para tabs de secciones (Datos generales / Relación con Licenciaturas) === */
 .custom-tabs {
   border-bottom: 2px solid #dee2e6;
   margin-bottom: 20px;
@@ -210,4 +210,17 @@ input[readonly] {
   background-color: #004080;
   color: white;
   border-bottom: 2px solid white;
+}
+
+.areaTemario {
+  resize: vertical;
+  font-size: 14px;
+}
+
+/*Estilo para select multiple*/
+.select2-container--default .select2-selection--multiple {
+  min-height: 80px;
+  max-height: 130px;
+  overflow-y: auto;
+  padding-bottom: 5px;
 }
