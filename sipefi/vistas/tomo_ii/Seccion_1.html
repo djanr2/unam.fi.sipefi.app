@@ -28,12 +28,12 @@
 		    </div>
 		    <div class="col-md-2 mb-3">
 		      <label><strong>Clave</strong></label>
-		      <input id="clave" type="text" class="form-control" readonly value="CXXXXXX">
+		      <input id="clave_asignatura" type="text" class="form-control" readonly value="CXXXXXX">
 		    </div>
         </div>
 
         <div class="row">
-          <div class="col-md-6 mb-3">
+          <div class="col-md-4 mb-3">
             <label><strong>&Aacute;rea de conocimiento</strong></label>
             <select id="area_con" class="form-select"></select>
           </div>
@@ -45,6 +45,10 @@
             <label><strong>Tipo modalidad</strong></label>
             <select id="tipo_modalidad" class="form-select" disabled></select>
           </div>
+          <div class="col-md-2 mb-3">
+		    <label><strong>Valor pr&aacute;ctico</strong></label>
+		    <select id="valor_practico" class="form-select select2-valor-practico" multiple></select>
+		  </div>
         </div>
 
         <div class="row">
@@ -65,11 +69,11 @@
         <div class="row">
           <div class="col-md-4 mb-3">
             <label><strong>Horas semestre (te&oacute;rica)</strong></label>
-            <input type="number" id="h_semestre_teo" class="form-control">
+            <input type="number" id="h_semestre_teo" class="form-control" readonly>
           </div>
           <div class="col-md-4 mb-3">
             <label><strong>Horas semestre (pr&aacute;ctica)</strong></label>
-            <input type="number" id="h_semestre_pra" class="form-control">
+            <input type="number" id="h_semestre_pra" class="form-control" readonly>
           </div>
           <div class="col-md-4 mb-3">
             <label><strong>Cr&eacute;ditos</strong></label>
@@ -96,11 +100,11 @@
           </div>
           <div class="col-md-3 mb-3">
             <label><strong>Seriaci&oacute;n anterior</strong></label>
-            <select id="ser_anterior" class="form-select"></select>
+            <select id="ser_anterior" class="form-select" multiple></select>
           </div>
           <div class="col-md-3 mb-3">
             <label><strong>Seriaci&oacute;n consecuente</strong></label>
-            <select id="ser_consecuente" class="form-select"></select>
+            <select id="ser_consecuente" class="form-select" multiple></select>
           </div>
         </div>
 

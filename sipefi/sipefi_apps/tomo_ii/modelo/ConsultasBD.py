@@ -64,25 +64,27 @@ class ConsultasBD():
                 sqlExtra = " a.ID_USUARIO_CREACION = '" + str(id_usuario) + "'"
      
             sqlCons = """
-                        SELECT 'SIPEFI-'||a.id_solicitud, g.asignatura,
-                        case when c.estatus is not null then c.estatus else b.desc_estatus end, 
-                        a.ID_USUARIO_CREACION,
-                        a.ID_USUARIO_MOD,
-                        TO_CHAR(a.FECHA_MODIFICACION,'dd/mm/yyyy') fecha_mod,
-                        '', a.id_solicitud||'#@@#'||a.id_estatus_solicitud||'#@@#'||g.asignatura||'#@@#'||
-                        d.USUARIO_SISTEMA||'#@@#'||a.historica||'#@@#'||a.id_perfil
-                        from TD_SOLICITUD_TOMO_II a inner join catalogo.TC_ESTATUS_SOLICITUD b 
+                        SELECT 
+                            'SIPEFI-'||a.id_solicitud, a.asignatura,
+                            case when c.estatus is not null then c.estatus else b.desc_estatus end, 
+                            ucrea.USUARIO_SISTEMA AS usuario_creacion,
+                            umod.USUARIO_SISTEMA AS usuario_modificacion,
+                            TO_CHAR(a.FECHA_MODIFICACION,'dd/mm/yyyy') fecha_mod,
+                            '', a.id_solicitud||'#@@#'||a.id_estatus_solicitud||'#@@#'||a.asignatura||'#@@#'||
+                            umod.USUARIO_SISTEMA||'#@@#'||a.historica||'#@@#'||a.id_perfil
+                        from TD_SOLICITUD_TOMO_II a 
+                        inner join catalogo.TC_ESTATUS_SOLICITUD b 
                             on a.id_estatus_solicitud = b.id_estatus_solicitud
-                        left join (""" + subQueryR + """) c on a.id_solicitud = c.id_solicitud
-                        inner join PARAMETRO.TP_USUARIO d
-                            on a.ID_USUARIO_MOD = d.ID_USUARIO
-                        inner join (
-                            select distinct f.id_solicitud, f.id_estatus_solicitud, f.id_asignatura from TD_REL_LIC_ASIGNATURA f
-                        ) e
-                            on a.id_solicitud = e.id_solicitud and a.id_estatus_solicitud = e.id_estatus_solicitud
-                        inner join TD_ASIGNATURA g
-                            on e.id_asignatura = g.id_asignatura
-                        where a.historica = 0 and a.id_estatus_solicitud in (""" + str(estatus) + """) and """ + sqlExtra + """
+                        left join (""" + subQueryR + """) c 
+                            on a.id_solicitud = c.id_solicitud
+                        LEFT JOIN PARAMETRO.TP_USUARIO ucrea 
+                            ON a.ID_USUARIO_CREACION = ucrea.ID_USUARIO
+                        LEFT JOIN PARAMETRO.TP_USUARIO umod 
+                            ON a.ID_USUARIO_MOD = umod.ID_USUARIO
+                        where 
+                            a.historica = 0 
+                            and a.id_estatus_solicitud in (""" + str(estatus) + """) 
+                            and """ + sqlExtra + """
                         order by a.id_solicitud desc
             """
             try:
@@ -114,36 +116,52 @@ class ConsultasBD():
             cursor = conBD().cursorBD()
             try:
                 data = cursor.execute("""
-                            select 'SIPEFI-'||g.id_solicitud, g.asignatura, g.desc_estatus, g.usu_crea, g.usu_mod, TO_CHAR(fecha_mod,'dd/mm/yy'), '<select class="accionSolicitud" id="numS'||g.id_solicitud||'"></select>',
-                                (select LISTAGG(g.id_solicitud||'-'||a.id_estatus_solicitud||'||'||b.desc_estatus, '#@@#') WITHIN GROUP (ORDER BY a.id_estatus_solicitud) AS estatus 
+                            select 
+                                'SIPEFI-'||g.id_solicitud, 
+                                g.asignatura, 
+                                g.desc_estatus, 
+                                g.usuario_creacion,
+                                g.usuario_modificacion, 
+                                TO_CHAR(g.fecha_mod,'dd/mm/yy'), 
+                                '<select class="accionSolicitud" id="numS'||g.id_solicitud||'"></select>',
+                                (
+                                    select 
+                                        LISTAGG(
+                                            g.id_solicitud||'-'||a.id_estatus_solicitud||'||'||b.desc_estatus, 
+                                            '#@@#'
+                                        ) WITHIN GROUP (ORDER BY a.id_estatus_solicitud) AS estatus 
                                     from TD_SOLICITUD_TOMO_II a
                                     inner join CATALOGO.TC_ESTATUS_SOLICITUD b
-                                    on a.id_estatus_solicitud = b.id_estatus_solicitud
-                                    where a.id_solicitud = g.id_solicitud group by a.id_solicitud
+                                        on a.id_estatus_solicitud = b.id_estatus_solicitud
+                                    where a.id_solicitud = g.id_solicitud 
+                                    group by a.id_solicitud
                                 ) estatus
                             from (
                                 select distinct 
-                                    a.id_solicitud, c.asignatura , e.desc_estatus, e.id_estatus_solicitud,
-                                    a.ID_USUARIO_CREACION usu_crea,
-                                    a.ID_USUARIO_MOD usu_mod,
-                                    a.FECHA_MODIFICACION fecha_mod
+                                    a.id_solicitud, 
+                                    a.asignatura, 
+                                    e.desc_estatus, 
+                                    e.id_estatus_solicitud,
+                                    ucrea.USUARIO_SISTEMA AS usuario_creacion,
+                                    umod.USUARIO_SISTEMA AS usuario_modificacion,
+                                    a.FECHA_MODIFICACION AS fecha_mod
                                 from TD_SOLICITUD_TOMO_II a
-                                inner join (
-                                  select distinct f.id_solicitud, f.id_estatus_solicitud, f.id_asignatura from TD_REL_LIC_ASIGNATURA f
-                                ) b
-                                on a.id_solicitud = b.id_solicitud and a.id_estatus_solicitud = b.id_estatus_solicitud
-                                inner join TD_ASIGNATURA c
-                                on b.id_asignatura = c.id_asignatura
                                 inner join (
                                     select c.id_solicitud, max(c.id_estatus_solicitud) id_estatus
                                     from TD_SOLICITUD_TOMO_II c 
-                                    where c.historica = 0 group by c.id_solicitud
-                                ) d
-                                on d.id_solicitud = a.id_solicitud
+                                    where c.historica = 0 
+                                    group by c.id_solicitud
+                                ) b
+                                    on b.id_solicitud = a.id_solicitud
                                 inner join CATALOGO.TC_ESTATUS_SOLICITUD e
-                                on d.id_estatus = e.id_estatus_solicitud
+                                    on b.id_estatus = e.id_estatus_solicitud
+                                LEFT JOIN PARAMETRO.TP_USUARIO ucrea 
+                                    ON a.ID_USUARIO_CREACION = ucrea.ID_USUARIO
+                                LEFT JOIN PARAMETRO.TP_USUARIO umod 
+                                    ON a.ID_USUARIO_MOD = umod.ID_USUARIO
                                 where a.ID_USUARIO_MOD = '""" + str(id_usuario) + """'
-                            ) g where g.id_estatus_solicitud != '""" + str(estatus) + """' 
+                            ) g 
+                            where g.id_estatus_solicitud != '""" + str(estatus) + """' 
                             order by g.id_solicitud desc
                 """)
                 res = [app for app in data]
@@ -164,26 +182,32 @@ class ConsultasBD():
             cursor = conBD().cursorBD()
             try:
                 data = cursor.execute("""
-                    SELECT 'SIPEFI-'||a.id_solicitud, g.asignatura,
-                        case when c.estatus is not null then c.estatus else b.desc_estatus end,
-                        a.ID_USUARIO_CREACION,
-                        a.ID_USUARIO_MOD,
+                    SELECT 
+                        'SIPEFI-'||a.id_solicitud, 
+                        a.asignatura,
+                        case 
+                            when c.estatus is not null then c.estatus 
+                            else b.desc_estatus 
+                        end,
+                        ucrea.USUARIO_SISTEMA AS usuario_creacion,
+                        umod.USUARIO_SISTEMA AS usuario_modificacion,
                         TO_CHAR(a.FECHA_MODIFICACION,'dd/mm/yyyy') fecha_mod,
-                        '', a.id_solicitud||'#@@#'||a.id_estatus_solicitud||'#@@#'||g.asignatura||'#@@#'||
-                        d.USUARIO_SISTEMA||'#@@#'||a.historica
-                    from TD_SOLICITUD_TOMO_II a inner join catalogo.TC_ESTATUS_SOLICITUD b 
+                        '', 
+                        a.id_solicitud||'#@@#'||a.id_estatus_solicitud||'#@@#'||a.asignatura||'#@@#'||
+                        umod.USUARIO_SISTEMA||'#@@#'||a.historica
+                    from TD_SOLICITUD_TOMO_II a 
+                    inner join catalogo.TC_ESTATUS_SOLICITUD b 
                         on a.id_estatus_solicitud = b.id_estatus_solicitud
-                    left join ("""+subQueryR+""") c on a.id_solicitud = c.id_solicitud
-                    inner join PARAMETRO.TP_USUARIO d
-                        on a.ID_USUARIO_MOD = d.ID_USUARIO
-                    inner join (
-                        select distinct f.id_solicitud, f.id_estatus_solicitud, f.id_asignatura from TD_REL_LIC_ASIGNATURA f
-                    ) e
-                    on a.id_solicitud = e.id_solicitud and a.id_estatus_solicitud = e.id_estatus_solicitud
-                    inner join TD_ASIGNATURA g
-                    on e.id_asignatura = g.id_asignatura
-                    where a.historica = 0 and a.id_estatus_solicitud >= '""" + str(estatus) + """' and 
-                    a.id_solicitud not in 
+                    left join ("""+subQueryR+""") c 
+                        on a.id_solicitud = c.id_solicitud
+                    LEFT JOIN PARAMETRO.TP_USUARIO ucrea 
+                        ON a.ID_USUARIO_CREACION = ucrea.ID_USUARIO
+                    LEFT JOIN PARAMETRO.TP_USUARIO umod 
+                        ON a.ID_USUARIO_MOD = umod.ID_USUARIO
+                    where 
+                        a.historica = 0 
+                        and a.id_estatus_solicitud >= '""" + str(estatus) + """' 
+                        and a.id_solicitud not in 
                                 (select distinct id_solicitud 
                                     from TD_SOLICITUD_TOMO_II 
                                     where ID_USUARIO_MOD = '""" + str(id_usuario) + """'
@@ -210,11 +234,12 @@ class ConsultasBD():
             catTipoMod = self.catalogoTipoModalidad()
             catRelMod = self.catalogoRelacionModalidad()
             catAsig = self.catalogoAsignaturas()
+            catValPract = self.catalogoValorPractico()
             res =   {'catAreaCon': catAreaCon, 'catCarAsig': catCarAsig,
                      'catEstDid': catEstDid, 'catTipoBib': catTipoBib,
                      'catFormEval': catFormEval, 'catLic': catLic,
                      'catModalidad': catModalidad, 'catTipoMod': catTipoMod,
-                     'catRelMod': catRelMod, 'catAsig': catAsig,
+                     'catRelMod': catRelMod, 'catAsig': catAsig, 'catValPract': catValPract,
                      'estatusACon': 200 if len(catAreaCon) >= 1 else 204,
                      'estatusCarAsig': 200 if len(catCarAsig) >= 1 else 204,
                      'estatusEstDid': 200 if len(catEstDid) >= 1 else 204,
@@ -224,7 +249,8 @@ class ConsultasBD():
                      'estatusMod': 200 if len(catModalidad) >= 1 else 204,
                      'estatusTMod': 200 if len(catTipoMod) >= 1 else 204,
                      'estatusRelMod': 200 if len(catRelMod) >= 1 else 204,
-                     'estatusAsig': 200 if len(catAsig) >= 1 else 204
+                     'estatusAsig': 200 if len(catAsig) >= 1 else 204,
+                     'estatusVPract': 200 if len(catValPract) >= 1 else 204
                     }
             return res
         
@@ -257,7 +283,26 @@ class ConsultasBD():
                 data = cursor.execute("""
                     select distinct id_asignatura, asignatura 
                     from sipefi.td_asignatura
-                    order by 2
+                    order by 1
+                """)
+                res = [app for app in data]
+            finally:
+                cursor.close()
+            return res
+        
+        def catalogoValorPractico(self):
+            """
+                Funcion que obtiene el catalogo del valor practico.
+                
+                :return: Regresa objeto con el catalogo de los posibles valores para los valores practicos.
+            """
+            cursor = conBD().cursorBD()
+            try:
+                data = cursor.execute("""
+                    select id_valor_practico, valor_practico 
+                    from catalogo.tc_valor_practico 
+                    where id_valor_practico != 0
+                    order by 1
                 """)
                 res = [app for app in data]
             finally:
@@ -471,6 +516,7 @@ class ConsultasBD():
                       on b.id_perfil_destino = c.id_perfil
                     where a.id_perfil = '""" + str(id_perfil) + """' 
                     and a.activo = '0' and c.activo = '0' 
+                    and b.activo = '0'
                     order by 1
                 """)
                 resp = [{"id": app[0], "rol": app[1]} for app in data]
@@ -508,7 +554,7 @@ class ConsultasBD():
             cursor = conBD().cursorBD()
             try:
                 cursor.execute("""
-                    SELECT ID_PERFIL 
+                    SELECT ID_USUARIO 
                     FROM PARAMETRO.TP_USUARIO 
                     WHERE USUARIO_SISTEMA = :usuario
                 """, {'usuario': usuario})
@@ -738,5 +784,37 @@ class ConsultasBD():
             cursor = conBD().cursorBD()
             try:
                 cursor.execute(sql, [comment])
+            finally:
+                cursor.close()
+                
+        def conexion(self):
+            """
+            Retorna la conexión activa a la base de datos configurada en Django.
+            """
+            return conBD().conexion()
+        
+        def insertar(self, sql, params=None):
+            """
+            Ejecuta sentencias INSERT/UPDATE/DELETE con o sin parámetros.
+            """
+            cursor = conBD().cursorBD()
+            try:
+                cursor.execute(sql, params or [])
+            except Exception as e:
+                print(f"[ERROR INSERTAR] SQL: {sql}")
+                print(f"[ERROR INSERTAR] Params: {params}")
+                print(f"[ERROR INSERTAR] Excepción: {str(e)}")
+                raise
+            finally:
+                cursor.close()
+                
+        def consulta(self, sql, params=None):
+            """
+            Ejecuta un SELECT y retorna todos los resultados.
+            """
+            cursor = conBD().cursorBD()
+            try:
+                cursor.execute(sql, params or [])
+                return cursor.fetchall()
             finally:
                 cursor.close()

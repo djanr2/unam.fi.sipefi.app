@@ -8,6 +8,7 @@ from django.template.response import TemplateResponse
 from django.http.response import HttpResponsePermanentRedirect
 from django.http import JsonResponse
 from django.views.decorators.cache import never_cache
+from django.views.decorators.csrf import csrf_exempt
 import json
 
 from sipefi_apps.tomo_ii.modelo.ConsultasBD import ConsultasBD as CBD
@@ -98,13 +99,40 @@ def requestRecargaPagina(request):
     return JsonResponse({"resp": "OK" }) 
 
 @never_cache
+@csrf_exempt
 def requestAccionSolicitud(request):
     """
+    Vista que procesa la solicitud recibida del frontend en formato de formulario con JSON serializado.
+    """
+    if request.method != "POST":
+        return JsonResponse({"estatus": 405, "error": "Método no permitido"})
+
+    try:
+        obj_json = request.POST.get("obj")
+        if not obj_json:
+            return JsonResponse({"estatus": 400, "error": "No se recibió el parámetro 'obj'"})
+
+        datos = json.loads(obj_json)
+
+        procesador = Solicitud()
+        resultado = procesador.procesar(datos)
+
+        return JsonResponse({"estatus": 200, "respuesta": resultado})
+
+    except json.JSONDecodeError:
+        return JsonResponse({"estatus": 400, "error": "El contenido del campo 'obj' no es JSON válido."})
+
+    except Exception as e:
+        return JsonResponse({"estatus": 500, "error": str(e)})
+    
+def requestCargaSolicitud(request):
+    """
         La funcion sirve para conectar la peticion cliente - servidor, 
-        en este caso realiza la accion solicitada por el usuario hacia la solicitud trabajada.
+        en este caso se obtienen los datos de la solicitud deseada por el usuario.
         
         :return: Nos da como respuesta una estructura JSON con la informacion solicitada en la peticion.
     """
-    obj = json.loads(request.POST.get("obj",""))
-    print(obj)
-    return JsonResponse(Solicitud().accionSolicitud(obj),safe=False)  
+    accion = request.POST.get('action','')
+    infoBusqueda = request.POST.get('info','')
+    obj = infoBusqueda.split("#@@#")
+    return JsonResponse(Solicitud().dameDatosSolicitud(obj[0], obj[1], accion))

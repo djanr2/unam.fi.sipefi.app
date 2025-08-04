@@ -28,3 +28,6 @@ class ConexionBD(object):
         cursor = connections['default'].cursor()
         cursor.execute("alter session set nls_date_format = 'dd-mm-yy'")
         return cursor
+    
+    def conexion(self):
+        return connections['default']

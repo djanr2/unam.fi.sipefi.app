@@ -12,7 +12,8 @@ from sipefi_apps.tomo_ii.controlador.views import (
     Vista_Principal_TomoII,
     requestTablasSoli,
     requestRecargaPagina,
-    requestAccionSolicitud
+    requestAccionSolicitud,
+    requestCargaSolicitud
 )
 
 urlpatterns = [
@@ -20,4 +21,5 @@ urlpatterns = [
     path("llenaTablasSoli", requestTablasSoli, name='tablasSoli'),
     path("recargaPagina/", requestRecargaPagina, name='recargaIdx'),
     path('accionSolicitud/', requestAccionSolicitud, name='accionSoli'),
+    path('cargaSolicitud/', requestCargaSolicitud, name='cargaSoli'),
 ]
