@@ -168,7 +168,7 @@ const soltii = function(){
 		$("#tablaSoliUsuario_wrapper .tituloTablas").html(
 				($.inArray(rol,idRV) != -1)?'<strong>Validaciones pendientes</strong>':
 											'<strong>Solicitudes pendientes de '+$("#usuario").html()+'</strong>');
-		$("#tablaSoliAvanzadas_wrapper .tituloTablas").html('<strong>Solicitudes donde '+$("#usuario").html()+' particip&oacute;</strong>');
+		$("#tablaSoliAvanzadas_wrapper .tituloTablas").html('<strong>Solicitudes en validaci&oacute;n</strong>');
 		$("#tablaSoliRecientes_wrapper .tituloTablas").html('<strong>Solicitudes recientes</strong>');
 		$("#tablaSoliUsuario th").addClass("centrar");
 		$("#tablaSoliAvanzadas th").addClass("centrar");
@@ -227,8 +227,11 @@ const soltii = function(){
 					$("#modalCargaSoli .modal-header").addClass("headerModalError");
 					$("#modalCargaSoli .textoBody").html("" +
 							"No fue posible realizar la carga de la solicitud <br>" +
-							"<strong>Avisa al &aacute;rea de sistemas de la DGAAR</strong>" +
-							"");
+							"Contacta al área de soporte con Osvaldo Ruiz <br>" +
+							"<strong><a href=\"mailto:oruiz@unam.mx?subject=Necesito%20ayuda\">" +
+								"oruiz@unam.mx" +
+							"</a></strong>" +
+					"");
 					$("#modalCargaSoli .modal-body button").attr('class','btn btn-danger');
 					$('#modalCargaSoli').modal('show');
 				}

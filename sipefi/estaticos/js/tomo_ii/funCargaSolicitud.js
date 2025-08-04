@@ -87,7 +87,7 @@ const fcs = function(){
 			// Cargar combos del tab "Relación con Licenciaturas"
 			llenaCombo("rel_licenciatura", obj.catLic || [], false);
 			llenaCombo("rel_semestre", [...Array(10).keys()].map(i => [i + 1, `Semestre ${i + 1}`]), false); // del 1 al 10
-			// seriación anterior y consecuente (múltiple)
+			// seriación antecedente y consecuente (múltiple)
 			$('#ser_anterior').select2({
 			    placeholder: "Selecciona una o más seriaciones",
 			    width: '100%'
@@ -179,10 +179,10 @@ const fcs = function(){
 	    fComun.mostrarTooltipCampo("#rel_semestre", "Selecciona el semestre");
 	    return;
 	  }
-	  // Validación: no debe haber elementos comunes entre anterior y consecuente
+	  // Validación: no debe haber elementos comunes entre antecedente y consecuente
 	  const interseccion = serAnt.some(val => serCon.includes(val));
 	  if (interseccion) {
-       fComun.mostrarTooltipCampo("#ser_consecuente", "No puede haber materias repetidas en seriación anterior y consecuente");
+       fComun.mostrarTooltipCampo("#ser_consecuente", "No puede haber materias repetidas en seriación antecedente y consecuente");
        return;
       }
 
@@ -402,7 +402,7 @@ const fcs = function(){
 	 * Función que recorre la tabla de relación con licenciaturas para extraer
 	 * los datos seleccionados por el usuario.
 	 * 
-	 * Cada fila contiene: licenciatura, semestre, seriación anterior y consecuente.
+	 * Cada fila contiene: licenciatura, semestre, seriación antecedente y consecuente.
 	 *
 	 * @function obtenerRelLicAsig
 	 * @returns {Array<Object>} Arreglo con objetos que representan la relación con licenciaturas.
@@ -535,7 +535,10 @@ const fcs = function(){
 				}else{
 					let palabra = (accion==1)?"guardado":(accion==2)?"procesamiento":"rechazo";
 					texto = "No fue posible realizar el "+palabra+" de la solicitud <br>" +
-							"<strong>Avisa al &aacute;rea de sistemas correspondiente</strong>";
+							"Contacta al área de soporte con Osvaldo Ruiz <br>" +
+							"<strong><a href=\"mailto:oruiz@unam.mx?subject=Necesito%20ayuda\">" +
+								"oruiz@unam.mx" +
+							"</a></strong>";
 					mostrarModalGuardar(2,texto);
 				}
 			}catch(e){console.log(e)}
@@ -710,7 +713,7 @@ const fcs = function(){
 			  $('#rel_licenciatura').val(idLic).trigger('change');
 			  $('#rel_semestre').val(semestre).trigger('change');
 
-			  // Cargar select multiple de seriación anterior y consecuente
+			  // Cargar select multiple de seriación antecedente y consecuente
 			  $('#ser_anterior').val(serAnt).trigger('change');
 			  $('#ser_consecuente').val(serCon).trigger('change');
 
