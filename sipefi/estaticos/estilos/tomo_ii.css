@@ -3,7 +3,7 @@
 	border: solid #ffc107 !important;
 }
 
-/* === Menú título (TOMO II) con azul institucional === */
+/* === MenÃº tÃ­tulo (TOMO II) con azul institucional === */
 .menuTitulo {
 	background: linear-gradient(90deg, #004080, #0066cc);
 	font-size: 15px;
@@ -26,7 +26,7 @@
 	width: 100%;
 }
 
-/* === Panel lateral izquierdo (menú de secciones) === */
+/* === Panel lateral izquierdo (menÃº de secciones) === */
 .optionSections {
 	background-color: #f8f9fa !important;
 	border-radius: 12px;
@@ -39,7 +39,7 @@
 	justify-content: space-between;
 }
 
-/* === Enlaces del menú lateral === */
+/* === Enlaces del menÃº lateral === */
 .optionSections .nav-link {
 	color: #212529 !important;
 	border-radius: 0.5rem;
@@ -91,7 +91,7 @@
 	border-radius: 0 3px 3px 0;
 }
 
-/* === Contenido de pestañas === */
+/* === Contenido de pestaÃ±as === */
 .infoSections {
 	background-color: #ffffff;
 	border-radius: 12px;
@@ -104,7 +104,7 @@
 	box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
 }
 
-/* === Encabezado dentro de la sección === */
+/* === Encabezado dentro de la secciÃ³n === */
 .panelHeader {
 	background-color: #004080;
 	color: white;
@@ -150,7 +150,7 @@ input[readonly] {
 	color: #495057;
 }
 
-/* === Transición entre tabs === */
+/* === TransiciÃ³n entre tabs === */
 .tab-pane {
 	transition: opacity 0.4s ease-in-out;
 }
@@ -160,7 +160,7 @@ input[readonly] {
 	color: white !important;
 }
 
-/* === Contenedor del botón cancelar (ocupa siempre espacio) === */
+/* === Contenedor del botÃ³n cancelar (ocupa siempre espacio) === */
 .contenedor-cancelar {
 	height: 65px;
 	display: flex;
@@ -169,14 +169,14 @@ input[readonly] {
 	padding: 10px 0;
 }
 
-/* === Botón de cancelar solicitud === */
+/* === BotÃ³n de cancelar solicitud === */
 .bCancelarSol {
 	width: 100%;
 	border-radius: 8px;
 	font-weight: 600;
 }
 
-/* === Alineación horizontal === */
+/* === AlineaciÃ³n horizontal === */
 .row {
 	margin-bottom: 8px;
 }
@@ -185,7 +185,7 @@ input[readonly] {
   margin-left: 8px;
 }
 
-/* === Estilo para tabs de secciones (Datos generales / Relación con Licenciaturas) === */
+/* === Estilo para tabs de secciones (Datos generales / RelaciÃ³n con Licenciaturas) === */
 .custom-tabs {
   border-bottom: 2px solid #dee2e6;
   margin-bottom: 20px;
@@ -223,4 +223,33 @@ input[readonly] {
   max-height: 130px;
   overflow-y: auto;
   padding-bottom: 5px;
+}
+
+/* Aplica solo al Select2 activado sobre el campo "valor_practico" */
+.select2-valor-practico ~ .select2-container--default .select2-selection--multiple {
+  min-height: 38px !important;
+  height: 38px !important;
+  padding: 0.25rem 0.5rem !important;
+  display: flex;
+  align-items: center;
+  border: 1px solid #ced4da;
+  border-radius: 0.375rem;
+}
+
+.select2-valor-practico ~ .select2-container--default .select2-selection--multiple .select2-search__field {
+  margin-top: 0 !important;
+  height: 28px !important;
+}
+
+/* Estilo para tarjetas de comentarios */
+
+#seccionComentarios .card {
+  border-radius: 8px;
+}
+#seccionComentarios .card-header {
+  font-size: 0.95rem;
+  font-weight: 500;
+}
+#seccionComentarios .card-body {
+  font-size: 0.95rem;
 }
