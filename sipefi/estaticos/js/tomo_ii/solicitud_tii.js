@@ -182,12 +182,11 @@ const soltii = function(){
     /**
 	 * Funcion encargada de realizar las acciones para la solicitud (1- Visualizar solicitud, 2- Editar solicitud).
 	 * @param {String} infoSelect Contiene la informacion general de la solicitud elegida para realizar una accion.
-	 * @param {int} opc Parametro que define la accion a realizar con la solicitud.
 	 * @return {void} 
 	 * @method realizaAccionSolicitud
 	 * @static
 	 */
-	const realizaAccionSolicitud = (infoSelect, opc) => {
+	const realizaAccionSolicitud = (infoSelect) => {
     	let accion = "";
     	let infoUtil = "";
     	let canAffect = false;
@@ -196,7 +195,7 @@ const soltii = function(){
     	infoUtil = String(infoSelect).split("__")[1];
     	let eSoli = parseInt(String(infoUtil).split("#@@#")[1]); 
     	canAffect = $.isNumeric(String(infoSelect).split("__")[2]);
-    	canAffect = canAffect * ((eSoli == 3)?false:true);
+    	canAffect = canAffect;
     	canAffect = canAffect==1?true:false;
     	fComun.guardaVarLocal("canAffect",canAffect);
     	fComun.guardaVarLocalS("accionSoli",accion);
@@ -205,7 +204,36 @@ const soltii = function(){
     			info: infoUtil,
     			rol: $("#rol").html()
     	}
-		//fcs.cargaCatalogos(2,param);
+		fcs.cargaCatalogos(2,param);
+    };
+	
+	/**
+	 * Funcion encargada obtener y de pintar o cargar la informacion de la solicitud elegida.
+	 * @param {Object} param Parametro que contiene el objeto con la info necesaria para consultar informacion de la solicitud.
+	 * @return {void} 
+	 * @method pintaSolicitud
+	 * @static
+	 */
+    const pintaSolicitud = (param) => {
+    	fComun.mostrarEspera();
+    	fComun.post("/SIPEFI/cargaSolicitud/",param, function(resp){
+			try{
+				let obj = resp;
+				if(obj.estatus == 200){ //Tenemos información que mostrar
+					console.log(obj)
+					fcs.cargaSolicitudAccion(obj);
+				}else{
+					$("#modalCargaSoli .modal-title").html("Mensaje de error");
+					$("#modalCargaSoli .modal-header").addClass("headerModalError");
+					$("#modalCargaSoli .textoBody").html("" +
+							"No fue posible realizar la carga de la solicitud <br>" +
+							"<strong>Avisa al &aacute;rea de sistemas de la DGAAR</strong>" +
+							"");
+					$("#modalCargaSoli .modal-body button").attr('class','btn btn-danger');
+					$('#modalCargaSoli').modal('show');
+				}
+			}catch(e){console.log(e)}
+		});
     };
 	
 	return{
@@ -214,6 +242,7 @@ const soltii = function(){
 		cargaMenuIniBotones:	cargaMenuIniBotones,
 		cargaMenuLlenadoBotones:	cargaMenuLlenadoBotones,
 		realizaAccionSolicitud:	realizaAccionSolicitud,
-		iniciaComponentes:	iniciaComponentes
+		iniciaComponentes:	iniciaComponentes,
+		pintaSolicitud:	pintaSolicitud
 	}
 }();

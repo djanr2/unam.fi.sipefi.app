@@ -12,8 +12,7 @@ const fComun = function(){
 	 * @constant urlsAjax
 	 * @default
 	 */
-	let urlsAjax = ['/buscaSolicitud/', '/SIPEFI/accionSolicitud/',
-					'/SIPEFI/llenaTablasSoli/', '/cargaSolicitud/', 
+	let urlsAjax = ['/SIPEFI/accionSolicitud/', '/SIPEFI/llenaTablasSoli/', '/SIPEFI/cargaSolicitud/', 
 					'/SIPEFI/recargaPagina/','/cancelarSolicitud/'
 					];
 	

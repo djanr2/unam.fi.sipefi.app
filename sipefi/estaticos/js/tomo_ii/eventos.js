@@ -315,6 +315,8 @@ const etii = function(){
 			const hTeo = parseFloat($("#h_sem_teo").val()) || 0;
 			const hPra = parseFloat($("#h_sem_pra").val()) || 0;
 			const creditos = (hTeo * 2) + hPra;
+			$("#h_semestre_teo").val(hTeo*16);
+			$("#h_semestre_pra").val(hPra*16);
 			$("#creditos").val(creditos);
 		} catch (e) {
 			console.error("Error al calcular créditos:", e);
@@ -497,10 +499,10 @@ const etii = function(){
 		$(".accionSolicitud").on("change",function(){
 			let rolSol = 99;
 			try{
-				rolSol = $(this).val().split("#@@#")[6].split("__")[0];
+				rolSol = $(this).val().split("#@@#")[5].split("__")[0];
 			}catch(e){}
 			fComun.guardaVarLocalS("rolSol", rolSol);
-			soltii.realizaAccionSolicitud($(this).val(),0);
+			soltii.realizaAccionSolicitud($(this).val());
 			$(this).val(0);
 		});
 	};

@@ -51,7 +51,7 @@ const fl = function(){
 	            },
 	            {
 	            	"render": function ( data, type, row ) {
-	            		let rolSol = parseInt(row[7].split("#@@#")[6]);
+	            		let rolSol = parseInt(row[7].split("#@@#")[5]);
 	            		let rol = parseInt($("#rol").html());
 	            		let estatusSoli = parseInt(row[7].split("#@@#")[1]);
 	            		let minusRol =  rol - rolSol;
@@ -59,8 +59,8 @@ const fl = function(){
 	            		let infoExtra = (canEdit)?"__1":"";
 	            		let selectItem = "<select class='accionSolicitud'>"+
 	            							"<option value='0' selected>Elige acci&oacute;n..</option>"+
-	            							"<option value='1__"+row[7]+(estatusSoli==3?"__1":infoExtra)+"'>Visualizar</option>"+
-	            							((canEdit)?"<option value='2__"+row[7]+infoExtra+"'>Editar</option>":"")+
+	            							"<option value='1__" + row[7] + infoExtra +"'>Visualizar</option>"+
+	            							((canEdit)?"<option value='2__" + row[7] + infoExtra + "'>Editar</option>":"")+
 	            						"</select>";
 	                    return selectItem;
 	                },
