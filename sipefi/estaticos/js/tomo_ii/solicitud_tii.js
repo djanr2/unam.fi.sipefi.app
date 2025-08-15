@@ -227,9 +227,9 @@ const soltii = function(){
 					$("#modalCargaSoli .modal-header").addClass("headerModalError");
 					$("#modalCargaSoli .textoBody").html("" +
 							"No fue posible realizar la carga de la solicitud <br>" +
-							"Contacta al área de soporte con Osvaldo Ruiz <br>" +
-							"<strong><a href=\"mailto:oruiz@unam.mx?subject=Necesito%20ayuda\">" +
-								"oruiz@unam.mx" +
+							"Contacta al área de soporte SIPEFI <br>" +
+							"<strong><a href=\"mailto:sipefi@fi.unam.edu?subject=Necesito%20ayuda\">" +
+								"sipefi@fi.unam.edu" +
 							"</a></strong>" +
 					"");
 					$("#modalCargaSoli .modal-body button").attr('class','btn btn-danger');
