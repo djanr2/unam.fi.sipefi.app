@@ -106,6 +106,11 @@ const etii = function(){
 				if (encontrado) {
 					const idTipoMod = encontrado[1];
 					$("#tipo_modalidad").val(idTipoMod);
+					if(idTipoMod === 1){
+						$("#valor_practico").prop("disabled", true);
+					}else {
+						$("#valor_practico").prop("disabled", false);
+					}
 				} else {
 					$("#tipo_modalidad").val(0); 
 				}

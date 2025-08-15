@@ -535,9 +535,9 @@ const fcs = function(){
 				}else{
 					let palabra = (accion==1)?"guardado":(accion==2)?"procesamiento":"rechazo";
 					texto = "No fue posible realizar el "+palabra+" de la solicitud <br>" +
-							"Contacta al área de soporte con Osvaldo Ruiz <br>" +
-							"<strong><a href=\"mailto:oruiz@unam.mx?subject=Necesito%20ayuda\">" +
-								"oruiz@unam.mx" +
+							"Contacta al área de soporte SIPEFI <br>" +
+							"<strong><a href=\"mailto:sipefi@fi.unam.edu?subject=Necesito%20ayuda\">" +
+								"sipefi@fi.unam.edu" +
 							"</a></strong>";
 					mostrarModalGuardar(2,texto);
 				}
