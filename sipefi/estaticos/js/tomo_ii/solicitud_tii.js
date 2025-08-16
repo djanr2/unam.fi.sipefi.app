@@ -37,7 +37,7 @@ const soltii = function(){
 		$("#rol").html(valor);
 		//Quitamos opcion de crear solicitudes nuevas al validador
 		let idRV = fComun.getVarLocalJ("idsValidador");
-		$("button[target|='aprobarSolicitud']").html("Solicitar aprobaci&oacute;n");
+		$("button[target|='aprobarSolicitud']").html("Solicitar validaci&oacute;n");
 		$(".creaSolicitud").show();
 		if($.inArray(valor,idRV) != -1){
 			$(".creaSolicitud").hide();
@@ -95,7 +95,6 @@ const soltii = function(){
 		let idRV = fComun.getVarLocalJ("idsValidador");
 		let canAffect = fComun.getVarLocalJ("canAffect");
 		$('.menuBotones').hide();
-		$(".SIPEFI_LOGIN").hide();
 		$('.menuBotones[target="regresarBusqSoli"]').show();
 		
 		if(accion == 1){ //Modo visualizar

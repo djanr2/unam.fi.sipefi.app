@@ -24,7 +24,7 @@
         <div class="row">
         	<div class="col-md-10 mb-3">
 		      <label><strong>Asignatura</strong></label>
-		      <input id="asignatura" type="text" class="form-control" placeholder="Nombre de la asignatura">
+		      <input id="asignatura" type="text" class="form-control" placeholder="Nombre de la asignatura" oninput="this.value = this.value.toUpperCase();">
 		    </div>
 		    <div class="col-md-2 mb-3">
 		      <label><strong>Clave</strong></label>
@@ -83,7 +83,7 @@
 
         <div class="mb-3">
           <label><strong>Objetivo general de la asignatura</strong></label>
-          <textarea id="objetivo" class="form-control" rows="3"></textarea>
+          <textarea id="objetivo" class="form-control" rows="3" placeholder="Para redactar los objetivos, es necesario agregar en la estructura  el ¿qué se quiere lograr?, ¿cómo se quiere lograr? y ¿para qué? (¿qué, cómo, para qué?)."></textarea>
         </div>
       </div>
 

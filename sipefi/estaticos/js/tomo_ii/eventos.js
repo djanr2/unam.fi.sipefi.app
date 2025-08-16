@@ -211,7 +211,9 @@ const etii = function(){
 	    listaContenidos.push({ idTema, texto });
 	
 	    $("#contenidoTema").val(""); // Limpiar campo
+	    let option = $("#temaContenido").val();
 	    reconstruirDesdeEstructuras();
+		$("#temaContenido").val(option);
 	  };
 	
 	  /**
