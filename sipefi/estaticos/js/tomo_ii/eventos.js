@@ -213,7 +213,7 @@ const etii = function(){
 	    $("#contenidoTema").val(""); // Limpiar campo
 	    let option = $("#temaContenido").val();
 	    reconstruirDesdeEstructuras();
-		$("#temaContenido").val(option);
+	    $("#temaContenido").val(option);
 	  };
 	
 	  /**

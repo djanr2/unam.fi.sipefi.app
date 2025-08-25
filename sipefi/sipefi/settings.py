@@ -30,7 +30,7 @@ SECRET_KEY = 'django-insecure-5x9#a*z8a4!v-0r0i(1a@6z4wd3yj-i(+rb(#$xd1kb(om2dtz
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'tomo2pe', '192.168.10.5', '132.248.54.199']
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'tomo2pe', '192.168.10.5', '132.248.54.199', 'www.sipefi.unam.mx']
 
 
 # Application definition
