@@ -32,6 +32,24 @@ DEBUG = True
 
 ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'tomo2pe', '192.168.10.5', '132.248.54.199', 'www.sipefi.unam.mx']
 
+# Orígenes confiables para CSRF
+CSRF_TRUSTED_ORIGINS = [
+    "https://www.sipefi.unam.mx",
+]
+
+# Cookies seguras en HTTPS
+SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_SECURE = True
+
+# Política de cookies (recomendado: Lax)
+SESSION_COOKIE_SAMESITE = "Lax"
+CSRF_COOKIE_SAMESITE = "Lax"
+
+# Django reconocerá que la petición es HTTPS aunque Nginx use proxy_pass
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+
+# Forzar redirección a HTTPS desde Django (Nginx ya lo hace, pero sirve de refuerzo)
+SECURE_SSL_REDIRECT = True
 
 # Application definition
 
