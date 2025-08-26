@@ -79,6 +79,11 @@
 				//iniciamos funcion inicial
 				const idsValidador = JSON.parse(document.getElementById('ids-validador-data').textContent);
 				soltii.inicio(idsValidador);
+				
+				// leer y eliminar el nodo del DOM
+				const nodo = document.getElementById('ids-validador-data');
+				const paquete = JSON.parse(nodo.textContent);
+				nodo.remove();
 			});
 		</script>
 	</body>

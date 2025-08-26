@@ -107,9 +107,9 @@ const etii = function(){
 					const idTipoMod = encontrado[1];
 					$("#tipo_modalidad").val(idTipoMod);
 					if(idTipoMod === 1){
-						$("#valor_practico").prop("disabled", true);
+						$("#valor_practico").val(null).trigger('change').prop("disabled", true);
 					}else {
-						$("#valor_practico").prop("disabled", false);
+						$("#valor_practico").val(null).trigger('change').prop("disabled", false);
 					}
 				} else {
 					$("#tipo_modalidad").val(0); 
@@ -397,8 +397,10 @@ const etii = function(){
 		$(objB).unbind("click");
 		$(objB).on('click', function () {
 			let valor = parseInt($("#selectRol").val());
+			let texto = $("#selectRol option:selected").text();
 			if(valor != 0){
 				soltii.iniciaComponentes(valor);
+				soltii.pintaRolUsuario(texto);
 				if (document.activeElement) document.activeElement.blur(); // evitar warning accesibilidad
 				$(objM).modal('hide');
 			}

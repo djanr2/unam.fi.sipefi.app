@@ -23,8 +23,29 @@ const soltii = function(){
 		fComun.iniciaModalComentarios();
 		fl.cargaTablasP1();
 		cargaMenuIniBotones();
-		(tamRol>1)?eligeRol(roles):iniciaComponentes(roles.resp[0].id);
+		if(tamRol>1){ //tiene opcion de mas de un perfil
+			eligeRol(roles);
+		}else{ //perfil unico
+			iniciaComponentes(roles.resp[0].id);
+			pintaRolUsuario(roles.resp[0].rol);
+		}
 	};
+	
+	const pintaRolUsuario = (rol) => {
+		let icono = "";
+
+		if(rol === "Administrador"){
+			icono = '<i class="fas fa-crown"></i>';
+		}else if(rol.includes("Operador")){
+			icono = '<i class="fas fa-edit"></i>';
+		}else if(rol.includes("Validador")){
+			icono = '<i class="fas fa-clipboard-check"></i>';
+		}
+		
+		$("#usuario").after(
+		` <span class="ms-2 text-white d-inline-flex align-items-center">${icono}<span>${rol}</span></span>`
+		);
+	}
 
 	/**
 	 * Funcion que inicializa los componentes en el sistema de acuerdo al perfil y usuario logueado.
@@ -39,10 +60,13 @@ const soltii = function(){
 		let idRV = fComun.getVarLocalJ("idsValidador");
 		$("button[target|='aprobarSolicitud']").html("Solicitar validaci&oacute;n");
 		$(".creaSolicitud").show();
+		$("#tablaSRU").show();
 		if($.inArray(valor,idRV) != -1){
 			$(".creaSolicitud").hide();
 			$("#tablaSoliUsuario").parent().css("margin-top", "100px");
 			$("button[target|='aprobarSolicitud']").html("Aprobar");
+		}else{
+			$("#tablaSRU").hide();
 		}
 		cargaInfoTablasP1();
 		etii.cargaEventosPrincipales();
@@ -245,6 +269,7 @@ const soltii = function(){
 		cargaMenuLlenadoBotones:	cargaMenuLlenadoBotones,
 		realizaAccionSolicitud:	realizaAccionSolicitud,
 		iniciaComponentes:	iniciaComponentes,
-		pintaSolicitud:	pintaSolicitud
+		pintaSolicitud:	pintaSolicitud,
+		pintaRolUsuario: pintaRolUsuario
 	}
 }();
