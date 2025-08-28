@@ -243,7 +243,6 @@ const soltii = function(){
 			try{
 				let obj = resp;
 				if(obj.estatus == 200){ //Tenemos información que mostrar
-					console.log(obj)
 					fcs.cargaSolicitudAccion(obj);
 				}else{
 					$("#modalCargaSoli .modal-title").html("Mensaje de error");

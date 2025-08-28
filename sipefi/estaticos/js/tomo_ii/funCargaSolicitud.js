@@ -122,6 +122,8 @@ const fcs = function(){
 			}
 		}catch(e){console.error("Error al cargar catálogos:", e);}
 		cssVistaCaptura();
+		//Desbloqueamos el campo asignatura, por si es nueva solicitud
+		$("#asignatura").prop("readonly", false);
 		if(opc == 2){ //Solo si estamos editando una solicitud existente
 			soltii.pintaSolicitud(param);
 		}
@@ -519,6 +521,8 @@ const fcs = function(){
 						mostrarModalGuardar(1,texto);
 						validarBotonesCambioEstatus(1);
 						fComun.guardaVarLocalS("accionSoli",2);
+						//Bloqueamos el campo asignatura, ya no se puede modificar
+						$("#asignatura").prop("readonly", true);
 					}else if(accion == 2){ //Se proceso correctamente estatus solicitud
 						let msjConfirm = "La aprobaci&oacute;n de la solicitud se ha realizado correctamente.";
 						let estatus = objSolicitud["idEstSoli"];
@@ -789,6 +793,9 @@ const fcs = function(){
 			    $("#seccionComentarios").append(html);
 			  });
 			}
+			
+			//Bloqueamos el campo asignatura, ya no se puede modificar
+			$("#asignatura").prop("readonly", true);
 
 		} catch (e) {
 			console.error("Error cargando la solicitud:", e);
