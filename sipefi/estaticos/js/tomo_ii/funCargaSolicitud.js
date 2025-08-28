@@ -682,6 +682,31 @@ const fcs = function(){
 			$('.menuBotones[target="#modalComentarios"]').show();
 		}else if(accion == 1){ // Visualizar
 			$('.menuBotones[target="guardarSolicitud"]').hide();
+			//Ponemos campos como visualizacion
+			//Inputs de texto / números / fechas / etc. → readonly
+			$('body').find('input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]):not([type="file"])')
+			        .prop('readonly', true)
+			        .toggleClass('is-readonly', true);
+
+			// Textareas → readonly
+			$('body').find('textarea')
+			        .prop('readonly', true)
+			        .toggleClass('is-readonly', true);
+
+			// Selects → disabled
+			$('body').find('select').prop('disabled', true);
+
+			// Select2
+			$('body').find('select.select2').prop('disabled', true).trigger('change.select2');
+
+			//Ocultamos los botones de “agregar”
+			const btnsOcultar = [
+				'#btnAgregarRelLicAsig',
+			    '#btnAgregarTema',
+			    '#btnAgregarContenido',
+			    '#btnAgregarBibliografia'
+			];
+			btnsOcultar.forEach(sel => $(sel).toggleClass('d-none', true));
 		}
 		/*	
 			Si solo puede visualizar sin proceder a validar
