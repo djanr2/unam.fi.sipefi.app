@@ -123,7 +123,16 @@ def requestAccionSolicitud(request):
         return JsonResponse({"estatus": 400, "error": "El contenido del campo 'obj' no es JSON válido."})
 
     except Exception as e:
-        return JsonResponse({"estatus": 500, "error": str(e)})
+        status = 500
+        message = str(e)
+    
+        # si lanzamos Exception((codigo, mensaje))
+        if e.args and isinstance(e.args[0], tuple) and len(e.args[0]) == 2:
+            code, msg = e.args[0]
+            if isinstance(code, int):
+                status, message = code, msg
+    
+        return JsonResponse({"estatus": status, "error": message})
     
 def requestCargaSolicitud(request):
     """

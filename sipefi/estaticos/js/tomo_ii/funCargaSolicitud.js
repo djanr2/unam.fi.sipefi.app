@@ -534,11 +534,17 @@ const fcs = function(){
 					}
 				}else{
 					let palabra = (accion==1)?"guardado":(accion==2)?"procesamiento":"rechazo";
-					texto = "No fue posible realizar el "+palabra+" de la solicitud <br>" +
-							"Contacta al área de soporte SIPEFI <br>" +
-							"<strong><a href=\"mailto:sipefi@fi.unam.edu?subject=Necesito%20ayuda\">" +
-								"sipefi@fi.unam.edu" +
-							"</a></strong>";
+					if(obj.estatus == 409){
+						texto = "No fue posible realizar el "+palabra+" de la solicitud <br>" +
+								obj.error;
+					}else{
+						texto = "No fue posible realizar el "+palabra+" de la solicitud <br>" +
+								"Contacta al área de soporte SIPEFI <br>" +
+								"<strong><a href=\"mailto:sipefi@fi.unam.edu?subject=Necesito%20ayuda\">" +
+									"sipefi@fi.unam.edu" +
+								"</a></strong>";
+					}
+					
 					mostrarModalGuardar(2,texto);
 				}
 			}catch(e){console.log(e)}

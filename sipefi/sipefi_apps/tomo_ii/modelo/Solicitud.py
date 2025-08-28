@@ -65,12 +65,40 @@ class Solicitud:
             
             # Si la solicitud ya existe, conservar creador y fecha
             id_usuario_creacion, fecha_creacion = None, None
-            if self.id_solicitud > 0:
-                id_usuario_creacion, fecha_creacion = self.obtener_datos_creacion()
-            
-            if self.id_solicitud == 0:
+            asignatura = datos.get("nombreAsignatura", "")
+            if self.id_solicitud > 0: #solicitud existente
+                id_usuario_creacion, fecha_creacion, asignatura = self.obtener_datos_creacion()
+            elif self.id_solicitud == 0: #solicitud nueva
                 accion = "Creación"
                 self.id_solicitud = self.db.consulta("SELECT NVL(MAX(id_solicitud), 0) + 1 FROM SIPEFI.TD_SOLICITUD_TOMO_II")[0][0]
+                
+                #Validamos que no exista la asignatura
+                existeAsig = self.db.consulta("""
+                    SELECT COUNT(*) AS total
+                    FROM SIPEFI.TD_ASIGNATURA
+                    WHERE UPPER(asignatura) = UPPER(:nombre_asignatura)
+                """, {
+                    "nombre_asignatura": asignatura
+                })[0][0]
+                
+                if existeAsig > 0:
+                    raise Exception((409, f"La asignatura <strong>'{asignatura}'</strong> ya existe"))
+                else:
+                    #Insertar asignatura en tabla de asignaturas
+                    sql = """
+                        INSERT INTO SIPEFI.TD_ASIGNATURA (
+                            id_asignatura, asignatura, plan_estudios, busuario
+                        ) VALUES (
+                            :id_asignatura, :asignatura, '2025', :usuario 
+                            
+                        )
+                    """
+                    params = {
+                        "id_asignatura": self.id_solicitud,
+                        "asignatura": asignatura,
+                        "usuario": self.usuario
+                    }
+                    self.db.insertar(sql, params)
             
             #Limpiamos solicitud primero
             self.limpiar_solicitud(self.id_solicitud, self.id_estatus)
@@ -96,7 +124,7 @@ class Solicitud:
             params = {
                 "id_solicitud": self.id_solicitud,
                 "id_estatus_solicitud": self.id_estatus,
-                "asignatura": datos.get("nombreAsignatura", ""),
+                "asignatura": asignatura,
                 "clave_asignatura": datos.get("claveAsignatura"),
                 "creditos": limpiar_num(datos.get("creditos")),
                 "id_area_conocimiento": limpiar_num(datos.get("areaConocimiento")),
@@ -129,7 +157,8 @@ class Solicitud:
             # Guardar historial
             comentario = metadatos.get("comentarios")
             self._guardar_traza(comentario, self.id_estatus, self.id_estatus, accion)
-
+            
+            #Actualizamos token
             self._actualizar_token()
             conn.commit()
             return {"idS": self.id_solicitud, "idES": self.id_estatus, "nomES": self.nom_estatus}
@@ -187,7 +216,7 @@ class Solicitud:
         :return: Tuple (id_usuario_creacion, fecha_creacion) o (None, None)
         """
         row = self.db.consulta("""
-            SELECT id_usuario_creacion, fecha_creacion
+            SELECT id_usuario_creacion, fecha_creacion, asignatura
             FROM SIPEFI.TD_SOLICITUD_TOMO_II
             WHERE id_solicitud = :id_solicitud AND id_estatus_solicitud = :id_estatus
         """, {
@@ -195,7 +224,7 @@ class Solicitud:
             "id_estatus": self.id_estatus
         })
         
-        return (row[0][0], row[0][1]) if row else (None, None)
+        return (row[0][0], row[0][1], row[0][2]) if row else (None, None, None)
 
     def limpiar_solicitud(self, id_soli, id_est):
         tablas = [
