@@ -11,6 +11,54 @@ const etii = function(){
 	let contadorTemas = 1;
 	
 	/**
+	 * Suma de horas ya capturadas en los temas.
+	 * @return {number}
+	 */
+	const horasTemasCapturadas = () =>
+	  listaTemas.reduce((acc, t) => acc + (parseInt(t.horas, 10) || 0), 0);
+
+	/**
+	 * Pinta "X de Y" y aplica estado del botón/inputs para Temas.
+	 * Regla: NO se puede capturar si no hay horas definidas (totalTeo <= 0) o si ya no quedan horas (restantes <= 0).
+	 * Devuelve totales sin truncar (restantes puede ser negativo para mostrar sobregiro).
+	 * @return {{totalTeo:number, usadas:number, restantes:number}}
+	 */
+	const actualizaHorasTeoricasRestantes = () => {
+	  const totalTeo  = parseInt($("#h_semestre_teo").val(), 10) || 0;
+	  const usadas    = horasTemasCapturadas(); 
+	  const restantes = totalTeo - usadas;
+
+	  // Texto "X de Y"
+	  $("#horasRestantes").text(Math.max(restantes, 0));
+	  $("#horasTotales").text(totalTeo);
+
+	  // Colores del bloque completo
+	  const $box = $("#boxHorasRestantes");
+	  $box
+	    .removeClass("bg-success bg-danger bg-secondary")
+	    .addClass(totalTeo <= 0 ? "bg-secondary" : (restantes > 0 ? "bg-success" : "bg-danger"))
+	    .attr(
+	      "title",
+	      totalTeo <= 0
+	        ? "Define primero las horas teóricas del semestre en Datos generales."
+	        : (restantes < 0 ? `Sobregiro de ${Math.abs(restantes)} h teóricas` : "")
+	    );
+
+	  // Bloqueo de botón (y opcionalmente inputs)
+	  const bloquear = (totalTeo <= 0) || (restantes <= 0);
+	  $("#btnAgregarTema").prop("disabled", bloquear);
+
+	  // impedir tecleo hasta definir horas:
+	  $("#nombreTema, #horasTema, #objetivoTema").prop("disabled", totalTeo <= 0);
+
+	  // Feedback del input "Horas tema"
+	  const v = parseInt($("#horasTema").val(), 10) || 0;
+	  $("#horasTema").toggleClass("is-invalid", totalTeo > 0 && v > Math.max(restantes, 0));
+
+	  return { totalTeo, usadas, restantes };
+	};
+	
+	/**
 	 * 
 	 * Funcion que inicializa los eventos principales a usar en el sistema SIPEFI-TOMO II.
 	 * @return {void} 
@@ -176,6 +224,13 @@ const etii = function(){
 		
 	   //Eventos de modal y dataTables complementarios
 	   eventosModalDTable();
+	   
+	   actualizaHorasTeoricasRestantes(); // Refresca el badge/botón de horas teoricas restantes
+	   
+	   $("#horasTema").on("input", function(){
+	     // Solo marca inválido si supera lo restante
+	     actualizaHorasTeoricasRestantes(); // recalcula y aplica la clase 'is-invalid' si corresponde
+	   });
 		
 	};
 	
@@ -192,10 +247,28 @@ const etii = function(){
 	      return fComun.mostrarTooltipCampo("#horasTema", "Ingresa las horas del tema (mayor a 0)");
 	    if (!objetivo) return fComun.mostrarTooltipCampo("#objetivoTema", "El objetivo del tema es requerido");
 	
+		const horasNueva = parseInt(horas, 10);
+  		const { totalTeo, usadas, restantes } = actualizaHorasTeoricasRestantes();
+		
+		// NO permitir capturar si no han definido total teórico
+	    if (totalTeo <= 0) {
+	    	return fComun.mostrarModalAdvertencia(
+	    		"Primero define las horas teóricas del semestre en la sección Datos generales."
+	    	);
+	  	}
+  		// Si ya hay total teórico definido, no permitimos rebasarlo
+	    if (totalTeo > 0 && horasNueva > Math.max(totalTeo - usadas, 0)) {
+	    	return fComun.mostrarModalAdvertencia(
+	      	`No puedes agregar ${horasNueva} h. Te quedan ${Math.max(totalTeo - usadas, 0)} h teóricas por asignar.`
+	    	);
+	    }
+		
 	    listaTemas.push({ id: contadorTemas++, nombre, horas, objetivo });
 	
 	    $("#nombreTema, #horasTema, #objetivoTema").val(""); // Limpiar campos
 	    reconstruirDesdeEstructuras();
+		
+		actualizaHorasTeoricasRestantes(); // Refresca el badge/botón de horas teoricas restantes
 	  };
 	
 	  /**
@@ -274,6 +347,8 @@ const etii = function(){
 	
 	      contadorPorTema[contenido.idTema]++;
 	    });
+		
+		actualizaHorasTeoricasRestantes();
 	  };
 	
 	  /**
@@ -325,6 +400,8 @@ const etii = function(){
 			$("#h_semestre_teo").val(hTeo*16);
 			$("#h_semestre_pra").val(hPra*16);
 			$("#creditos").val(creditos);
+			
+			actualizaHorasTeoricasRestantes(); 
 		} catch (e) {
 			console.error("Error al calcular créditos:", e);
 		}

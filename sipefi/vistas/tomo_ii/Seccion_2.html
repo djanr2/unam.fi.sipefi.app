@@ -42,11 +42,21 @@
 		      <textarea id="objetivoTema" class="form-control areaTemario" rows="3" placeholder="Para redactar los objetivos, es necesario agregar en la estructura  el ¿qué se quiere lograr?, ¿cómo se quiere lograr? y ¿para qué? (¿qué, cómo, para qué?)."></textarea>
 		    </div>
 		  </div>
-		
-		  <div class="d-flex justify-content-end mb-3">
-		    <button class="btn btn-primary" id="btnAgregarTema">
-		      <i class="fas fa-plus"></i> Agregar tema
-		    </button>
+		  
+		  <div class="row mb-3">
+			   <div class="col-md-6 d-flex align-items-center">
+			    <div id="boxHorasRestantes" class="px-3 py-2 rounded-3 text-white fw-semibold d-inline-block bg-success">
+			      Horas teóricas restantes:
+			      <span id="horasRestantes">0</span>
+			      de
+			      <span id="horasTotales">0</span>
+			    </div>
+			  </div>
+			  <div class="col-md-6 d-flex justify-content-end">
+			    <button class="btn btn-primary" id="btnAgregarTema">
+			      <i class="fas fa-plus"></i> Agregar tema
+			    </button>
+			  </div>
 		  </div>
 		
 		  <table id="tablaTemas" class="table table-sm table-bordered table-hover table-striped text-center align-middle">
