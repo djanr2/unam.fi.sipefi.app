@@ -26,7 +26,7 @@ const etii = function(){
 	const actualizaHorasTeoricasRestantes = () => {
 	  const totalTeo  = (parseInt($("#h_semestre_teo").val() , 10)
 		  						+ parseInt($("#h_semestre_pra").val() , 10)) || 0;
-	  const usadas    = horasTemasCapturadas() + parseInt($('#horasPracticasTemario').val() , 10) || 0;
+	  const usadas    = horasTemasCapturadas() + (parseInt($('#horasPracticasTemario').val() , 10) || 0);
 	  const restantes = totalTeo - usadas;
 
 	  // Texto "X de Y"
@@ -157,8 +157,12 @@ const etii = function(){
 					$("#tipo_modalidad").val(idTipoMod);
 					if(idTipoMod === 1){
 						$("#valor_practico").val(null).trigger('change').prop("disabled", true);
+						$("#h_sem_pra").val('0').trigger('change').prop("disabled", true);
+						$("#h_semestre_pra").val('0').trigger('change');
 					}else {
 						$("#valor_practico").val(null).trigger('change').prop("disabled", false);
+						$("#h_sem_pra").val('0').trigger('change').prop("disabled", false);
+						$("#h_semestre_pra").val('0').trigger('change');
 					}
 				} else {
 					$("#tipo_modalidad").val(0); 
@@ -232,7 +236,12 @@ const etii = function(){
 	     // Solo marca inválido si supera lo restante
 	     actualizaHorasTeoricasRestantes(); // recalcula y aplica la clase 'is-invalid' si corresponde
 	   });
-		
+
+	   $("#horasPracticasTemario").on("input", function(){
+	     // Solo marca inválido si supera lo restante
+	     actualizaHorasTeoricasRestantes(); // recalcula y aplica la clase 'is-invalid' si corresponde
+	   });
+	   
 	};
 	
 	  /**
