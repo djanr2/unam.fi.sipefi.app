@@ -24,8 +24,9 @@ const etii = function(){
 	 * @return {{totalTeo:number, usadas:number, restantes:number}}
 	 */
 	const actualizaHorasTeoricasRestantes = () => {
-	  const totalTeo  = parseInt($("#h_semestre_teo").val(), 10) || 0;
-	  const usadas    = horasTemasCapturadas(); 
+	  const totalTeo  = (parseInt($("#h_semestre_teo").val() , 10)
+		  						+ parseInt($("#h_semestre_pra").val() , 10)) || 0;
+	  const usadas    = horasTemasCapturadas() + parseInt($('#horasPracticasTemario').val() , 10) || 0;
 	  const restantes = totalTeo - usadas;
 
 	  // Texto "X de Y"
