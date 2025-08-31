@@ -7,10 +7,12 @@
 const etii = function(){
 	
 	let listaTemas = [];       // [{ id, nombre, horas, objetivo }]
-	let listaContenidos = [];  // [{ idTema, texto }]
+	let listaContenidos = [];  // [{ idTema, texto }] ... [{ idTema, texto, idContenido }]:  idContenido prop is added on reconstruirDesdeEstructuras
 	let contadorTemas = 1;
 	let temaForEdit = [];
+	let contenidoForEdit = [];
 	let isActionEditingTema = false;
+	let isActionEditingContenido = false;
 	
 	/**
 	 * Suma de horas ya capturadas en los temas.
@@ -352,14 +354,25 @@ const etii = function(){
 	      const numTema = mapIdTemaToNumero[contenido.idTema];
 	      const nombreTema = mapIdTemaToNombre[contenido.idTema];
 	      const numContenido = contadorPorTema[contenido.idTema] = (contadorPorTema[contenido.idTema] || 1);
-	
+		  const idContenido = parseFloat(numTema+"."+numContenido);
+
+		  contenido.idContenido = idContenido;
+
 	      const fila = [
 	        `${numTema}. ${nombreTema}`,
-	        `${numTema}.${numContenido}`,
+	        `${idContenido}`,
 	        contenido.texto,
-			`<button class="btn btn-danger btn-sm" onclick="etii.eliminarContenido(this)">
+			`<div>
+				<button class="btn btn-danger btn-sm" onclick="etii.eliminarContenido(this)">
 			     <i class="fas fa-trash-alt"></i>
-			   </button>`
+			   	</button>
+				<button class="btn btn-danger btn-sm" onclick="etii.editarContenido(${idContenido})" id = "btnEdit-${idContenido}">
+					 <i class="fas fa-edit"></i>
+				</button>
+				<button class="btn btn-danger btn-sm" onclick="etii.saveContenido(${idContenido})" id = "btnSave-${idContenido}" hidden="true">
+					 <i class="fas fa-save"></i>
+				</button>
+			</div>`
 	      ];
 	
 	      const row = tablaContenidosDT.row.add(fila).draw(false);
@@ -413,8 +426,9 @@ const etii = function(){
 
 	  };
 
-	  const saveTema = (id) => {temaForEdit = listaTemas.find(t => t.id === id);
+	  const saveTema = (id) => {
 		  if(isActionEditingTema){
+			  temaForEdit = listaTemas.find(t => t.id === id);
 			 var input_nombre = document.getElementById("id_nombre_tema-"+id);
 			 var input_horas = document.getElementById("id_horas_tema-"+id);
 			 var input_objetivo = document.getElementById("id_objetivo_tema-"+id);
@@ -451,6 +465,33 @@ const etii = function(){
 	  if (idx >= 0) listaContenidos.splice(idx, 1);
 	
 	  reconstruirDesdeEstructuras();
+	};
+
+	const editarContenido = (idContenido) => {
+		if(!isActionEditingContenido){
+		  contenidoForEdit = listaContenidos.find(c => c.idContenido === idContenido);
+		  var contenido = contenidoForEdit.texto;
+		  var contenido_id = "id_contenido-" + idContenido;
+		  contenidoForEdit.texto = `<input type="text" class="form-control" value="${contenido}" id = "${contenido_id}">`;
+		  reconstruirDesdeEstructuras();
+		  document.getElementById("btnEdit-"+idContenido).hidden = true;
+		  document.getElementById("btnSave-"+idContenido).hidden = false;
+		  $('.menuBotones[target="guardarSolicitud"]').prop('disabled', true);
+		  isActionEditingContenido = !isActionEditingContenido;
+		}
+	};
+
+	const saveContenido = (idContenido) => {
+  		if(isActionEditingContenido){
+			  contenidoForEdit = listaContenidos.find(c => c.idContenido === idContenido);
+			 var input_contenido = document.getElementById("id_contenido-"+idContenido);
+			 contenidoForEdit.texto = input_contenido.value;
+			reconstruirDesdeEstructuras();
+			document.getElementById("btnEdit-"+idContenido).hidden = false;
+			document.getElementById("btnSave-"+idContenido).hidden = true;
+			$('.menuBotones[target="guardarSolicitud"]').prop('disabled', false);
+			isActionEditingContenido = !isActionEditingContenido;
+		  }
 	};
 	
 	
@@ -671,6 +712,8 @@ const etii = function(){
 		eliminarTema:	eliminarTema,
 		editarTema:	editarTema,
 		saveTema:	saveTema,
-		eliminarContenido:	eliminarContenido
+		eliminarContenido:	eliminarContenido,
+		editarContenido: editarContenido,
+		saveContenido: saveContenido
 	}
 }();
