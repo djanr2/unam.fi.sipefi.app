@@ -9,6 +9,8 @@ const etii = function(){
 	let listaTemas = [];       // [{ id, nombre, horas, objetivo }]
 	let listaContenidos = [];  // [{ idTema, texto }]
 	let contadorTemas = 1;
+	let temaForEdit = [];
+	let isActionEditingTema = false;
 	
 	/**
 	 * Suma de horas ya capturadas en los temas.
@@ -318,12 +320,20 @@ const etii = function(){
 	      const numero = idx + 1;
 	      const fila = [
 	        numero,
-	        tema.nombre,
+			  tema.nombre,
 	        tema.horas,
 	        tema.objetivo,
-	        `<button class="btn btn-danger btn-sm" onclick="etii.eliminarTema(${tema.id})">
-	           <i class="fas fa-trash-alt"></i>
-	         </button>`
+	        `<div>
+				<button class="btn btn-danger btn-sm" onclick="etii.eliminarTema(${tema.id})">
+				   <i class="fas fa-trash-alt"></i>
+				 </button>
+				 <button class="btn btn-danger btn-sm" onclick="etii.editarTema(${tema.id})" id = "btnEdit-${tema.id}">
+				   <i class="fas fa-edit"></i>
+				 </button>
+				 <button class="btn btn-danger btn-sm" onclick="etii.saveTema(${tema.id})" id = "btnSave-${tema.id}" hidden="true">
+				   <i class="fas fa-save"></i>
+				 </button>
+			</div>`
 	      ];
 	      const row = tablaTemasDT.row.add(fila).draw(false);
 	      $(row.node()).attr("data-idtema", tema.id);
@@ -375,7 +385,54 @@ const etii = function(){
 	    listaTemas = listaTemas.filter(t => t.id !== id);
 	    reconstruirDesdeEstructuras();
 	  };
-	  
+
+	  const editarTema = (id) => {
+	    const tieneContenido = listaContenidos.some(c => c.idTema === id);
+	    if (tieneContenido) {
+	      fComun.mostrarModalAdvertencia("No puedes editar este tema porque tiene contenido asociado.");
+	      return;
+	    }
+
+		if(!isActionEditingTema){
+			temaForEdit = listaTemas.find(t => t.id === id);
+			var nombre_tema = temaForEdit.nombre;
+			var nombre_tema_id = "id_nombre_tema-" + id;
+			var horas_tema = temaForEdit.horas;
+			var horas_tema_id = "id_horas_tema-" + id;
+			var objetivo_tema = temaForEdit.objetivo;
+			var objetivo_tema_id = "id_objetivo_tema-" + id;
+			temaForEdit.nombre = `<input type="text" class="form-control" value="${nombre_tema}" id = "${nombre_tema_id}">`;
+			temaForEdit.horas = `<input type="number" class="form-control" value="${horas_tema}" id = "${horas_tema_id}">`;
+			temaForEdit.objetivo = `<input type="text" class="form-control" value="${objetivo_tema}" id = "${objetivo_tema_id}">`;
+			reconstruirDesdeEstructuras();
+			document.getElementById("btnEdit-"+id).hidden = true;
+			document.getElementById("btnSave-"+id).hidden = false;
+			$('.menuBotones[target="guardarSolicitud"]').prop('disabled', true);
+			isActionEditingTema = !isActionEditingTema;
+		}
+
+	  };
+
+	  const saveTema = (id) => {temaForEdit = listaTemas.find(t => t.id === id);
+		  if(isActionEditingTema){
+			 var input_nombre = document.getElementById("id_nombre_tema-"+id);
+			 var input_horas = document.getElementById("id_horas_tema-"+id);
+			 var input_objetivo = document.getElementById("id_objetivo_tema-"+id);
+
+			 temaForEdit.nombre = input_nombre.value;
+			 temaForEdit.horas = input_horas.value;
+			 temaForEdit.objetivo = input_objetivo.value;
+
+			reconstruirDesdeEstructuras();
+			document.getElementById("btnEdit-"+id).hidden = false;
+			document.getElementById("btnSave-"+id).hidden = true;
+			$('.menuBotones[target="guardarSolicitud"]').prop('disabled', false);
+			isActionEditingTema = !isActionEditingTema;
+		  }
+	  };
+
+
+
 	 /**
 	 * Elimina el contenido asociado al botón presionado.
 	 * @param {HTMLElement} boton - Referencia al botón dentro de la fila
@@ -395,6 +452,7 @@ const etii = function(){
 	
 	  reconstruirDesdeEstructuras();
 	};
+	
 	
 	/**
 	 * Calcula los créditos automáticamente con base en horas semana teóricas y prácticas
@@ -611,6 +669,8 @@ const etii = function(){
 		eventoAlerta:	eventoAlerta,
 		eventoAprobSoli:	eventoAprobSoli,
 		eliminarTema:	eliminarTema,
+		editarTema:	editarTema,
+		saveTema:	saveTema,
 		eliminarContenido:	eliminarContenido
 	}
 }();
