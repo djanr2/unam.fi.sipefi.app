@@ -96,9 +96,13 @@ const fcs = function(){
 			    placeholder: "Selecciona una o más seriaciones",
 			    width: '100%'
 			});
-			llenaCombo("ser_anterior", obj.catAsig || [], false);
-			llenaCombo("ser_consecuente", obj.catAsig || [], false);
-			
+
+			const asignaturaRequest = param.info?.split('#@@#')[2] || null;
+			const thisAsignatura = (asignaturaRequest !==null )? asignaturaRequest: "" ;
+
+			llenaCombo("ser_anterior", obj.catAsig.filter(([index, dato]) => dato !==thisAsignatura )|| [], false);
+			llenaCombo("ser_consecuente", obj.catAsig.filter(([index, dato]) => dato !==thisAsignatura ) || [], false);
+
 			//Cargar combos de la sección de bibliografia
 			llenaCombo("tipo_bibliografia", obj.catTipoBib || [], false);
 			
