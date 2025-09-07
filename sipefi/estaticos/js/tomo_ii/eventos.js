@@ -13,6 +13,7 @@ const etii = function(){
 	let contenidoForEdit = [];
 	let isActionEditingTema = false;
 	let isActionEditingContenido = false;
+	let isActionEditingBibliografia = false;
 	
 	/**
 	 * Suma de horas ya capturadas en los temas.
@@ -214,7 +215,7 @@ const etii = function(){
 	   $('#tipo_bibliografia').on('change', function () {
 	       fcs.actualizarCamposExtra();
 	   });
-	   
+
 	   /**
 	    * Evento delegado para eliminar una fila de la tabla de bibliografía.
 	    * Se adjunta al contenedor y aplica solo a botones con clase 'btn-eliminar-biblio'.
@@ -483,9 +484,9 @@ const etii = function(){
 
 	const saveContenido = (idContenido) => {
   		if(isActionEditingContenido){
-			  contenidoForEdit = listaContenidos.find(c => c.idContenido === idContenido);
-			 var input_contenido = document.getElementById("id_contenido-"+idContenido);
-			 contenidoForEdit.texto = input_contenido.value;
+			contenidoFordit = listaContenidos.find(c => c.idContenido === idContenido);
+			var input_contenido = document.getElementById("id_contenido-"+idContenido);
+			contenidoForEdit.texto = input_contenido.value;
 			reconstruirDesdeEstructuras();
 			document.getElementById("btnEdit-"+idContenido).hidden = false;
 			document.getElementById("btnSave-"+idContenido).hidden = true;
@@ -493,7 +494,114 @@ const etii = function(){
 			isActionEditingContenido = !isActionEditingContenido;
 		  }
 	};
-	
+
+	const editarBibliografia = (idBibliografia) => {
+		if(!isActionEditingBibliografia) {
+			var bibliografiaTable = $('#tablaBibliografia').DataTable();
+
+			var varHandler = bibliografiaTable.cell(idBibliografia - 1, 1).data();
+			var autorForEdit = varHandler ? varHandler : "";
+			var autorForEdit_input = `<input type="text" class="form-control" value="${autorForEdit}" id = "id-biblio-autor-${idBibliografia}">`;
+			bibliografiaTable.cell(idBibliografia - 1, 1).data(autorForEdit_input).draw();
+
+			varHandler = bibliografiaTable.cell(idBibliografia - 1, 2).data();
+			var yearForEdit = varHandler ? varHandler : "0";
+			var yearForEdit_input = `<input type="number" class="form-control" value="${yearForEdit}" id = "id-biblio-year-${idBibliografia}">`;
+			bibliografiaTable.cell(idBibliografia - 1, 2).data(yearForEdit_input).draw();
+
+			varHandler = bibliografiaTable.cell(idBibliografia - 1, 3).data();
+			var isComplementaria = (varHandler === "Complementaria" )? true : false;
+			var clasificacionForEdit_input = `<select id = "id-biblio-clasificacion-${idBibliografia}" className="form-select">
+				<option value="0" ${(!isComplementaria)? "selected" : ""}>Básica</option>
+				<option value="1" ${(isComplementaria)? "selected" : ""}>Complementaria</option>
+			</select>`;
+			bibliografiaTable.cell(idBibliografia - 1, 3).data(clasificacionForEdit_input).draw();
+
+			varHandler = bibliografiaTable.cell(idBibliografia - 1, 4).data();
+			var tituloForEdit = varHandler ? varHandler : "";
+			var tituloForEdit_input = `<input type="text" class="form-control" value="${tituloForEdit}" id = "id-biblio-titulo-${idBibliografia}">`;
+			bibliografiaTable.cell(idBibliografia - 1, 4).data(tituloForEdit_input).draw();
+
+			varHandler = bibliografiaTable.cell(idBibliografia - 1, 5).data();
+			var extra1ForEdit = varHandler ? varHandler : "";
+			var extra1ForEdit_input = `<input type="text" class="form-control" value="${extra1ForEdit}" id = "id-biblio-extra1-${idBibliografia}">`;
+			bibliografiaTable.cell(idBibliografia - 1, 5).data(extra1ForEdit_input).draw();
+
+			varHandler = bibliografiaTable.cell(idBibliografia - 1, 6).data();
+			var extra2ForEdit = varHandler ? varHandler : "";
+			var extra2ForEdit_input = `<input type="text" class="form-control" value="${extra2ForEdit}" id = "id-biblio-extra2-${idBibliografia}">`;
+			bibliografiaTable.cell(idBibliografia - 1, 6).data(extra2ForEdit_input).draw();
+
+			varHandler = bibliografiaTable.cell(idBibliografia - 1, 7).data();
+			var extra3ForEdit = varHandler ? varHandler : "";
+			var extra3ForEdit_input = `<input type="text" class="form-control" value="${extra3ForEdit}" id = "id-biblio-extra3-${idBibliografia}">`;
+			bibliografiaTable.cell(idBibliografia - 1, 7).data(extra3ForEdit_input).draw();
+
+			varHandler = bibliografiaTable.cell(idBibliografia - 1, 8).data();
+			var extra4ForEdit = varHandler ? varHandler : "";
+			var extra4ForEdit_input = `<input type="text" class="form-control" value="${extra4ForEdit}" id = "id-biblio-extra4-${idBibliografia}">`;
+			bibliografiaTable.cell(idBibliografia - 1, 8).data(extra4ForEdit_input).draw();
+
+			varHandler = bibliografiaTable.cell(idBibliografia - 1, 9).data();
+			var temasForEdit = varHandler ? varHandler : "";
+			var temasForEdit_input = `<input type="text" class="form-control" value="${temasForEdit}" id = "id-biblio-temas-${idBibliografia}">`;
+			bibliografiaTable.cell(idBibliografia - 1, 9).data(temasForEdit_input).draw();
+
+			document.getElementById("bibliografia-btnedit-" + (idBibliografia)).hidden = true;
+			document.getElementById("bibliografia-btnsave-" + (idBibliografia)).hidden = false;
+			$('.menuBotones[target="guardarSolicitud"]').prop('disabled', true);
+			isActionEditingBibliografia = !isActionEditingBibliografia;
+		}
+	};
+
+	const saveBibliografia = (idBibliografia) => {
+		if (isActionEditingBibliografia) {
+			const bibliografiaTable = $('#tablaBibliografia').DataTable();
+
+			var varHandler = $(bibliografiaTable.cell(idBibliografia-1, 1).node()).find('input').val();
+			const autorForEdit = varHandler ? varHandler : "";
+			bibliografiaTable.cell(idBibliografia-1, 1).data(autorForEdit).draw();
+
+			varHandler = $(bibliografiaTable.cell(idBibliografia-1, 2).node()).find('input').val();
+			const yearForEdit = varHandler ? varHandler : "0";
+			bibliografiaTable.cell(idBibliografia-1, 2).data(yearForEdit).draw();
+
+			const clasificacionForEdit_selected = document.getElementById(`id-biblio-clasificacion-${idBibliografia}`).value;
+			const clasificacionForEdit_input = (clasificacionForEdit_selected === "0")? "B&aacute;sica" : "Complementaria";
+			bibliografiaTable.cell(idBibliografia - 1, 3).data(clasificacionForEdit_input).draw();
+
+			varHandler = $(bibliografiaTable.cell(idBibliografia-1, 4).node()).find('input').val();
+			const tituloForEdit = varHandler ? varHandler : "";
+			bibliografiaTable.cell(idBibliografia-1, 4).data(tituloForEdit).draw();
+
+			varHandler = $(bibliografiaTable.cell(idBibliografia-1, 5).node()).find('input').val();
+			const extra1ForEdit = varHandler ? varHandler : "";
+			bibliografiaTable.cell(idBibliografia-1, 5).data(extra1ForEdit).draw();
+
+			varHandler= $(bibliografiaTable.cell(idBibliografia-1, 6).node()).find('input').val();
+			const extra2ForEdit =  varHandler ? varHandler : "";
+			bibliografiaTable.cell(idBibliografia-1, 6).data(extra2ForEdit).draw();
+
+			varHandler = $(bibliografiaTable.cell(idBibliografia-1, 7).node()).find('input').val();
+			const extra3ForEdit = varHandler ? varHandler : "";
+			bibliografiaTable.cell(idBibliografia-1, 7).data(extra3ForEdit).draw();
+
+			varHandler = $(bibliografiaTable.cell(idBibliografia-1, 8).node()).find('input').val();
+			const extra4ForEdit = varHandler ? varHandler : "";
+			bibliografiaTable.cell(idBibliografia-1, 8).data(extra4ForEdit).draw();
+
+			varHandler = $(bibliografiaTable.cell(idBibliografia-1, 9).node()).find('input').val();
+			const temasForEdit = varHandler ? varHandler : "";
+			bibliografiaTable.cell(idBibliografia-1, 9).data(temasForEdit).draw();
+
+			document.getElementById("bibliografia-btnedit-"+idBibliografia).hidden = false;
+			document.getElementById("bibliografia-btnsave-"+idBibliografia).hidden = true;
+			$('.menuBotones[target="guardarSolicitud"]').prop('disabled', false);
+			isActionEditingBibliografia = !isActionEditingBibliografia;
+		}
+	  };
+
+
 	
 	/**
 	 * Calcula los créditos automáticamente con base en horas semana teóricas y prácticas
@@ -714,6 +822,8 @@ const etii = function(){
 		saveTema:	saveTema,
 		eliminarContenido:	eliminarContenido,
 		editarContenido: editarContenido,
-		saveContenido: saveContenido
+		saveContenido: saveContenido,
+		editarBibliografia: editarBibliografia,
+		saveBibliografia: saveBibliografia
 	}
 }();

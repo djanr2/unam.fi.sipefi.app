@@ -325,6 +325,8 @@ const fcs = function(){
 		  return;
 		}
 
+		const idBibliografia = $('#tablaBibliografia').DataTable().data().length + 1;
+
 		// Construcción de fila
 		const fila = `
 		  <tr>
@@ -343,7 +345,9 @@ const fcs = function(){
 		        <i class="fas fa-trash-alt"></i>
 		      </button>
 		      <input type="hidden" class="datos-biblio" value="${idTipo}@##@${autor}@##@${anio}@##@${clasif}@##@${titulo}@##@${extra1}@##@${extra2}@##@${extra3}@##@${extra4}@##@${temas}">
-		    </td>
+			  <button class="btn btn-sm btn-danger" id = "bibliografia-btnedit-${idBibliografia}" onclick="etii.editarBibliografia(${idBibliografia})"><i class="fas fa-edit"></i></button>
+			  <button class="btn btn-sm btn-danger" id = "bibliografia-btnsave-${idBibliografia}" onclick="etii.saveBibliografia(${idBibliografia})" hidden><i class="fas fa-save"></i></button>
+		     </td>
 		  </tr>
 		`;
 
@@ -374,14 +378,13 @@ const fcs = function(){
 	  const catalogoTipos = (fComun.getVarLocalJ("catalogos")?.catTipoBib) || [];
 	  const tabla = $('#tablaBibliografia').DataTable();
 	  const data = [];
-	
 	  tabla.rows().every(function () {
 	    const fila = $(this.node()).find('td');
 	    const tipoTexto = fila.eq(0).text().trim();
 	    const tipoObj = catalogoTipos.find(([id, nombre]) => nombre.trim().toUpperCase() === tipoTexto.toUpperCase());
 		const clasifTexto = fila.eq(3).text().trim().toLowerCase();
 		const clasif = clasifTexto === 'complementaria' ? 1 : 0;
-		
+
 	    data.push({
 	      idTipo: tipoObj ? tipoObj[0] : null,
 	      tipo: tipoTexto,
@@ -776,16 +779,21 @@ const fcs = function(){
 			const catTipoBib = fComun.getVarLocalJ("catalogos")?.catTipoBib || [];
 			tablaBib.clear();
 
+
 			(solicitud.bibliografia || []).forEach(b => {
 				const tipoBib = catTipoBib.find(([id]) => id == b.idTipo)?.[1] || "Tipo desconocido";
 				const clasif = b.clasifBiblio == 1 ? "Complementaria" : "Básica";
 				const hidden = `<input type="hidden" class="datos-biblio" value="${b.idTipo}@##@${b.autor}@##@${b.anio}@##@${b.clasifBiblio}@##@${b.titulo}@##@${b.extra1}@##@${b.extra2}@##@${b.extra3}@##@${b.extra4}@##@${b.temas}">`;
-
 				tablaBib.row.add([
 					tipoBib, b.autor, b.anio, clasif, b.titulo, b.extra1, b.extra2, b.extra3, b.extra4, b.temas,
-					`<button class="btn btn-sm btn-danger btn-eliminar-biblio"><i class="fas fa-trash-alt"></i></button>${hidden}`
+					`<div>
+						<button class="btn btn-sm btn-danger btn-eliminar-biblio"><i class="fas fa-trash-alt"></i></button>${hidden}
+						<button class="btn btn-sm btn-danger" id = "bibliografia-btnedit-${b.id}" onclick="etii.editarBibliografia(${b.id})"><i class="fas fa-edit"></i></button>
+						<button class="btn btn-sm btn-danger" id = "bibliografia-btnsave-${b.id}" onclick="etii.saveBibliografia(${b.id})" hidden><i class="fas fa-save"></i></button>
+					</div>`
 				]);
 			});
+
 			tablaBib.draw();
 
 			// === 5. ESTRATEGIAS Y EVALUACIÓN ===
