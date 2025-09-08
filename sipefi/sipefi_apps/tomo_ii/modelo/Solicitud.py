@@ -370,7 +370,7 @@ class Solicitud:
             })
 
     def _insertar_estrategias(self, estrategias):
-        for tipo, formas in estrategias.get("formasEvaluacion", {}).items():
+        for _, formas in estrategias.get("formasEvaluacion", {}).items():
             for f in formas:
                 self.db.insertar("""
                     INSERT INTO SIPEFI.TD_REL_ASIG_EVALUACION (

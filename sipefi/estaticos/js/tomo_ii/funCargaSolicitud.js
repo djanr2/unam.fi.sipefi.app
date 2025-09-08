@@ -8,19 +8,19 @@ const fcs = function(){
 	//Variables globales
 	const camposPorTipo = {
 	    'LIBRO IMPRESO': {
-	      labels: ['Editorial', 'Edición (opcional)', '', ''],
+	      labels: ['Editorial', 'Edición', '', ''],
 	      requeridos: [true, false, false, false]
 	    },
 	    'ARTÍCULO IMPRESO': {
-	      labels: ['Nombre de la Revista', 'Volumen(Número)', 'Páginas', 'DOI/URL (opcional)'],
+	      labels: ['Nombre de la Revista', 'Volumen(Número)', 'Páginas', 'DOI/URL'],
 	      requeridos: [true, true, true, false]
 	    },
 	    'NORMA O LEY': {
-	      labels: ['Edición/Revisión (opcional)', 'Editorial/Organización', 'URL o DOI', ''],
+	      labels: ['Edición/Revisión', 'Editorial/Organización', 'DOI/URL', ''],
 	      requeridos: [false, true, true, false]
 	    },
 	    'APUNTES DE CLASE (MATERIAL DE CURSO)': {
-	      labels: ['Tipo de Documento', 'Nombre de la Institución', 'URL/Enlace (opcional)', ''],
+	      labels: ['Tipo de Documento', 'Nombre de la Institución', 'URL/Enlace', ''],
 	      requeridos: [true, true, false, false]
 	    },
 	    'MATERIAL AUDIOVISUAL DIGITAL': {
@@ -28,16 +28,24 @@ const fcs = function(){
 	      requeridos: [true, true, true, false]
 	    },
 	    'LIBRO ELECTRÓNICO': {
-	      labels: ['Editorial', 'Edición (opcional)', 'DOI/URL', ''],
+	      labels: ['Editorial', 'Edición', 'DOI/URL', ''],
 	      requeridos: [true, false, true, false]
 	    },
 	    'ARTÍCULO ELECTRÓNICO': {
 	      labels: ['Nombre de la Revista', 'Volumen(Número)', 'Páginas', 'DOI/URL'],
 	      requeridos: [true, true, true, true]
 	    },
-		'TESIS': {
-	      labels: ['Grado de la Tesis', 'Institución que otorga título', 'Nombre del repositorio', 'URL del repositorio'],
-	      requeridos: [true, true, true, true]
+		'TESIS EN REPOSITORIO DIGITAL': {
+	      labels: ['Grado de la tesis', 'Nombre de la institución', 'DOI/URL', ''],
+	      requeridos: [true, true, true, false]
+	    },
+		'INFORME': {
+	      labels: ['Serie o número de informe', 'Editorial/Organización', 'URL', ''],
+	      requeridos: [true, true, true, false]
+	    },
+		'PÁGINA WEB': {
+	      labels: ['Nombre del sitio web', 'URL', '', ''],
+	      requeridos: [true, true, false, false]
 	    },
 	    'DEFAULT': {
 	      labels: ['Campo extra 1', 'Campo extra 2', 'Campo extra 3', 'Campo extra 4'],
