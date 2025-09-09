@@ -172,24 +172,49 @@ class Solicitud:
 
     def procesar_aprobacion(self, obj):
         """
-        Procesa una solicitud al siguiente estatus (Estatus + 1 o +2 según rol).
+        Procesa una solicitud al siguiente estatus (Estatus + 1).
         Guarda traza del cambio de estatus y actualiza token.
 
         :param obj: Objeto completo de solicitud.
         :return: Diccionario con estatus actualizado.
         """
-        self.id_solicitud = int(obj.get("metadatos", {}).get("numSolicitud"))
-        self.id_estatus = int(obj.get("metadatos", {}).get("idEstSoli"))
-        self.usuario = obj.get("metadatos", {}).get("usuarioSoli")
-        comentario = obj.get("metadatos", {}).get("comentarios")
-
-        # Aprobación: Avanza de 1->2 o 2->3
-        nuevo_estatus = self.id_estatus + 1 if self.id_estatus < 3 else 3
-        accion = "Envío a validación" if nuevo_estatus == 2 else "Aprobado"
-        self._guardar_traza(comentario, self.id_estatus, nuevo_estatus, accion)
-        self._actualizar_token()
-
-        return {"idS": self.id_solicitud, "idES": nuevo_estatus, "nomES": self.obtener_nombre_estatus(nuevo_estatus)}
+        conn = self.db.conexion()
+        try:
+            self.id_solicitud = int(obj.get("metadatos", {}).get("numSolicitud"))
+            self.id_estatus   = int(obj.get("metadatos", {}).get("idEstSoli"))
+            self.usuario      = obj.get("metadatos", {}).get("usuarioSoli")
+            comentario        = obj.get("metadatos", {}).get("comentarios")
+    
+            if self.id_estatus >= 3:
+                # Ya está concluida: no avanza
+                return {"idS": self.id_solicitud, "idES": self.id_estatus, "nomES": self.obtener_nombre_estatus(self.id_estatus)}
+    
+            nuevo_estatus = self.id_estatus + 1
+            id_usuario_mod = self.db.getIdUsuario(self.usuario)
+    
+            # Marcamos versión actual como histórica
+            self.db.insertar("""
+                UPDATE SIPEFI.TD_SOLICITUD_TOMO_II
+                SET historica = 1, fecha_modificacion = SYSDATE, id_usuario_mod = :id_usuario_mod
+                WHERE id_solicitud = :id_solicitud AND id_estatus_solicitud = :id_estatus
+            """, {"id_usuario_mod": id_usuario_mod, "id_solicitud": self.id_solicitud, "id_estatus": self.id_estatus})
+    
+            # Limpiamos cualquier residuo en el estatus destino e insertamos clon de la solicitud en el nuevo estatus
+            self.limpiar_solicitud(self.id_solicitud, nuevo_estatus)
+            self._clonar_version(self.id_solicitud, self.id_estatus, nuevo_estatus, self.usuario)
+    
+            # Guardamos Traza y actualizamos token
+            accion = "Envío a validación" if nuevo_estatus == 2 else "Aprobado"
+            self._guardar_traza(comentario, self.id_estatus, nuevo_estatus, accion)
+            self._actualizar_token()
+    
+            conn.commit()
+            return {"idS": self.id_solicitud, "idES": nuevo_estatus, "nomES": self.obtener_nombre_estatus(nuevo_estatus)}
+        except Exception:
+            conn.rollback()
+            raise
+        finally:
+            conn.close()
 
     def rechazar_solicitud(self, obj):
         """
@@ -198,14 +223,119 @@ class Solicitud:
         :param obj: Objeto de solicitud.
         :return: Diccionario de confirmación.
         """
-        self.id_solicitud = int(obj.get("metadatos", {}).get("numSolicitud"))
-        self.id_estatus = int(obj.get("metadatos", {}).get("idEstSoli"))
-        self.usuario = obj.get("metadatos", {}).get("usuarioSoli")
-        comentario = obj.get("metadatos", {}).get("comentarios")
-
-        self._guardar_traza(comentario, self.id_estatus, 1, "Rechazada")
-        self._actualizar_token()
-        return {"idS": self.id_solicitud, "idES": self.id_estatus, "nomES": "Rechazada"}
+        conn = self.db.conexion()
+        try:
+            self.id_solicitud = int(obj.get("metadatos", {}).get("numSolicitud"))
+            self.id_estatus   = int(obj.get("metadatos", {}).get("idEstSoli"))
+            self.usuario      = obj.get("metadatos", {}).get("usuarioSoli")
+            comentario        = obj.get("metadatos", {}).get("comentarios")
+            id_usuario_mod    = self.db.getIdUsuario(self.usuario)
+    
+            if self.id_estatus <= 1:
+                # No hay versión anterior para reactivar
+                self._guardar_traza(comentario, self.id_estatus, self.id_estatus, "Rechazada (sin versión anterior)")
+                self._actualizar_token()
+                return {"idS": self.id_solicitud, "idES": self.id_estatus, "nomES": "Elaboración"}
+    
+            estatus_anterior = self.id_estatus - 1
+    
+            # Borramos la versión actual completa
+            self.limpiar_solicitud(self.id_solicitud, self.id_estatus)
+    
+            # Reactivamos la versión anterior
+            self.db.insertar("""
+                UPDATE SIPEFI.TD_SOLICITUD_TOMO_II
+                SET historica = 0, fecha_modificacion = SYSDATE, id_usuario_mod = :id_usuario_mod
+                WHERE id_solicitud = :id_solicitud AND id_estatus_solicitud = :estatus_anterior
+            """, {"id_usuario_mod": id_usuario_mod, "id_solicitud": self.id_solicitud, "estatus_anterior": estatus_anterior})
+    
+            # Guardamos traza y actualizamos token
+            self._guardar_traza(comentario, self.id_estatus, estatus_anterior, "Rechazada")
+            self._actualizar_token()
+    
+            conn.commit()
+            return {"idS": self.id_solicitud, "idES": estatus_anterior, "nomES": self.obtener_nombre_estatus(estatus_anterior)}
+        except Exception:
+            conn.rollback()
+            raise
+        finally:
+            conn.close()
+            
+    def _clonar_version(self, id_soli, est_origen, est_destino, usuario_mod):
+        """Clonamos la solicitud para guardar el nuevo estatus de la solicitud."""
+        # Encabezado
+        self.db.insertar("""
+            INSERT INTO SIPEFI.TD_SOLICITUD_TOMO_II (
+                id_solicitud, id_estatus_solicitud, historica, asignatura, clave_asignatura, creditos,
+                id_area_conocimiento, id_modalidad, id_tipo_modalidad, id_caracter_asig,
+                horas_teo_semana, horas_pract_semana, horas_teo_semestre, horas_pract_semestre,
+                objetivo_general, actividades_practicas, formacion_integral, perfil_profesiografico, id_perfil,
+                fecha_creacion, fecha_modificacion, id_usuario_creacion, id_usuario_mod
+            )
+            SELECT
+                id_solicitud, :est_destino, 0, asignatura, clave_asignatura, creditos,
+                id_area_conocimiento, id_modalidad, id_tipo_modalidad, id_caracter_asig,
+                horas_teo_semana, horas_pract_semana, horas_teo_semestre, horas_pract_semestre,
+                objetivo_general, actividades_practicas, formacion_integral, perfil_profesiografico, id_perfil,
+                fecha_creacion, SYSDATE, id_usuario_creacion, :id_usuario_mod
+            FROM SIPEFI.TD_SOLICITUD_TOMO_II
+            WHERE id_solicitud = :id_solicitud AND id_estatus_solicitud = :est_origen
+        """, {
+            "id_solicitud": id_soli, "est_origen": est_origen,
+            "est_destino": est_destino, "id_usuario_mod": self.db.getIdUsuario(usuario_mod)
+        })
+    
+        # Hijas
+        self.db.insertar("""
+            INSERT INTO SIPEFI.TD_REL_VAL_PRACTICO (id_solicitud, id_estatus_solicitud, id_valor_practico, busuario)
+            SELECT id_solicitud, :est_destino, id_valor_practico, :busuario
+            FROM SIPEFI.TD_REL_VAL_PRACTICO
+            WHERE id_solicitud = :id_solicitud AND id_estatus_solicitud = :est_origen
+        """, {"id_solicitud": id_soli, "est_origen": est_origen, "est_destino": est_destino, "busuario": usuario_mod})
+    
+        self.db.insertar("""
+            INSERT INTO SIPEFI.TD_REL_LIC_ASIGNATURA (id_solicitud, id_estatus_solicitud, id_licenciatura, seriacion_ant, seriacion_cons, semestre, busuario)
+            SELECT id_solicitud, :est_destino, id_licenciatura, seriacion_ant, seriacion_cons, semestre, :busuario
+            FROM SIPEFI.TD_REL_LIC_ASIGNATURA
+            WHERE id_solicitud = :id_solicitud AND id_estatus_solicitud = :est_origen
+        """, {"id_solicitud": id_soli, "est_origen": est_origen, "est_destino": est_destino, "busuario": usuario_mod})
+    
+        self.db.insertar("""
+            INSERT INTO SIPEFI.TD_TEMARIO_ASIGNATURA (id_solicitud, id_estatus_solicitud, num_tema, tema, objetivo, horas_tema, busuario)
+            SELECT id_solicitud, :est_destino, num_tema, tema, objetivo, horas_tema, :busuario
+            FROM SIPEFI.TD_TEMARIO_ASIGNATURA
+            WHERE id_solicitud = :id_solicitud AND id_estatus_solicitud = :est_origen
+        """, {"id_solicitud": id_soli, "est_origen": est_origen, "est_destino": est_destino, "busuario": usuario_mod})
+    
+        self.db.insertar("""
+            INSERT INTO SIPEFI.TD_CONTENIDO_TEMATICO (id_solicitud, id_estatus_solicitud, num_tema, num_contenido, contenido, busuario)
+            SELECT id_solicitud, :est_destino, num_tema, num_contenido, contenido, :busuario
+            FROM SIPEFI.TD_CONTENIDO_TEMATICO
+            WHERE id_solicitud = :id_solicitud AND id_estatus_solicitud = :est_origen
+        """, {"id_solicitud": id_soli, "est_origen": est_origen, "est_destino": est_destino, "busuario": usuario_mod})
+    
+        self.db.insertar("""
+            INSERT INTO SIPEFI.TD_BIBLIOGRAFIA (id_solicitud, id_estatus_solicitud, id_bibliografia, es_complementaria, id_tipo_bibliografia,
+                                                autor, publicacion, titulo, campo_1, campo_2, campo_3, campo_4, temas_recomienda, busuario)
+            SELECT id_solicitud, :est_destino, id_bibliografia, es_complementaria, id_tipo_bibliografia,
+                   autor, publicacion, titulo, campo_1, campo_2, campo_3, campo_4, temas_recomienda, :busuario
+            FROM SIPEFI.TD_BIBLIOGRAFIA
+            WHERE id_solicitud = :id_solicitud AND id_estatus_solicitud = :est_origen
+        """, {"id_solicitud": id_soli, "est_origen": est_origen, "est_destino": est_destino, "busuario": usuario_mod})
+    
+        self.db.insertar("""
+            INSERT INTO SIPEFI.TD_REL_ASIG_EVALUACION (id_solicitud, id_estatus_solicitud, id_forma_eval, busuario)
+            SELECT id_solicitud, :est_destino, id_forma_eval, :busuario
+            FROM SIPEFI.TD_REL_ASIG_EVALUACION
+            WHERE id_solicitud = :id_solicitud AND id_estatus_solicitud = :est_origen
+        """, {"id_solicitud": id_soli, "est_origen": est_origen, "est_destino": est_destino, "busuario": usuario_mod})
+    
+        self.db.insertar("""
+            INSERT INTO SIPEFI.TD_REL_ASIG_ESTRAT_DID (id_solicitud, id_estatus_solicitud, id_estrategia_didact, busuario)
+            SELECT id_solicitud, :est_destino, id_estrategia_didact, :busuario
+            FROM SIPEFI.TD_REL_ASIG_ESTRAT_DID
+            WHERE id_solicitud = :id_solicitud AND id_estatus_solicitud = :est_origen
+        """, {"id_solicitud": id_soli, "est_origen": est_origen, "est_destino": est_destino, "busuario": usuario_mod})
     
     def obtener_datos_creacion(self):
         """

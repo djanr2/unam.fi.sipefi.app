@@ -102,10 +102,10 @@ const etii = function(){
 				  	fcs.accionSolicitud(1);
 				    break;
 			  case 'aprobarSolicitud':
-				  	//fcs.validaSoliRiesgos(1);
+				  	fcs.validaSolicitud(1);
 				    break;
 			  case 'rechazarSolicitud':
-				  	//fcs.modalRechazoSoli();
+				  	fcs.modalRechazoSoli();
 				    break;
 			  case '#modalComentarios':
 				  	$(accion).modal('show');
@@ -759,7 +759,7 @@ const etii = function(){
 		$(objB).unbind("click");
 		$(objB).on('click', function () {
 			$(objM).modal('hide');
-			opc==1?fcs.accionSolicitud(4):"";
+			opc==1?fcs.accionSolicitud(3):"";
 		});
 	};
 	

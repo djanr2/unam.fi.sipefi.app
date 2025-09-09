@@ -519,6 +519,7 @@ const fcs = function(){
 		objSolicitud = construirSolicitud();
 		let modalAprob = "#modalAprobSoliEstatus";
 		objSolicitud["accionSoli"] = accion;
+		const idEstSolicitud = $("#idES").html();
 		
 		fComun.post2("/SIPEFI/accionSolicitud/", objSolicitud, function(resp){
 			try{
@@ -541,15 +542,15 @@ const fcs = function(){
 					}else if(accion == 2){ //Se proceso correctamente estatus solicitud
 						let msjConfirm = "La aprobaci&oacute;n de la solicitud se ha realizado correctamente.";
 						let estatus = objSolicitud["idEstSoli"];
-						msjConfirm = (estatus==1)?"La solicitud ha sido enviada correctamente para su aprobaci&oacute;n.":msjConfirm;
+						msjConfirm = (idEstSolicitud == 1)?"La solicitud ha sido enviada correctamente para su aprobaci&oacute;n.":msjConfirm;
 						$(modalAprob+" .textoBody").html(msjConfirm);
 						$(modalAprob).modal('show');
-						epf.eventoAprobSoli(".cierraModalAprob",modalAprob);
+						etii.eventoAprobSoli(".cierraModalAprob",modalAprob);
 					}else if(accion == 3){ //Se rechazo correctamente la solicitud
 						let msjConfirm = "La solicitud ha sido rechazada correctamente.";
 						$(modalAprob+" .textoBody").html(msjConfirm);
 						$(modalAprob).modal('show');
-						epf.eventoAprobSoli(".cierraModalAprob",modalAprob);
+						etii.eventoAprobSoli(".cierraModalAprob",modalAprob);
 					}
 				}else{
 					let palabra = (accion==1)?"guardado":(accion==2)?"procesamiento":"rechazo";
@@ -847,6 +848,39 @@ const fcs = function(){
 		}
 	};
 	
+	/**
+	 * Funcion que se encarga de presentar un modal de alerta, para asegurar la accion solicitada de rechazo de la solicitud.
+	 * @return {void}
+	 * @method modalRechazoSoli
+	 * @static
+	 */
+	const modalRechazoSoli = () => {
+		$("#modalAlerta .textoBody").html("" +
+				"Se procede a realizar el <strong>rechazo</strong> de la <br>" +
+				"solicitud <strong>" + $("#numSolicitud").html() + "</strong> con estatus <strong>" + $("#estatusSoli").html() + "</strong>."+ 
+				"<br><br>" +
+				"<center>"+
+					"<strong>&#191;Confirmas la petici&oacute;n&#63;</strong>" +
+				"</center>"+
+				"");
+		$("#modalAlerta .modal-body .btn-secondary").attr('id','cerrarAlerta').html('Cancelar');
+		$("#modalAlerta .modal-body .btn-warning").attr('id','rechazarSoli').html('<strong>Confirmar</strong>');
+		$('#modalAlerta').modal('show');
+		etii.eventoAlerta("#cerrarAlerta","#modalAlerta",0);
+		etii.eventoAlerta("#rechazarSoli","#modalAlerta",1);
+	};
+	
+	/**
+	 * Funcion que realiza la validacion de la solicitud.
+	 * @param {int} opc Parametro que indica si la solicitud debe ser procesada o solo se tiene que realizar la validacion.
+	 * @return {void}
+	 * @method validaSolicitud
+	 * @static
+	 */
+	const validaSolicitud = (opc) =>{
+		accionSolicitud(2);
+	};
+	
 	return{
 		cssVistaCaptura:	cssVistaCaptura,
 		cargaCatalogos:	cargaCatalogos,
@@ -854,6 +888,8 @@ const fcs = function(){
 		actualizarCamposExtra:	actualizarCamposExtra,
 		validaCamposReqBiblio:	validaCamposReqBiblio,
 		accionSolicitud:	accionSolicitud,
-		cargaSolicitudAccion:	cargaSolicitudAccion
+		cargaSolicitudAccion:	cargaSolicitudAccion,
+		modalRechazoSoli:	modalRechazoSoli,
+		validaSolicitud:	validaSolicitud
 	}
 }();

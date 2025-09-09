@@ -67,26 +67,31 @@
 </div>
 
 <!-- Modal procesa solicitud aprobada por estatus -->
-<div class="modal fade modalStatic" id="modalAprobSoliEstatus" tabindex="-1" role="dialog" aria-hidden="true">
-	  <div class="modal-dialog modal-dialog-centered" role="document">
-	    <div class="modal-content">
-	      <div class="modal-header headerModalSucess">
-	        <h5 class="modal-title" >Mensaje de confirmaci&oacute;n</h5>
-	        <button type="button" class="close cierraModalAprob" aria-label="Close">
-	          <span aria-hidden="true" style="color: #fff;">&times;</span>
-	        </button>
-	      </div>
-	      <div class="modal-body">
-	      	<center>
-	        	<span class="textoBody">
-	        	</span>
-	        	<br><br>
-	        	<button type="button" class="btn btn-success cierraModalAprob">Cerrar</button>
-	        </center>
-	        <br>
-	      </div>
-	    </div>
-	  </div>
+<div class="modal fade modalStatic"
+     id="modalAprobSoliEstatus"
+     tabindex="-1"
+     aria-hidden="true"
+     data-bs-backdrop="static" data-bs-keyboard="false">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header headerModalSucess text-white">
+        <h5 class="modal-title">Mensaje de confirmaci&oacute;n</h5>
+
+        <button type="button"
+                class="btn-close btn-close-white cierraModalAprob"
+                data-bs-dismiss="modal"
+                aria-label="Close"></button>
+      </div>
+
+      <div class="modal-body text-center">
+        <span class="textoBody"></span>
+        <br><br>
+        <button type="button"
+                class="btn btn-success cierraModalAprob"
+                data-bs-dismiss="modal">Cerrar</button>
+      </div>
+    </div>
+  </div>
 </div>
 
 
