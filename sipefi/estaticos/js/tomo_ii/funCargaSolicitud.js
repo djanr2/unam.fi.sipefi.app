@@ -52,6 +52,22 @@ const fcs = function(){
 	      requeridos: [false, false, false, false]
 	    }
 	 };
+	 
+	 // --- Estilo para resaltar select2 inválidos (una sola vez) ---
+	 (function ensureSelect2InvalidStyle() {
+	   const styleId = "select2-invalid-style";
+	   if (!document.getElementById(styleId)) {
+	     const css = `
+	       .select2-container .select2-selection.is-invalid {
+	         border-color: #dc3545 !important;
+	         box-shadow: 0 0 0 .25rem rgba(220,53,69,.25);
+	       }`;
+	     const s = document.createElement('style');
+	     s.id = styleId; 
+	     s.textContent = css;
+	     document.head.appendChild(s);
+	   }
+	 })();
 	
 	/**
 	 * Funcion que ajusta Look&feel de elementos mostrados en pantalla al usuario.
@@ -877,7 +893,201 @@ const fcs = function(){
 	 * @method validaSolicitud
 	 * @static
 	 */
-	const validaSolicitud = (opc) =>{
+	const validaSolicitud = (opc = 2) =>{
+		const errs = [];
+		const invalidEls = [];
+
+		// Limpia marcas previas (inputs, selects, textareas y contenedores select2) de errores
+		$('input, select, textarea').removeClass('is-invalid');
+		$('.select2-selection').removeClass('is-invalid');
+
+		const mark = (sel, msg) => { 
+		  const $el = $(sel);
+		  $el.addClass('is-invalid');
+		  // Si es select2, marca su contenedor visual
+		  if ($el.hasClass('select2-hidden-accessible') || $el.data('select2')) {
+		    const $cont = $el.next('.select2').find('.select2-selection');
+		    $cont.addClass('is-invalid');
+		  }
+		  errs.push(msg); 
+		  invalidEls.push(sel); 
+		};
+
+		const valOf = (id) => ($(`#${id}`).val() ?? '').toString().trim();
+		const numOf = (id) => {
+		  const n = parseFloat(valOf(id).replace(',', '.'));
+		  return Number.isFinite(n) ? n : NaN;
+		};
+		const checkText = (id, label) => { if (!valOf(id)) mark(`#${id}`, `Captura ${label}.`); };
+		const checkNumberPos = (id, label) => {
+		  const n = numOf(id);
+		  if (!Number.isFinite(n) || n <= 0) mark(`#${id}`, `${label} debe ser un número > 0.`);
+		  return n;
+		};
+		const checkSelect = (id, label) => {
+		  const $el = $(`#${id}`);
+		  const v = $el.val();
+		  const isArray = Array.isArray(v);
+		  const emptyArray = isArray && v.length === 0;
+		  const onlyZeros = isArray && v.every(x => x === '0' || x === 0 || x === '' || x == null);
+		  const emptyScalar = !isArray && (!v || v === '0');
+		  if (emptyArray || onlyZeros || emptyScalar) mark(`#${id}`, `Selecciona ${label}.`);
+		};
+		
+		const checkNumberNonNeg = (id, label) => {
+		  const n = numOf(id);
+		  if (!Number.isFinite(n) || n < 0) mark(`#${id}`, `${label} debe ser un número ≥ 0.`);
+		  return n;
+		};
+
+		const dtRowsCount = (tblId) => {
+		  if ($.fn.DataTable && $.fn.DataTable.isDataTable(`#${tblId}`)) {
+		    return $(`#${tblId}`).DataTable().rows({ filter: 'applied' }).count();
+		  }
+		  return $(`#${tblId} tbody tr`).length;
+		};
+
+		const dtSumColumn = (tblId, colIdx) => {
+		  let sum = 0;
+		  if ($.fn.DataTable && $.fn.DataTable.isDataTable(`#${tblId}`)) {
+		    const data = $(`#${tblId}`).DataTable().column(colIdx, { search: 'applied' }).data().toArray();
+		    for (const v of data) {
+		      const n = parseFloat(String(v).replace(',', '.'));
+		      if (Number.isFinite(n)) sum += n;
+		    }
+		  } else {
+		    $(`#${tblId} tbody tr`).each(function () {
+		      const txt = $(this).find('td').eq(colIdx).text().trim().replace(',', '.');
+		      const n = parseFloat(txt);
+		      if (Number.isFinite(n)) sum += n;
+		    });
+		  }
+		  return sum;
+		};
+
+		// === Validamos campos input y select validados ===
+		// Selects requeridos 
+		[
+		  ['area_con', 'el área de conocimiento'],
+		  ['modalidad', 'la modalidad'],
+		  ['tipo_modalidad', ' el tipo de modalidad'],
+		  ['caracter', 'el carácter de la asignatura'],
+		  ['estrategias_didacticas', 'al menos una estrategia didáctica'],
+		  ['eval_diagnostica', 'la evaluación diagnóstica'],
+		  ['eval_formativa', 'la evaluación formativa'],
+		  ['eval_sumativa', 'la evaluación sumativa'],
+		].forEach(([id, label]) => checkSelect(id, label));
+
+		// Inputs / Textareas requeridos (formacion_integral es OPCIONAL)
+		[
+		  ['asignatura', 'el nombre de la asignatura'],
+		  ['clave_asignatura', 'la clave de la asignatura'],
+		  ['objetivo', 'el objetivo general'],
+		  ['perfil_profesiografico', 'el perfil profesiográfico'],
+		].forEach(([id, label]) => checkText(id, label));
+
+		// Números requeridos
+		const creditos         = checkNumberPos('creditos', 'los créditos');
+		const hSemTeoSemana    = checkNumberNonNeg('h_sem_teo', 'las horas teóricas por semana');
+		const hSemPraSemana    = checkNumberNonNeg('h_sem_pra', 'las horas prácticas por semana');
+		const hSemTeoTotal     = checkNumberNonNeg('h_semestre_teo', 'las horas teóricas del semestre');
+		const hSemPraTotal     = checkNumberNonNeg('h_semestre_pra', 'las horas prácticas del semestre');
+		const horasPracTemario = checkNumberNonNeg('horasPracticasTemario', 'las horas prácticas del temario');
+
+		// --- Reglas de coherencia horas prácticas ---
+		// Si por semana NO hay prácticas, entonces semestre y temario deben ser 0.
+		// Si por semana SÍ hay prácticas (>0), entonces semestre y temario deben ser >0.
+		if (Number.isFinite(hSemPraSemana) && Number.isFinite(hSemPraTotal) && Number.isFinite(horasPracTemario)) {
+		  if (hSemPraSemana === 0) {
+		    if (hSemPraTotal !== 0) {
+		      mark('#h_semestre_pra', 'Si horas prácticas por semana = 0, las horas prácticas del semestre deben ser 0.');
+		    }
+		    if (horasPracTemario !== 0) {
+		      mark('#horasPracticasTemario', 'Si horas prácticas por semana = 0, las horas prácticas del temario deben ser 0.');
+		    }
+		  } else if (hSemPraSemana > 0) {
+		    if (!(hSemPraTotal > 0)) {
+		      mark('#h_semestre_pra', 'Si hay horas prácticas por semana, debe haber horas prácticas del semestre (> 0).');
+		    }
+		    if (!(horasPracTemario > 0)) {
+		      mark('#horasPracticasTemario', 'Si hay horas prácticas por semana, debe haber horas prácticas en el temario (> 0).');
+		    }
+		  }
+		}
+		
+		// --- Reglas de coherencia horas prácticas ---
+		// Si por semana NO hay teoricas, entonces semestre ser 0.
+		// Si por semana SÍ hay teoricas (>0), entonces semestre >0.
+		if (Number.isFinite(hSemTeoSemana) && Number.isFinite(hSemTeoTotal)) {
+		  if (hSemTeoSemana === 0) {
+		    if (hSemTeoTotal !== 0) {
+		      mark('#h_semestre_teo', 'Si horas teoricas por semana = 0, las horas teoricas del semestre deben ser 0.');
+		    }
+		  } else if (hSemTeoSemana > 0) {
+		    if (!(hSemTeoTotal > 0)) {
+		      mark('#h_semestre_teo', 'Si hay horas teoricas por semana, debe haber horas teoricas del semestre (> 0).');
+		    }
+		  }
+		}
+		
+		// === Validamos Tablas con ≥ 1 registro ===
+		if (dtRowsCount('tablaRelacionesLic') < 1) mark('#tablaRelacionesLic', 'Agrega al menos una relación licenciatura–asignatura.');
+		if (dtRowsCount('tablaBibliografia')  < 1) mark('#tablaBibliografia',  'Agrega al menos una referencia bibliográfica.');
+		if (dtRowsCount('tablaTemas')         < 1) mark('#tablaTemas',         'Agrega al menos un tema al temario.');
+		if (dtRowsCount('tablaContenidos')    < 1) mark('#tablaContenidos',    'Agrega al menos un contenido (para algún tema).');
+
+		// === Validamos Horas del semestre ===
+		const COL_HORAS_TEMA = 2; 
+		const sumaHorasTemas = dtSumColumn('tablaTemas', COL_HORAS_TEMA);
+
+		const horasTotalesSemestre = hSemTeoTotal + hSemPraTotal;
+		const esperado             = sumaHorasTemas + horasPracTemario;
+
+		if (Number.isFinite(horasTotalesSemestre) && Number.isFinite(esperado)) {
+		  if (Math.abs(horasTotalesSemestre - esperado) > 0.0001) {
+		    $('#h_semestre_teo, #h_semestre_pra, #horasPracticasTemario, #tablaTemas').addClass('is-invalid');
+		    $('.select2-selection[aria-labelledby="h_semestre_teo"], .select2-selection[aria-labelledby="h_semestre_pra"]').addClass('is-invalid');
+		    errs.push(
+		      `Las horas totales del semestre (${horasTotalesSemestre}) deben ser iguales a ` +
+		      `Horas de temas (${sumaHorasTemas}) + Horas prácticas del temario (${horasPracTemario}).`
+		    );
+		  }
+		}
+		
+		if (Number.isFinite(hSemTeoSemana) && Number.isFinite(hSemPraSemana)) {
+		  if (hSemTeoSemana === 0 && hSemPraSemana === 0) {
+		    mark('#h_sem_teo', 'Debe haber horas teóricas o prácticas por semana (> 0 en al menos una).');
+		    mark('#h_sem_pra', 'Debe haber horas teóricas o prácticas por semana (> 0 en al menos una).');
+		  }
+		}
+
+		// === Resultado: si hay errores, mostramos modal de errores ===
+		if (errs.length) {
+		  const txtH = "No se puede procesar la solicitud";
+		  const body = `
+		    <div class='form-group'>
+		      <p>Corrige lo siguiente antes de continuar:</p>
+		      <ul class="mb-0">
+		        ${errs.map(e => `<li>${e}</li>`).join('')}
+		      </ul>
+		    </div>`;
+		  fComun.mostrarModalAdvertencia(body, txtH);
+
+		  // Enfoca el primer inválido y hace scroll
+		  if (invalidEls.length) {
+		    const $first = $(invalidEls[0]);
+		    try { 
+		      if ($first.data('select2')) { $first.select2('open'); }
+		      else { $first.trigger('focus'); } 
+		    } catch(e) {}
+		    try {
+		      $('html, body').animate({ scrollTop: Math.max(0, $first.offset().top - 120) }, 350);
+		    } catch(e) {}
+		  }
+		  return;
+		}
+
+		// === si todo OK: procesar ===
 		accionSolicitud(2);
 	};
 	

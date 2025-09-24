@@ -463,7 +463,7 @@ class Solicitud:
                 "id_solicitud": self.id_solicitud,
                 "id_estatus_solicitud": self.id_estatus,
                 "num_tema": num_tema,
-                "num_contenido": cont["numeroCont"],
+                "num_contenido": cont["numeroCont"].split(".")[1],
                 "contenido": cont["contenido"],
                 "busuario": self.usuario
             })
@@ -565,6 +565,11 @@ class Solicitud:
         })
 
     def obtener_nombre_estatus(self, id_est):
+        try:
+            id_est = int(id_est)
+        except (TypeError, ValueError):
+            # Si no se puede convertir, forzamos al default
+            return "Elaboración"
         return {
             0: "Cancelada",
             1: "Elaboración",
@@ -645,7 +650,7 @@ class Solicitud:
             """, params)
         
             contenido = self.db.consulta("""
-                SELECT num_tema, num_contenido, contenido
+                SELECT num_tema, num_tema||'.'||num_contenido, contenido
                 FROM SIPEFI.TD_CONTENIDO_TEMATICO
                 WHERE id_solicitud = :id_solicitud AND id_estatus_solicitud = :id_estatus_solicitud
             """, params)

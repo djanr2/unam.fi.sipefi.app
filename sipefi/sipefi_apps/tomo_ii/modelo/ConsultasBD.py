@@ -115,6 +115,16 @@ class ConsultasBD():
             """
             cursor = conBD().cursorBD()
             try:
+                extraCond = """ 
+                        a.ID_USUARIO_MOD = '""" + str(id_usuario) + """'
+                        and a.ID_USUARIO_MOD != a.ID_USUARIO_CREACION
+                        """
+                if estatus == 1: #Operativo
+                    extraCond = """
+                        (a.ID_USUARIO_MOD = '""" + str(id_usuario) + """' or
+                        a.ID_USUARIO_CREACION = '""" + str(id_usuario) + """'
+                        )
+                    """
                 data = cursor.execute("""
                             select 
                                 'SIPEFI-'||g.id_solicitud, 
@@ -159,7 +169,9 @@ class ConsultasBD():
                                     ON a.ID_USUARIO_CREACION = ucrea.ID_USUARIO
                                 LEFT JOIN PARAMETRO.TP_USUARIO umod 
                                     ON a.ID_USUARIO_MOD = umod.ID_USUARIO
-                                where a.ID_USUARIO_MOD = '""" + str(id_usuario) + """'
+                                where 
+                                a.historica = 0 and
+                                """ + extraCond + """
                             ) g 
                             where g.id_estatus_solicitud != '""" + str(estatus) + """' 
                             order by g.id_solicitud desc
@@ -210,7 +222,9 @@ class ConsultasBD():
                         and a.id_solicitud not in 
                                 (select distinct id_solicitud 
                                     from TD_SOLICITUD_TOMO_II 
-                                    where ID_USUARIO_MOD = '""" + str(id_usuario) + """'
+                                    where (ID_USUARIO_MOD = '""" + str(id_usuario) + """'
+                                    or ID_USUARIO_CREACION = '""" + str(id_usuario) + """'
+                                    )
                                 )
                     order by a.id_solicitud desc
                 """)

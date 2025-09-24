@@ -355,7 +355,7 @@ const etii = function(){
 	      const numTema = mapIdTemaToNumero[contenido.idTema];
 	      const nombreTema = mapIdTemaToNombre[contenido.idTema];
 	      const numContenido = contadorPorTema[contenido.idTema] = (contadorPorTema[contenido.idTema] || 1);
-		  const idContenido = parseFloat(numTema+"."+numContenido);
+		  const idContenido = numTema + "." + numContenido;
 
 		  contenido.idContenido = idContenido;
 

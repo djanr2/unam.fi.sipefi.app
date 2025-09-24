@@ -189,10 +189,10 @@ const soltii = function(){
 		let idRV = fComun.getVarLocalJ("idsValidador");
 		let rol = parseInt($("#rol").html());
 		$("#tablaSoliUsuario_wrapper .tituloTablas").html(
-				($.inArray(rol,idRV) != -1)?'<strong>Validaciones pendientes</strong>':
+				($.inArray(rol,idRV) != -1)?'<strong>Pendientes por validar</strong>':
 											'<strong>Solicitudes pendientes de '+$("#usuario").html()+'</strong>');
-		$("#tablaSoliAvanzadas_wrapper .tituloTablas").html('<strong>Solicitudes en validaci&oacute;n</strong>');
-		$("#tablaSoliRecientes_wrapper .tituloTablas").html('<strong>Solicitudes recientes</strong>');
+		$("#tablaSoliAvanzadas_wrapper .tituloTablas").html('<strong>Solicitudes donde particip&eacute;</strong>');
+		$("#tablaSoliRecientes_wrapper .tituloTablas").html('<strong>Otras Solicitudes</strong>');
 		$("#tablaSoliUsuario th").addClass("centrar");
 		$("#tablaSoliAvanzadas th").addClass("centrar");
 		$("#tablaSoliRecientes th").addClass("centrar");
