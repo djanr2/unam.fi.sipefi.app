@@ -367,10 +367,10 @@ const etii = function(){
 				<button class="btn btn-danger btn-sm" onclick="etii.eliminarContenido(this)">
 			     <i class="fas fa-trash-alt"></i>
 			   	</button>
-				<button class="btn btn-danger btn-sm" onclick="etii.editarContenido(${idContenido})" id = "btnEdit-${idContenido}">
+				<button class="btn btn-danger btn-sm" onclick="etii.editarContenido(${numTema},${numContenido})" id = "btnEdit-${idContenido}">
 					 <i class="fas fa-edit"></i>
 				</button>
-				<button class="btn btn-danger btn-sm" onclick="etii.saveContenido(${idContenido})" id = "btnSave-${idContenido}" hidden="true">
+				<button class="btn btn-danger btn-sm" onclick="etii.saveContenido(${numTema},${numContenido})" id = "btnSave-${idContenido}" hidden="true">
 					 <i class="fas fa-save"></i>
 				</button>
 			</div>`
@@ -402,11 +402,6 @@ const etii = function(){
 
 	  const editarTema = (id) => {
 	    const tieneContenido = listaContenidos.some(c => c.idTema === id);
-	    if (tieneContenido) {
-	      fComun.mostrarModalAdvertencia("No puedes editar este tema porque tiene contenido asociado.");
-	      return;
-	    }
-
 		if(!isActionEditingTema){
 			temaForEdit = listaTemas.find(t => t.id === id);
 			var nombre_tema = temaForEdit.nombre;
@@ -468,7 +463,9 @@ const etii = function(){
 	  reconstruirDesdeEstructuras();
 	};
 
-	const editarContenido = (idContenido) => {
+	const editarContenido = (numTema, numContenido) => {
+		const temaStr = String(numContenido);
+		const idContenido = ""+numTema+"."+temaStr;
 		if(!isActionEditingContenido){
 		  contenidoForEdit = listaContenidos.find(c => c.idContenido === idContenido);
 		  var contenido = contenidoForEdit.texto;
@@ -482,7 +479,9 @@ const etii = function(){
 		}
 	};
 
-	const saveContenido = (idContenido) => {
+	const saveContenido = (numTema, numContenido) => {
+		const temaStr = String(numContenido);
+		const idContenido = ""+numTema+"."+temaStr;
   		if(isActionEditingContenido){
 			contenidoFordit = listaContenidos.find(c => c.idContenido === idContenido);
 			var input_contenido = document.getElementById("id_contenido-"+idContenido);
