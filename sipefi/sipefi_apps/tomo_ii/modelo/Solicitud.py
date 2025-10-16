@@ -615,20 +615,21 @@ class Solicitud:
             valor_practico_list = [row[0] for row in valor_practico]
             
             lics_raw = self.db.consulta("""
-                SELECT id_licenciatura, seriacion_ant, seriacion_cons, semestre
+                SELECT id_licenciatura, seriacion_ant, seriacion_cons, semestre, id_solicitud
                 FROM SIPEFI.TD_REL_LIC_ASIGNATURA
                 WHERE id_solicitud = :id_solicitud AND id_estatus_solicitud = :id_estatus_solicitud
             """, params)
             
             licenciaturas = {}
-            for lic_id, s_ant, s_con, semestre in lics_raw:
+            for lic_id, s_ant, s_con, semestre, id_solicitud in lics_raw:
                 key = (lic_id, semestre)
                 if key not in licenciaturas:
                     licenciaturas[key] = {
                         "idLic": lic_id,
                         "seriacionAnt": set(),
                         "seriacionCons": set(),
-                        "semestre": semestre
+                        "semestre": semestre,
+                        "id_solicitud": id_solicitud
                     }
                 if s_ant and s_ant != 0:
                     licenciaturas[key]["seriacionAnt"].add(s_ant)
@@ -640,7 +641,8 @@ class Solicitud:
                 "idLic": val["idLic"],
                 "seriacionAnt": list(val["seriacionAnt"]),
                 "seriacionCons": list(val["seriacionCons"]),
-                "semestre": val["semestre"]
+                "semestre": val["semestre"],
+                "idSolicitud":val["id_solicitud"],
             } for val in licenciaturas.values()]
         
             temario = self.db.consulta("""

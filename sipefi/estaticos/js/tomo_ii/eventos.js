@@ -809,6 +809,13 @@ const etii = function(){
 			$(this).val(0);
 		});
 	};
+
+	const descargaPdf = (idPerfil, idLic, idSolicitud) => {
+		const url = `/SIPEFI/reporte/generarPdf/${idPerfil}/${idLic}/${idSolicitud}/`;
+  		window.open(url, '_blank'); // abre en nueva pestaña
+	};
+
+
 	
 	return{
 		cargaEventosPrincipales: cargaEventosPrincipales,
@@ -824,6 +831,7 @@ const etii = function(){
 		editarContenido: editarContenido,
 		saveContenido: saveContenido,
 		editarBibliografia: editarBibliografia,
-		saveBibliografia: saveBibliografia
+		saveBibliografia: saveBibliografia,
+		descargaPdf: descargaPdf
 	}
 }();

@@ -13,7 +13,7 @@ from sipefi_apps.tomo_ii.controlador.views import (
     requestTablasSoli,
     requestRecargaPagina,
     requestAccionSolicitud,
-    requestCargaSolicitud
+    requestCargaSolicitud,
 )
 
 urlpatterns = [

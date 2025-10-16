@@ -186,6 +186,9 @@ const fcs = function(){
 	  let tablaRelacionesDT = $('#tablaRelacionesLic').DataTable();
 	  // Obtener valores seleccionados de los campos
 	  const idLic = $("#rel_licenciatura").val();
+	  const idSolicitud = $("#rel_solicitud").val();
+	  const idPerfil = $("#rol").html();
+
 	  const txtLic = $("#rel_licenciatura option:selected").text().trim();
 	  const semestre = $("#rel_semestre").val();
 	  
@@ -234,9 +237,15 @@ const fcs = function(){
 	  
 	  // Botón de eliminar y campo oculto con valores concatenados
 	  const botonEliminar = `
-	    <button class="btn btn-sm btn-danger btnEliminarRelacion">
-	      <i class="fas fa-trash-alt"></i>
-	    </button>
+		<div>
+			<button class="btn btn-sm btn-danger btnEliminarRelacion">
+			  <i class="fas fa-trash-alt"></i>
+			</button>
+			<!--LEONIXGU-->
+			<button class="btn btn-sm btn-danger" onclick="etii.descargaPdf(${idPerfil}, ${idLic}, ${idSolicitud})" hidden>
+			  <i class="fas fa-file-pdf"></i>
+			</button>
+		</div>
 	    <input type="hidden" class="datos-relacion" 
 	           value="${idLic}@##@${semestre}@##@${serAnt.join(",")}@##@${serCon.join(",")}">
 	  `;
@@ -254,7 +263,7 @@ const fcs = function(){
 	  $("#rel_licenciatura").val("0");
 	  $("#rel_semestre").val("1");
 	  $("#ser_anterior").val(null).trigger("change");
-	  $("#ser_consecuente").val(null).trigger("change");;
+	  $("#ser_consecuente").val(null).trigger("change");
 	};
 	
 	/**
@@ -708,8 +717,10 @@ const fcs = function(){
 		$("#estatusSoli").html(solicitud.nomEstSoli);
 		$("#idES").html(solicitud.idEstSoli);
 		$("#usuarioSol").html(solicitud.usuarioSoli);
+
 		validarBotonesCambioEstatus(1);
 		if(accion == 2){ // 2-Editar
+
 			$('.menuBotones[target="guardarSolicitud"]').show();
 			$('.menuBotones[target="#modalComentarios"]').show();
 		}else if(accion == 1){ // Visualizar
@@ -751,7 +762,6 @@ const fcs = function(){
 		
 		try {
 			if (!solicitud) return;
-
 			// === 1. DATOS GENERALES ===
 			const dg = solicitud.datosGenerales;
 			$('#asignatura').val(dg.asignatura);
@@ -775,14 +785,18 @@ const fcs = function(){
 			  const semestre = rel.semestre;
 			  const serAnt = rel.seriacionAnt || [];
 			  const serCon = rel.seriacionCons || [];
+			  const idSolicitud = rel.idSolicitud || [];
 
 			  // Establecer licenciatura y semestre
 			  $('#rel_licenciatura').val(idLic).trigger('change');
 			  $('#rel_semestre').val(semestre).trigger('change');
+			  $('#rel_solicitud').val(idSolicitud);
+
 
 			  // Cargar select multiple de seriación antecedente y consecuente
 			  $('#ser_anterior').val(serAnt).trigger('change');
 			  $('#ser_consecuente').val(serCon).trigger('change');
+
 
 			  // Simular clic en botón agregar relación
 			  $('#btnAgregarRelLicAsig').click();

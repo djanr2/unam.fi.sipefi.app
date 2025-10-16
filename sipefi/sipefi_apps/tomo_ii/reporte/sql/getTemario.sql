@@ -1,0 +1,4 @@
+select NUM_TEMA, TEMA, HORAS_TEMA, OBJETIVO
+from SIPEFI.TD_TEMARIO_ASIGNATURA
+where ID_SOLICITUD = :id_asignatura
+order by NUM_TEMA

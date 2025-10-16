@@ -24,4 +24,6 @@ urlpatterns = [
     path('SIPEFI/', include('sipefi_apps.tomo_ii.controlador.urls')),
     path("SIPEFI/login/", LoginSipefi.as_view(), name="login"),
     path('SIPEFI/cerrarSesion/', views.cerrarSesionUsuarioSistema, name='logOut'),
+    path('SIPEFI/reporte/', include('sipefi_apps.tomo_ii.reporte.urls'), name='generaPDF'),
+
 ]
