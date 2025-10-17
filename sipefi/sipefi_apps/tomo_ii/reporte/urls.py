@@ -5,5 +5,5 @@ generarPdf
 )
 
 urlpatterns = [
-    path('generarPdf/<int:perfil>/<int:licenciatura>/<int:asignatura>/', generarPdf, name='generarPdf'),
+    path('generarPdf/', generarPdf, name='generarPdf'),
 ]

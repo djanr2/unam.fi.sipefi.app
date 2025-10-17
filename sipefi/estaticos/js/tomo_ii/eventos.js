@@ -810,8 +810,12 @@ const etii = function(){
 	};
 
 	const descargaPdf = (idPerfil, idLic, idSolicitud) => {
-		const url = `/SIPEFI/reporte/generarPdf/${idPerfil}/${idLic}/${idSolicitud}/`;
-  		window.open(url, '_blank'); // abre en nueva pestaña
+		let param = {
+				idPerfil: idPerfil,
+				idLic: idLic,
+				idSolicitud: idSolicitud
+		};
+		fComun.postFileDownload("/SIPEFI/reporte/generarPdf/", param, function(resp){});
 	};
 
 

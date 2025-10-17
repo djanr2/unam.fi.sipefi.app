@@ -14,15 +14,6 @@ class MiddlewareHttpReqResp:
     def __call__(self, request):
         # Ejecutar la funcion antes de procesar la solicitud
         resp = ""
-        # LEONIXGU
-        if self.bypass_url_incluida(request.path):
-            response = self.get_response(request)
-            self.token = request.META.get('HTTP_TOKENSISTEMA', '')
-            #LEONIXGU
-            print('token')
-            print(self.token)
-            response["AccesoSistema"] = "OK"
-            return response
         if not self.es_url_excluida(request.path):
             resp = self.ejecutar_antes_peticion(request)
         if resp == "NOK":
@@ -54,11 +45,3 @@ class MiddlewareHttpReqResp:
             "/SIPEFI/recargaPagina/"
         ]
         return url in urls_excluidas
-    #LEONIXGU
-    def bypass_url_incluida(self, url: str)-> bool:
-        var_inclu = [
-            #/SIPEFI/reporte/generarPdf/<perfil>/<id_licenciatura>/<id_solicitud>/
-            "/SIPEFI/reporte/generarPdf/2/1/4/",
-            "/SIPEFI/reporte/generarPdf/3/1/4/"
-        ]
-        return url in var_inclu

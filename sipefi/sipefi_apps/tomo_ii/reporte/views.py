@@ -1,6 +1,7 @@
 import unicodedata
 import os
 import re
+import json
 
 from io import BytesIO
 from django.utils.text import camel_case_to_spaces
@@ -25,7 +26,11 @@ NEGRO = colors.black
 GRIS_SUAVE = colors.HexColor("#F3F4F6")
 watermark_on = True  # o False para desactivarla
 
-def generarPdf(request, perfil, licenciatura, asignatura):
+def generarPdf(request):
+    obj = json.loads(request.POST.get("obj", ""))
+    perfil= int(obj['idPerfil'])
+    licenciatura= int(obj['idLic'])
+    asignatura = int(obj['idSolicitud'])
 
     consultas = ConsultasPDF()
     '''
@@ -37,36 +42,36 @@ def generarPdf(request, perfil, licenciatura, asignatura):
     id_perfil = perfil
     # LICENCIATURA
     asignatura_inf = consultas.get_informacion_asignatura(id_licenciatura, id_asignatura)
-    licenciatura_pdf = asignatura_inf[0][0] if asignatura_inf else None
-    asignatura_pdf = asignatura_inf[0][1] if asignatura_inf else None
-    clave_pdf = asignatura_inf[0][2] if asignatura_inf else None
-    semestre_pdf = str(asignatura_inf[0][3] if asignatura_inf else None)
-    creditos_pdf =  str(asignatura_inf[0][4] if asignatura_inf else None)
-    area_conocimiento_pdf = asignatura_inf[0][5] if asignatura_inf else None
-    modalidad_pdf =  asignatura_inf[0][6] if asignatura_inf else None
-    tipo_pdf = asignatura_inf[0][7] if asignatura_inf else None
-    caracter_pdf = asignatura_inf[0][8] if asignatura_inf else None
-    valor_practico_pdf = asignatura_inf[0][9] if asignatura_inf else None
-    horas_teoricas_semanales_pdf = asignatura_inf[0][10] if asignatura_inf else None
-    horas_practicas_semanales_pdf = asignatura_inf[0][11] if asignatura_inf else None
-    horas_teoricas_semestrales_pdf = asignatura_inf[0][12] if asignatura_inf else None
-    horas_practicas_semestrales_pdf = asignatura_inf[0][13] if asignatura_inf else None
-    objetivo_pdf =  asignatura_inf[0][14] if asignatura_inf else None
-    formacion_integral_pdf =  asignatura_inf[0][15] if asignatura_inf else None
-    perfil_profesiografico_pdf = asignatura_inf[0][16] if asignatura_inf else None
-    color_hex = asignatura_inf[0][17] if asignatura_inf else None
+    licenciatura_pdf = asignatura_inf[0][0] if asignatura_inf and asignatura_inf[0][0] is not None else ""
+    asignatura_pdf = asignatura_inf[0][1] if asignatura_inf and asignatura_inf[0][1] is not None else ""
+    clave_pdf = asignatura_inf[0][2] if asignatura_inf and asignatura_inf[0][2] is not None else ""
+    semestre_pdf = str(asignatura_inf[0][3] if asignatura_inf and asignatura_inf[0][3] is not None else "")
+    creditos_pdf =  str(asignatura_inf[0][4] if asignatura_inf and asignatura_inf[0][4] is not None else "")
+    area_conocimiento_pdf = asignatura_inf[0][5] if asignatura_inf and asignatura_inf[0][5] is not None else ""
+    modalidad_pdf =  asignatura_inf[0][6] if asignatura_inf and asignatura_inf[0][6] is not None else ""
+    tipo_pdf = asignatura_inf[0][7] if asignatura_inf and asignatura_inf[0][7] is not None else ""
+    caracter_pdf = asignatura_inf[0][8] if asignatura_inf and asignatura_inf[0][8] is not None else ""
+    valor_practico_pdf = asignatura_inf[0][9] if asignatura_inf and asignatura_inf[0][9] else ""
+    horas_teoricas_semanales_pdf = asignatura_inf[0][10] if asignatura_inf and asignatura_inf[0][10] is not None else 0
+    horas_practicas_semanales_pdf = asignatura_inf[0][11] if asignatura_inf and asignatura_inf[0][11] is not None else 0
+    horas_teoricas_semestrales_pdf = asignatura_inf[0][12] if asignatura_inf and asignatura_inf[0][12] is not None else 0
+    horas_practicas_semestrales_pdf = asignatura_inf[0][13] if asignatura_inf and asignatura_inf[0][13] is not None else 0
+    objetivo_pdf =  asignatura_inf[0][14] if asignatura_inf and asignatura_inf[0][14] is not None else ""
+    formacion_integral_pdf =  asignatura_inf[0][15] if asignatura_inf and asignatura_inf[0][15] is not None else ""
+    perfil_profesiografico_pdf = asignatura_inf[0][16] if asignatura_inf and asignatura_inf[0][16] is not None else ""
+    color_hex = asignatura_inf[0][17] if asignatura_inf and asignatura_inf[0][17] is not None else "#F3F4F6"
 
     color_pdf = colors.HexColor(color_hex)
 
     seriaciones_inf = consultas.get_seriaciones(id_licenciatura,id_asignatura)
-    seriacion_antecedente_pdf = seriaciones_inf[0][0] if seriaciones_inf else None
-    seriacion_consecuente_pdf = seriaciones_inf[0][1] if seriaciones_inf else None
+    seriacion_antecedente_pdf = seriaciones_inf[0][0] if seriaciones_inf and seriaciones_inf[0][0] is not None else ""
+    seriacion_consecuente_pdf = seriaciones_inf[0][1] if seriaciones_inf and seriaciones_inf[0][1] is not None else ""
 
     temario_inf = consultas.get_temario(id_asignatura)
 
     resumen_temario_inf = consultas.get_resumen_temario(id_asignatura)
-    suma_horas_temario_pdf = resumen_temario_inf[0][0] if resumen_temario_inf else None
-    actividades_practicas_horas_pdf =resumen_temario_inf[0][1] if resumen_temario_inf else None
+    suma_horas_temario_pdf = resumen_temario_inf[0][0] if resumen_temario_inf and resumen_temario_inf[0][0] is not None else ""
+    actividades_practicas_horas_pdf =resumen_temario_inf[0][1] if resumen_temario_inf and resumen_temario_inf[0][1] is not None else ""
 
 
     subtemas_inf = consultas.get_subtemas(id_asignatura)
@@ -99,7 +104,7 @@ def generarPdf(request, perfil, licenciatura, asignatura):
     nombre_archivo_pdf = camel_case_to_spaces(asignatura_pdf)
 
     is_documento_oficial_inf = consultas.get_is_documento_ofical_by_perfil(id_perfil)
-    is_documento_oficial_pdf = is_documento_oficial_inf[0][0] if is_documento_oficial_inf else None
+    is_documento_oficial_pdf = is_documento_oficial_inf[0][0] if is_documento_oficial_inf and is_documento_oficial_inf[0][0] is not None else ""
 
     if is_documento_oficial_pdf == 1 :
         global watermark_on
@@ -334,29 +339,32 @@ def generarPdf(request, perfil, licenciatura, asignatura):
 
     y_actual = y_actual - 10
 
-    y_actual = dibujar_formacion_integral(
-        p, x=30, y=y_actual, w_total=width - 60,
-        texto=formacion_integral_pdf,
-        # paginación
-        titulo="Formación integral",
-        auto_paginacion=True, page_width=width, page_height=height,
-        top_margin=40, bottom_margin=40,
-        draw_page_header_fn=None,  # pasa None si no quieres header general
-        color = color_pdf,
-    )
+
+    if formacion_integral_pdf != '':
+        y_actual = dibujar_parrafo_with_title(
+            p, x=30, y=y_actual, w_total=width - 60,
+            texto=formacion_integral_pdf,
+            # paginación
+            titulo="Formación integral",
+            auto_paginacion=True, page_width=width, page_height=height,
+            top_margin=40, bottom_margin=40,
+            draw_page_header_fn=None,  # pasa None si no quieres header general
+            color = color_pdf,
+        )
 
     y_actual = y_actual - 10
 
-    y_actual = dibujar_formacion_integral(
-        p, x=30, y=y_actual, w_total=width - 60,
-        texto=perfil_profesiografico_pdf,
-        # paginación
-        titulo="Perfil Profesiográfico",
-        auto_paginacion=True, page_width=width, page_height=height,
-        top_margin=40, bottom_margin=40,
-        draw_page_header_fn=None,  # pasa None si no quieres header general
-        color=color_pdf,
-    )
+    if perfil_profesiografico_pdf != '':
+        y_actual = dibujar_parrafo_with_title(
+            p, x=30, y=y_actual, w_total=width - 60,
+            texto=perfil_profesiografico_pdf,
+            # paginación
+            titulo="Perfil Profesiográfico",
+            auto_paginacion=True, page_width=width, page_height=height,
+            top_margin=40, bottom_margin=40,
+            draw_page_header_fn=None,  # pasa None si no quieres header general
+            color=color_pdf,
+        )
 
 
     dibujar_marca_agua(p, width, height, habilitada = watermark_on)
@@ -1170,7 +1178,7 @@ def dibujar_tabla_resumen_horas(
 
     for idx in range(len(labels)):
         label_txt = str(labels[idx] or "")
-        val_txt = f"{float(valores[idx]):.1f}" if idx < len(valores) else "0.0"
+        val_txt = f"{float(valores[idx]):.1f}" if idx < len(valores) and str(valores[idx]).strip() != '' else "0.0"
 
         para_label = Paragraph(label_txt, style_label)
         para_val   = Paragraph(val_txt,   style_val)
@@ -2053,7 +2061,7 @@ def dibujar_formas_evaluacion(
 
     return y - alto_total
 
-def dibujar_formacion_integral(
+def dibujar_parrafo_with_title(
     p, x, y, w_total,
     texto,                                  # contenido largo (puede tener <b>, <i>, <br/>, etc.)
     titulo="Formación integral",
