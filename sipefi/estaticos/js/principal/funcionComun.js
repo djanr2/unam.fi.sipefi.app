@@ -770,10 +770,12 @@ const fComun = function(){
 	 * @param {string} titulo - Título opcional (default: 'Acción no permitida').
 	 */
 	const mostrarModalAdvertencia = (mensaje, titulo = "Acción no permitida") => {
-	  $("#tituloErrorGenerico").text(titulo);
-	  $("#mensajeErrorGenerico").html(mensaje);
-	  const modal = new bootstrap.Modal(document.getElementById("modalErrorGenerico"));
-	  modal.show();
+		ocultarEspera();
+	  	$("#tituloErrorGenerico").text(titulo);
+	  	$("#mensajeErrorGenerico").html(mensaje);
+		const el = document.getElementById("modalErrorGenerico");
+		const modal = bootstrap.Modal.getOrCreateInstance(el, { backdrop: 'static' });
+		if (!el.classList.contains('show')) modal.show();
 	}
 	
 	// Funcion para normalizar y quitar acentos
