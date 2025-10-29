@@ -241,7 +241,7 @@ const fcs = function(){
 			<button class="btn btn-sm btn-danger btnEliminarRelacion">
 			  <i class="fas fa-trash-alt"></i>
 			</button>
-			<button class="btn btn-sm btn-danger" onclick="etii.descargaPdf(${idPerfil}, ${idLic}, ${idSolicitud})" >
+			<button class="btn btn-sm btn-danger" onclick="etii.descargaPdf(${idPerfil}, ${idLic}, ${idSolicitud})" hidden>
 			  <i class="fas fa-file-pdf"></i>
 			</button>
 		</div>
