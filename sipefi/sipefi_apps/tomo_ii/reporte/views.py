@@ -106,9 +106,18 @@ def generarPdf(request):
     is_documento_oficial_inf = consultas.get_is_documento_ofical_by_perfil(id_perfil)
     is_documento_oficial_pdf = is_documento_oficial_inf[0][0] if is_documento_oficial_inf and is_documento_oficial_inf[0][0] is not None else ""
 
+    if valor_practico_pdf == '':
+        valor_practico_pdf = 'Ninguno'
+    if formacion_integral_pdf == '':
+        formacion_integral_pdf = 'Ninguna'
+    if actividades_practicas_horas_pdf == '':
+        actividades_practicas_horas_pdf = 0
+    if suma_horas_temario_pdf == '':
+        suma_horas_temario_pdf = 0
+
     if is_documento_oficial_pdf == 1 :
         global watermark_on
-        watermark_on= False;
+        watermark_on= False
 
     subtemas_por_id = {}  # dict auxiliar para juntar las listas
     for r in subtemas_inf:
@@ -185,7 +194,7 @@ def generarPdf(request):
     ancho_total = width - 2 * x_inicio
     alto_celda = 20
 
-    textos_celdas = ['Clave: '+clave_pdf, 'Semestre: '+semestre_pdf, 'Creditos: '+creditos_pdf]
+    textos_celdas = ['Clave: '+clave_pdf, 'Semestre: '+semestre_pdf, 'Créditos: '+creditos_pdf]
 
     dibujarClaveSemestreCreaditos(p, x_inicio, y_inicio, ancho_total, alto_celda, textos_celdas, borde_color=color_pdf)
 
@@ -280,7 +289,7 @@ def generarPdf(request):
 
     y_actual = dibujar_bibliografia_temas(
         p, x=30, y=y_actual, w_total=width - 60,
-        titulo_izq='BIBLIOGRAÍA BÁSICA',
+        titulo_izq='Bibliografía básica',
         color=color_pdf,
         outline_color = color_pdf,
         bibliografias=bibliografia_basica_pdf, temas=temas_bibliografia_basica_pdf,
@@ -296,7 +305,7 @@ def generarPdf(request):
 
     y_actual = dibujar_bibliografia_temas(
         p, x=30, y=y_actual, w_total=width - 60,
-        titulo_izq='BIBLIOGRAÍA COMPLEMENTARIA',
+        titulo_izq='Bibliografía complementaria',
         color=color_pdf,
         outline_color=color_pdf,
         bibliografias=bibliografia_complementaria_pdf, temas=temas_bibliografia_complementaria_pdf,
@@ -359,7 +368,7 @@ def generarPdf(request):
             p, x=30, y=y_actual, w_total=width - 60,
             texto=perfil_profesiografico_pdf,
             # paginación
-            titulo="Perfil Profesiográfico",
+            titulo="Perfil profesiográfico",
             auto_paginacion=True, page_width=width, page_height=height,
             top_margin=40, bottom_margin=40,
             draw_page_header_fn=None,  # pasa None si no quieres header general
@@ -643,7 +652,7 @@ def tala_columnas(p, x_inicio, y_inicio, ancho_total,
             ("Modalidad", modalidad),
             ("Tipo", tipo),
             ("Caracter", caracter),
-            ("Valor Práctico", valor),
+            ("Valor práctico", valor),
         ]
         return dibujar_tabla_interna_2c(
             p, x, y, w_total=w,
@@ -1513,8 +1522,8 @@ def dibujar_bibliografia_temas(
     col_gap=12,                     # separación entre columnas
     # estilos
     font="Helvetica", font_b="Helvetica-Bold",
-    fs_biblio=10, leading_biblio=14,
-    fs_tema=10,   leading_tema=14,
+    fs_biblio=9, leading_biblio=11,
+    fs_tema=9,   leading_tema=11,
     fs_hdr=10,
     # paddings y cajas
     hdr_pad_x=10, hdr_pad_y=8, hdr_radio=6,
