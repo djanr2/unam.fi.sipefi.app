@@ -789,7 +789,7 @@ const fcs = function(){
 			  // Establecer licenciatura y semestre
 			  $('#rel_licenciatura').val(idLic).trigger('change');
 			  $('#rel_semestre').val(semestre).trigger('change');
-			  $('#rel_solicitud').val(idSolicitud);
+			  $('#rel_solicitud').val(idSolicitud).trigger('change');
 
 
 			  // Cargar select multiple de seriación antecedente y consecuente
