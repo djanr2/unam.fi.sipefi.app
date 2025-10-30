@@ -1013,17 +1013,14 @@ const fcs = function(){
 		if (Number.isFinite(hSemPraSemana) && Number.isFinite(hSemPraTotal) && Number.isFinite(horasPracTemario)) {
 		  if (hSemPraSemana === 0) {
 		    if (hSemPraTotal !== 0) {
-		      mark('#h_semestre_pra', 'Si horas prácticas por semana = 0, las horas prácticas del semestre deben ser 0.');
+				mark('#h_semestre_pra', 'Si horas prácticas por semana = 0, las horas prácticas del semestre deben ser 0.');
 		    }
-		    if (horasPracTemario !== 0) {
-		      mark('#horasPracticasTemario', 'Si horas prácticas por semana = 0, las horas prácticas del temario deben ser 0.');
-		    }
+			if (horasPracTemario !== 0) {
+              mark('#horasPracticasTemario', 'Si horas prácticas por semana = 0, las horas de actividades prácticas deben ser 0.');
+			}
 		  } else if (hSemPraSemana > 0) {
 		    if (!(hSemPraTotal > 0)) {
 		      mark('#h_semestre_pra', 'Si hay horas prácticas por semana, debe haber horas prácticas del semestre (> 0).');
-		    }
-		    if (!(horasPracTemario > 0)) {
-		      mark('#horasPracticasTemario', 'Si hay horas prácticas por semana, debe haber horas prácticas en el temario (> 0).');
 		    }
 		  }
 		}
