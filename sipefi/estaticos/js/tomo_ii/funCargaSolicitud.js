@@ -188,6 +188,10 @@ const fcs = function(){
 	  const idLic = $("#rel_licenciatura").val();
 	  const idSolicitud = $("#rel_solicitud").val();
 	  const idPerfil = $("#rol").html();
+	  let hiddenPdf = "";
+	  if (idSolicitud === "0"){
+		  hiddenPdf = "hidden";
+	  }
 
 	  const txtLic = $("#rel_licenciatura option:selected").text().trim();
 	  const semestre = $("#rel_semestre").val();
@@ -241,7 +245,7 @@ const fcs = function(){
 			<button class="btn btn-sm btn-danger btnEliminarRelacion">
 			  <i class="fas fa-trash-alt"></i>
 			</button>
-			<button class="btn btn-sm btn-danger" onclick="etii.descargaPdf(${idPerfil}, ${idLic}, ${idSolicitud})">
+			<button class="btn btn-sm btn-danger" onclick="etii.descargaPdf(${idPerfil}, ${idLic}, ${idSolicitud})" ${hiddenPdf}>
 			  <i class="fas fa-file-pdf"></i>
 			</button>
 		</div>
