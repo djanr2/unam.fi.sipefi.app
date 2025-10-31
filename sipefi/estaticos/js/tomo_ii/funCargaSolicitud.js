@@ -186,11 +186,13 @@ const fcs = function(){
 	  let tablaRelacionesDT = $('#tablaRelacionesLic').DataTable();
 	  // Obtener valores seleccionados de los campos
 	  const idLic = $("#rel_licenciatura").val();
-	  const idSolicitud = $("#rel_solicitud").val();
+	  const idSolicitud = $("#numSolicitud").html();
 	  const idPerfil = $("#rol").html();
-	  let hiddenPdf = "";
-	  if (idSolicitud === "0"){
-		  hiddenPdf = "hidden";
+      let isPdfHidden;
+	  if (idSolicitud === "xxxx"){
+		   isPdfHidden = "hidden";
+	  }else{
+		   isPdfHidden =   "";
 	  }
 
 	  const txtLic = $("#rel_licenciatura option:selected").text().trim();
@@ -245,7 +247,7 @@ const fcs = function(){
 			<button class="btn btn-sm btn-danger btnEliminarRelacion">
 			  <i class="fas fa-trash-alt"></i>
 			</button>
-			<button class="btn btn-sm btn-danger" onclick="etii.descargaPdf(${idPerfil}, ${idLic}, ${idSolicitud})" ${hiddenPdf}>
+			<button class="btn btn-sm btn-danger" onclick="etii.descargaPdf(${idPerfil}, ${idLic}, ${idSolicitud})" ${isPdfHidden}>
 			  <i class="fas fa-file-pdf"></i>
 			</button>
 		</div>
