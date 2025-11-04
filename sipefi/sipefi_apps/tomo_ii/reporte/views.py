@@ -4,7 +4,6 @@ import re
 import json
 
 from io import BytesIO
-from django.utils.text import camel_case_to_spaces
 from django.conf import settings
 from django.http import HttpResponse
 from reportlab.lib.enums import TA_CENTER, TA_RIGHT, TA_LEFT, TA_JUSTIFY
@@ -101,7 +100,7 @@ def generarPdf(request):
     formas_evaluacion_formativa_inf = consultas.get_formas_evaluacion(id_asignatura, 'Formativa')
     formas_evaluacion_sumativa_inf = consultas.get_formas_evaluacion(id_asignatura, 'Sumativa')
 
-    nombre_archivo_pdf = camel_case_to_spaces(asignatura_pdf)
+    nombre_archivo_pdf = normalize_name(asignatura_pdf)
 
     is_documento_oficial_inf = consultas.get_is_documento_ofical_by_perfil(id_perfil)
     is_documento_oficial_pdf = is_documento_oficial_inf[0][0] if is_documento_oficial_inf and is_documento_oficial_inf[0][0] is not None else ""
@@ -168,7 +167,7 @@ def generarPdf(request):
     else:
         print(" Logo derecho no encontrado")
 
-    # 📝 Texto centrado entre los logos
+    # Texto centrado entre los logos
     text_unam = f"UNIVERSIDAD NACIONAL AUTÓNOMA DE MÉXICO"
     text_fi = f"FACULTAD DE INGENIERÍA"
     p.setFont("Helvetica-Bold", 10)
@@ -253,7 +252,7 @@ def generarPdf(request):
         p, x=30, y=y_actual, w_total=width - 60,
         filas=filas_temas,
         draw_outer_border=True,  # contorno exterior del cuerpo
-        draw_col_dividers=True,  # 👈 solo líneas verticales internas
+        draw_col_dividers=True,  #  solo líneas verticales internas
         outer_border_color=color_pdf,
         col_divider_color=color_pdf,
         gap_header_body=6
@@ -263,7 +262,7 @@ def generarPdf(request):
         p, x=30, y=y_actual, w_total=width - 60,
         valores=(suma_horas_temario_pdf, actividades_practicas_horas_pdf, (suma_horas_temario_pdf + actividades_practicas_horas_pdf)),
         labels=("Horas en el Semestre", "Actividades prácticas", "TOTAL"),
-        fs=9, leading=12, pad_x=8, pad_y=4, row_min_h=18,  # 👈 compacto
+        fs=9, leading=12, pad_x=8, pad_y=4, row_min_h=18,  #  compacto
         border_color=color_pdf, fill_ultimo=GRIS_SUAVE, radio=0
     )
 
@@ -295,7 +294,7 @@ def generarPdf(request):
         bibliografias=bibliografia_basica_pdf, temas=temas_bibliografia_basica_pdf,
         col_gap=14,
         draw_column_outline=True, outline_radius=6, outline_over_header=False,
-        # 👇 auto-paginación
+        #  auto-paginación
         auto_paginacion=True, page_width=width, page_height=height,
         top_margin=40, bottom_margin=40,
         draw_header_fn=None  # o None si no quieres redibujar nada
@@ -311,7 +310,7 @@ def generarPdf(request):
         bibliografias=bibliografia_complementaria_pdf, temas=temas_bibliografia_complementaria_pdf,
         col_gap=14,
         draw_column_outline=True, outline_radius=6, outline_over_header=False,
-        # 👇 auto-paginación
+        #  auto-paginación
         auto_paginacion=True, page_width=width, page_height=height,
         top_margin=40, bottom_margin=40,
         draw_header_fn=None  # o None si no quieres redibujar nada
@@ -2262,4 +2261,15 @@ def dibujar_marca_agua(
     p.restoreState()
 
 
+def normalize_name(name: str) -> str:
+    # Convert to lowercase
+    name = name.lower()
 
+    # Replace spaces with underscores
+    name = name.replace(" ", "_")
+
+    # Normalize accents (e.g., Á -> á)
+    # The 'NFC' form ensures composed characters like á stay as one character
+    name = unicodedata.normalize("NFC", name)
+
+    return name
