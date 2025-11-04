@@ -3,8 +3,8 @@ with VALOR_PRACTICO as (
     SELECT LISTAGG(cvp.VALOR_PRACTICO, ', ') WITHIN GROUP (ORDER BY cvp.VALOR_PRACTICO) as valor_practico
     from CATALOGO.TC_VALOR_PRACTICO cvp,
          SIPEFI.TD_REL_VAL_PRACTICO rvp
-    where rvp.ID_SOLICITUD = cvp.ID_VALOR_PRACTICO
-    and ID_SOLICITUD = :id_asignatura
+    where cvp.ID_VALOR_PRACTICO = rvp.ID_VALOR_PRACTICO
+      and rvp.ID_SOLICITUD = :id_asignatura
 ), SEMESTRE AS (
          SELECT DISTINCT SEMESTRE SEMESTRE
          FROM   SIPEFI.TD_REL_LIC_ASIGNATURA
