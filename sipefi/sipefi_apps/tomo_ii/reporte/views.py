@@ -180,25 +180,35 @@ def generarPdf(request):
     dibujar_linea_con_texto(p, y_line, "PROGRAMA DE ESTUDIO", width)
 
     x_inicio = 30
-    y_inicio = height - 100
+    y_actual = height - 130
     ancho_total = width - 2 * x_inicio
-    alto_celda = 20
 
-    textos = [asignatura_pdf, licenciatura_pdf]
+    y_actual = draw_header_table(
+        p,
+        x=x_inicio,
+        y=y_actual,
+        width=ancho_total,
+        color=color_pdf,
+        clave=clave_pdf,
+        nombre=asignatura_pdf
+    )
 
-    dibujar_dos_celdas(p, x_inicio, y_inicio, ancho_total, alto_celda, textos, color = color_pdf)
+    y_actual = y_actual - 40
 
-    x_inicio = 30
-    y_inicio = height - 130  # Posición superior izquierda de las celdas
     ancho_total = width - 2 * x_inicio
-    alto_celda = 20
 
-    textos_celdas = ['Clave: '+clave_pdf, 'Semestre: '+semestre_pdf, 'Créditos: '+creditos_pdf]
+    y_actual = draw_info_table(
+        p,
+        x=x_inicio,
+        y=y_actual,
+        width=ancho_total,
+        color=color_pdf,
+        semestre=semestre_pdf,
+        creditos=creditos_pdf,
+        fase="",
+        licenciatura=licenciatura_pdf
+    )
 
-    dibujarClaveSemestreCreaditos(p, x_inicio, y_inicio, ancho_total, alto_celda, textos_celdas, borde_color=color_pdf)
-
-    x_inicio = 30
-    y_actual = height - 165
     ancho_total = width - 2 * x_inicio
 
     y_actual = tala_columnas(
@@ -214,7 +224,7 @@ def generarPdf(request):
         texto_derecha=""
     )
 
-    y_actual = y_actual - 10
+    y_actual = y_actual - 20
 
     y_actual = dibujar_seriacion_2x2(
         p, x=30, y=y_actual, w_total=width - 60,
@@ -554,6 +564,11 @@ def dibujar_tabla_interna_2c(p, x, y, w_total, titulo, filas,
     w_der = w_total - w_izq
 
     # -------- Encabezado (span 2 columnas) ----------
+    y = y - 5
+    p.setFillColor(NEGRO)
+    p.setFont("Helvetica-Bold", 11)  # Font name and size
+    p.drawString(x, y , "Área del conocimiento")
+    y = y - 5
     estilo_hdr = ParagraphStyle(
         "hdr", fontName=font_b, fontSize=fs+1, leading=fs+3,
         textColor=header_fg, alignment=TA_CENTER)
@@ -568,7 +583,7 @@ def dibujar_tabla_interna_2c(p, x, y, w_total, titulo, filas,
     w_hdr, _ = para_hdr.wrap(w_total - 12, 10000)
     para_hdr.drawOn(p, x + (w_total - w_hdr)/2, y - h_hdr + (h_hdr - (fs+3))/2 - 1)
 
-    y_cursor = y - h_hdr - gap_header   # 👈 separación debajo del header
+    y_cursor = y - h_hdr - gap_header   # separación debajo del header
     altura_total = h_hdr + gap_header
 
     # -------- Filas etiqueta-valor ----------
@@ -821,6 +836,12 @@ def dibujar_col2_horas_semana_doble(
     color = colors.HexColor("#D1D5DB"),
     **kwargs           # base kwargs comunes a ambos paneles
 ):
+    y= y -5
+    p.setFillColor(NEGRO)
+    p.setFont("Helvetica-Bold", 11)  # Font name and size
+    p.drawString(x, y, "")
+    y = y - 5
+
     panel1_cfg = panel1_cfg or {}
     panel2_cfg = panel2_cfg or {}
 
@@ -2273,3 +2294,141 @@ def normalize_name(name: str) -> str:
     name = unicodedata.normalize("NFC", name)
 
     return name
+
+
+def draw_header_table(c: canvas.Canvas, x: float, y: float, width: float, color, clave: str, nombre: str):
+    """
+    Dibuja encabezados de texto ("Clave" y "Nombre") arriba,
+    y debajo dos cajas con valores (clave y nombre):
+      - Izquierda: solo contorno del color.
+      - Derecha: relleno completo del mismo color.
+      - Ambas con esquinas redondeadas y separación entre columnas.
+      - Sin sobrepintado ni bordes blancos.
+
+    Args:
+        c (canvas.Canvas): lienzo de ReportLab.
+        x, y (float): coordenadas inferiores izquierdas.
+        width (float): ancho total.
+        color: color de ReportLab (ej. colors.HexColor("#007ACC")).
+        clave (str): valor de la columna "Clave".
+        nombre (str): valor de la columna "Nombre".
+
+    Returns:
+        float: nueva coordenada y (para continuar dibujando debajo).
+    """
+    # ---- Dimensiones ----
+    col_gap = 10
+    col1_width = width * 0.1
+    col2_width = width * 0.9 - col_gap
+    height = 25
+    radius = 4
+
+    # ---- Encabezados (fuera de las cajas) ----
+    c.setFont("Helvetica-Bold", 11)
+    c.setFillColor(colors.black)
+    c.drawString(x, y + height + 8, "Clave")
+    c.drawString(x + col1_width + col_gap, y + height + 8, "Nombre")
+
+    # ---- Caja 1 (contorno solamente) ----
+    c.setLineWidth(1)
+    c.setStrokeColor(color)
+    c.setFillColor(colors.white)
+    c.roundRect(x, y, col1_width, height, radius, stroke=1, fill=0)
+
+    # ---- Caja 2 (relleno completo) ----
+    c.setStrokeColor(color)
+    c.setFillColor(color)
+    c.roundRect(x + col1_width + col_gap, y, col2_width, height, radius, stroke=1, fill=1)
+
+    # ---- Dibujar textos dentro de las cajas ----
+    # Clave
+    c.setFont("Helvetica", 10)
+    c.setFillColor(colors.black)
+    text_y = y + height / 2 - 3  # centrado vertical aproximado
+    c.drawString(x + 5, text_y, clave)
+
+    # Nombre (texto blanco sobre fondo de color)
+    c.setFillColor(colors.white)
+    c.drawString(x + col1_width + col_gap + 5, text_y, nombre)
+
+    # ---- Devolver nueva posición y ----
+    return y - 12
+
+def draw_info_table(c: canvas.Canvas, x: float, y: float, width: float, color,
+                    semestre: str, creditos: str, fase: str, licenciatura: str):
+    """
+    Dibuja una fila de 4 columnas con encabezados arriba y valores dentro de cajas redondeadas:
+      - Columnas: "Semestre", "Créditos", "Fase", "Licenciatura"
+      - Distribución: 10%, 10%, 10%, 70%
+      - Las tres primeras columnas tienen solo contorno del color.
+      - La última columna tiene fondo completo del color.
+      - Texto centrado verticalmente.
+      - Devuelve la nueva posición y para continuar dibujando.
+
+    Args:
+        c (canvas.Canvas): lienzo de ReportLab.
+        x, y (float): coordenadas inferiores izquierdas.
+        width (float): ancho total de la fila.
+        color: color de ReportLab (ej. colors.HexColor("#007ACC")).
+        semestre (str): valor de la columna 1.
+        creditos (str): valor de la columna 2.
+        fase (str): valor de la columna 3.
+        licenciatura (str): valor de la columna 4.
+
+    Returns:
+        float: nueva coordenada y (para continuar dibujando debajo).
+    """
+    # ---- Dimensiones ----
+    col_gap = 10
+    proportions = [0.10, 0.10, 0.10, 0.70]
+    col_widths = [width * p for p in proportions]
+    col_widths[3] -= col_gap * 3  # ajustar por espacios entre columnas
+    height = 25
+    radius = 4
+    text_y = y + height / 2 - 3  # centrado vertical
+
+    # ---- Encabezados ----
+    headers = ["Semestre", "Créditos", "Fase", "Licenciatura"]
+    c.setFont("Helvetica-Bold", 11)
+    c.setFillColor(colors.black)
+
+    x_pos = x
+    for i, header in enumerate(headers):
+        c.drawString(x_pos, y + height + 8, header)
+        if i < 3:
+            x_pos += col_widths[i] + col_gap
+        else:
+            x_pos += col_widths[i]
+
+    # ---- Dibujar cajas y valores ----
+    values = [semestre, creditos, fase, licenciatura]
+    x_pos = x
+
+    for i, val in enumerate(values):
+        if i < 3:
+            # Contorno solamente
+            c.setLineWidth(1)
+            c.setStrokeColor(color)
+            c.setFillColor(colors.white)
+            c.roundRect(x_pos, y, col_widths[i], height, radius, stroke=1, fill=0)
+            c.setFont("Helvetica", 11)
+            c.setFillColor(colors.black)
+        else:
+            # Última columna: relleno completo
+            c.setStrokeColor(color)
+            c.setFillColor(color)
+            c.roundRect(x_pos, y, col_widths[i], height, radius, stroke=1, fill=1)
+            c.setFillColor(colors.white)
+            c.setFont("Helvetica", 12)
+
+        # Texto dentro de la caja
+        c.drawString(x_pos + 5, text_y, val)
+
+        # Avanzar al siguiente bloque
+        if i < 3:
+            x_pos += col_widths[i] + col_gap
+        else:
+            x_pos += col_widths[i]
+
+    # ---- Devolver nueva posición y ----
+    return y - 12
