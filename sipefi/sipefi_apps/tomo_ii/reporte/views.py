@@ -196,6 +196,12 @@ def generarPdf(request):
     y_actual = y_actual - 40
 
     ancho_total = width - 2 * x_inicio
+    fase_pdf= ""
+    if int(semestre_pdf) < 6:
+        fase_pdf = "F1"
+    else:
+        fase_pdf = "F2"
+
 
     y_actual = draw_info_table(
         p,
@@ -205,7 +211,7 @@ def generarPdf(request):
         color=color_pdf,
         semestre=semestre_pdf,
         creditos=creditos_pdf,
-        fase="",
+        fase=fase_pdf,
         licenciatura=licenciatura_pdf
     )
 
