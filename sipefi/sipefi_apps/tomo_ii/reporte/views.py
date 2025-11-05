@@ -2252,7 +2252,7 @@ def get_bibliografia_str(fila):
 def dibujar_marca_agua(
     p, width, height,
     habilitada = watermark_on,
-    texto="DOCUMENTO NO OFICIAL",
+    texto="BORRADOR",
     angulo=45,                 # grados
     font="Helvetica-Bold",
     font_size=64,
