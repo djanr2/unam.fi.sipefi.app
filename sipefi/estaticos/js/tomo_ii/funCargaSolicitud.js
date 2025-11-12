@@ -394,7 +394,10 @@ const fcs = function(){
 		`;
 
 		// Agrega fila al DataTable
-		$('#tablaBibliografia').DataTable().row.add($(fila)).draw();
+		var bibliografiaTable = $('#tablaBibliografia').DataTable();
+		var paginaActual = bibliografiaTable.page.info().pages - 1;
+		bibliografiaTable.row.add($(fila)).draw();
+		bibliografiaTable.page(paginaActual).draw('page');
 
 		// Limpia los campos
 		$('#tipo_bibliografia').val('0').trigger('change');

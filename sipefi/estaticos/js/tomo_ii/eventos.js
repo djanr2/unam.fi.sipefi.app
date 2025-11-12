@@ -496,7 +496,9 @@ const etii = function(){
 
 	const editarBibliografia = (idBibliografia) => {
 		if(!isActionEditingBibliografia) {
+
 			var bibliografiaTable = $('#tablaBibliografia').DataTable();
+			var paginaActual = bibliografiaTable.page();
 
 			var varHandler = bibliografiaTable.cell(idBibliografia - 1, 1).data();
 			var autorForEdit = varHandler ? varHandler : "";
@@ -546,16 +548,19 @@ const etii = function(){
 			var temasForEdit_input = `<input type="text" class="form-control" value="${temasForEdit}" id = "id-biblio-temas-${idBibliografia}">`;
 			bibliografiaTable.cell(idBibliografia - 1, 9).data(temasForEdit_input).draw();
 
+			bibliografiaTable.page(paginaActual).draw('page');
 			document.getElementById("bibliografia-btnedit-" + (idBibliografia)).hidden = true;
 			document.getElementById("bibliografia-btnsave-" + (idBibliografia)).hidden = false;
 			$('.menuBotones[target="guardarSolicitud"]').prop('disabled', true);
 			isActionEditingBibliografia = !isActionEditingBibliografia;
+
 		}
 	};
 
 	const saveBibliografia = (idBibliografia) => {
 		if (isActionEditingBibliografia) {
 			const bibliografiaTable = $('#tablaBibliografia').DataTable();
+			var paginaActual = bibliografiaTable.page();
 
 			var varHandler = $(bibliografiaTable.cell(idBibliografia-1, 1).node()).find('input').val();
 			const autorForEdit = varHandler ? varHandler : "";
@@ -564,10 +569,6 @@ const etii = function(){
 			varHandler = $(bibliografiaTable.cell(idBibliografia-1, 2).node()).find('input').val();
 			const yearForEdit = varHandler ? varHandler : "0";
 			bibliografiaTable.cell(idBibliografia-1, 2).data(yearForEdit).draw();
-
-			const clasificacionForEdit_selected = document.getElementById(`id-biblio-clasificacion-${idBibliografia}`).value;
-			const clasificacionForEdit_input = (clasificacionForEdit_selected === "0")? "B&aacute;sica" : "Complementaria";
-			bibliografiaTable.cell(idBibliografia - 1, 3).data(clasificacionForEdit_input).draw();
 
 			varHandler = $(bibliografiaTable.cell(idBibliografia-1, 4).node()).find('input').val();
 			const tituloForEdit = varHandler ? varHandler : "";
@@ -593,6 +594,12 @@ const etii = function(){
 			const temasForEdit = varHandler ? varHandler : "";
 			bibliografiaTable.cell(idBibliografia-1, 9).data(temasForEdit).draw();
 
+			bibliografiaTable.page(paginaActual).draw('page');
+			const clasificacionForEdit_selected = document.getElementById("id-biblio-clasificacion-"+idBibliografia).value;
+			const clasificacionForEdit_input = (clasificacionForEdit_selected === "0")? "B&aacute;sica" : "Complementaria";
+			bibliografiaTable.cell(idBibliografia - 1, 3).data(clasificacionForEdit_input).draw();
+
+			bibliografiaTable.page(paginaActual).draw('page');
 			document.getElementById("bibliografia-btnedit-"+idBibliografia).hidden = false;
 			document.getElementById("bibliografia-btnsave-"+idBibliografia).hidden = true;
 			$('.menuBotones[target="guardarSolicitud"]').prop('disabled', false);
