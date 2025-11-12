@@ -498,17 +498,15 @@ const etii = function(){
 		if(!isActionEditingBibliografia) {
 
 			var bibliografiaTable = $('#tablaBibliografia').DataTable();
-			var paginaActual = bibliografiaTable.page();
 
 			var varHandler = bibliografiaTable.cell(idBibliografia - 1, 1).data();
 			var autorForEdit = varHandler ? varHandler : "";
 			var autorForEdit_input = `<input type="text" class="form-control" value="${autorForEdit}" id = "id-biblio-autor-${idBibliografia}">`;
-			bibliografiaTable.cell(idBibliografia - 1, 1).data(autorForEdit_input).draw();
 
 			varHandler = bibliografiaTable.cell(idBibliografia - 1, 2).data();
 			var yearForEdit = varHandler ? varHandler : "0";
 			var yearForEdit_input = `<input type="number" class="form-control" value="${yearForEdit}" id = "id-biblio-year-${idBibliografia}">`;
-			bibliografiaTable.cell(idBibliografia - 1, 2).data(yearForEdit_input).draw();
+
 
 			varHandler = bibliografiaTable.cell(idBibliografia - 1, 3).data();
 			var isComplementaria = (varHandler === "Complementaria" )? true : false;
@@ -516,41 +514,50 @@ const etii = function(){
 				<option value="0" ${(!isComplementaria)? "selected" : ""}>Básica</option>
 				<option value="1" ${(isComplementaria)? "selected" : ""}>Complementaria</option>
 			</select>`;
-			bibliografiaTable.cell(idBibliografia - 1, 3).data(clasificacionForEdit_input).draw();
 
 			varHandler = bibliografiaTable.cell(idBibliografia - 1, 4).data();
 			var tituloForEdit = varHandler ? varHandler : "";
 			var tituloForEdit_input = `<input type="text" class="form-control" value="${tituloForEdit}" id = "id-biblio-titulo-${idBibliografia}">`;
-			bibliografiaTable.cell(idBibliografia - 1, 4).data(tituloForEdit_input).draw();
+
 
 			varHandler = bibliografiaTable.cell(idBibliografia - 1, 5).data();
 			var extra1ForEdit = varHandler ? varHandler : "";
 			var extra1ForEdit_input = `<input type="text" class="form-control" value="${extra1ForEdit}" id = "id-biblio-extra1-${idBibliografia}">`;
-			bibliografiaTable.cell(idBibliografia - 1, 5).data(extra1ForEdit_input).draw();
+
 
 			varHandler = bibliografiaTable.cell(idBibliografia - 1, 6).data();
 			var extra2ForEdit = varHandler ? varHandler : "";
 			var extra2ForEdit_input = `<input type="text" class="form-control" value="${extra2ForEdit}" id = "id-biblio-extra2-${idBibliografia}">`;
-			bibliografiaTable.cell(idBibliografia - 1, 6).data(extra2ForEdit_input).draw();
+
 
 			varHandler = bibliografiaTable.cell(idBibliografia - 1, 7).data();
 			var extra3ForEdit = varHandler ? varHandler : "";
 			var extra3ForEdit_input = `<input type="text" class="form-control" value="${extra3ForEdit}" id = "id-biblio-extra3-${idBibliografia}">`;
-			bibliografiaTable.cell(idBibliografia - 1, 7).data(extra3ForEdit_input).draw();
+
 
 			varHandler = bibliografiaTable.cell(idBibliografia - 1, 8).data();
 			var extra4ForEdit = varHandler ? varHandler : "";
 			var extra4ForEdit_input = `<input type="text" class="form-control" value="${extra4ForEdit}" id = "id-biblio-extra4-${idBibliografia}">`;
-			bibliografiaTable.cell(idBibliografia - 1, 8).data(extra4ForEdit_input).draw();
+
 
 			varHandler = bibliografiaTable.cell(idBibliografia - 1, 9).data();
 			var temasForEdit = varHandler ? varHandler : "";
 			var temasForEdit_input = `<input type="text" class="form-control" value="${temasForEdit}" id = "id-biblio-temas-${idBibliografia}">`;
-			bibliografiaTable.cell(idBibliografia - 1, 9).data(temasForEdit_input).draw();
 
-			bibliografiaTable.page(paginaActual).draw('page');
-			document.getElementById("bibliografia-btnedit-" + (idBibliografia)).hidden = true;
-			document.getElementById("bibliografia-btnsave-" + (idBibliografia)).hidden = false;
+			varHandler = bibliografiaTable.cell(idBibliografia - 1, 0).data();
+			var tipoNoEdit = varHandler ? varHandler : "";
+			var tipoNoEdit_input = `<input type="text" class="form-control" value="${tipoNoEdit}" id = "id-biblio-temas-${idBibliografia}" disabled>`;
+
+			var buttons = `<div>
+						<button class="btn btn-sm btn-danger btn-eliminar-biblio"><i class="fas fa-trash-alt"></i></button>
+						<button class="btn btn-sm btn-danger" id = "bibliografia-btnedit-${idBibliografia}" onclick="etii.editarBibliografia(${idBibliografia})" hidden><i class="fas fa-edit"></i></button>
+						<button class="btn btn-sm btn-danger" id = "bibliografia-btnsave-${idBibliografia}" onclick="etii.saveBibliografia(${idBibliografia})"><i class="fas fa-save"></i></button>
+					</div>`;
+
+			bibliografiaTable.row(idBibliografia-1).data([tipoNoEdit_input,autorForEdit_input,yearForEdit_input,
+				clasificacionForEdit_input,tituloForEdit_input,extra1ForEdit_input,extra2ForEdit_input,
+				extra3ForEdit_input,extra4ForEdit_input, temasForEdit_input,buttons]).draw(false);
+
 			$('.menuBotones[target="guardarSolicitud"]').prop('disabled', true);
 			isActionEditingBibliografia = !isActionEditingBibliografia;
 
@@ -560,48 +567,49 @@ const etii = function(){
 	const saveBibliografia = (idBibliografia) => {
 		if (isActionEditingBibliografia) {
 			const bibliografiaTable = $('#tablaBibliografia').DataTable();
-			var paginaActual = bibliografiaTable.page();
 
-			var varHandler = $(bibliografiaTable.cell(idBibliografia-1, 1).node()).find('input').val();
+			var varHandler = $(bibliografiaTable.cell(idBibliografia-1, 0).node()).find('input').val();
+			const tipoNoEdit = varHandler ? varHandler : "";
+
+			 varHandler = $(bibliografiaTable.cell(idBibliografia-1, 1).node()).find('input').val();
 			const autorForEdit = varHandler ? varHandler : "";
-			bibliografiaTable.cell(idBibliografia-1, 1).data(autorForEdit).draw();
 
 			varHandler = $(bibliografiaTable.cell(idBibliografia-1, 2).node()).find('input').val();
 			const yearForEdit = varHandler ? varHandler : "0";
-			bibliografiaTable.cell(idBibliografia-1, 2).data(yearForEdit).draw();
 
 			varHandler = $(bibliografiaTable.cell(idBibliografia-1, 4).node()).find('input').val();
 			const tituloForEdit = varHandler ? varHandler : "";
-			bibliografiaTable.cell(idBibliografia-1, 4).data(tituloForEdit).draw();
 
 			varHandler = $(bibliografiaTable.cell(idBibliografia-1, 5).node()).find('input').val();
 			const extra1ForEdit = varHandler ? varHandler : "";
-			bibliografiaTable.cell(idBibliografia-1, 5).data(extra1ForEdit).draw();
 
 			varHandler= $(bibliografiaTable.cell(idBibliografia-1, 6).node()).find('input').val();
 			const extra2ForEdit =  varHandler ? varHandler : "";
-			bibliografiaTable.cell(idBibliografia-1, 6).data(extra2ForEdit).draw();
 
 			varHandler = $(bibliografiaTable.cell(idBibliografia-1, 7).node()).find('input').val();
 			const extra3ForEdit = varHandler ? varHandler : "";
-			bibliografiaTable.cell(idBibliografia-1, 7).data(extra3ForEdit).draw();
 
 			varHandler = $(bibliografiaTable.cell(idBibliografia-1, 8).node()).find('input').val();
 			const extra4ForEdit = varHandler ? varHandler : "";
-			bibliografiaTable.cell(idBibliografia-1, 8).data(extra4ForEdit).draw();
 
 			varHandler = $(bibliografiaTable.cell(idBibliografia-1, 9).node()).find('input').val();
 			const temasForEdit = varHandler ? varHandler : "";
-			bibliografiaTable.cell(idBibliografia-1, 9).data(temasForEdit).draw();
 
-			bibliografiaTable.page(paginaActual).draw('page');
+
 			const clasificacionForEdit_selected = document.getElementById("id-biblio-clasificacion-"+idBibliografia).value;
 			const clasificacionForEdit_input = (clasificacionForEdit_selected === "0")? "B&aacute;sica" : "Complementaria";
-			bibliografiaTable.cell(idBibliografia - 1, 3).data(clasificacionForEdit_input).draw();
 
-			bibliografiaTable.page(paginaActual).draw('page');
-			document.getElementById("bibliografia-btnedit-"+idBibliografia).hidden = false;
-			document.getElementById("bibliografia-btnsave-"+idBibliografia).hidden = true;
+			var buttons = `<div>
+						<button class="btn btn-sm btn-danger btn-eliminar-biblio"><i class="fas fa-trash-alt"></i></button>
+						<button class="btn btn-sm btn-danger" id = "bibliografia-btnedit-${idBibliografia}" onclick="etii.editarBibliografia(${idBibliografia})"><i class="fas fa-edit"></i></button>
+						<button class="btn btn-sm btn-danger" id = "bibliografia-btnsave-${idBibliografia}" onclick="etii.saveBibliografia(${idBibliografia})" hidden><i class="fas fa-save"></i></button>
+					</div>`;
+
+
+			bibliografiaTable.row(idBibliografia-1).data([tipoNoEdit,autorForEdit,yearForEdit,
+				clasificacionForEdit_input,tituloForEdit,extra1ForEdit,extra2ForEdit,
+				extra3ForEdit,extra4ForEdit, temasForEdit,buttons]).draw(false);
+
 			$('.menuBotones[target="guardarSolicitud"]').prop('disabled', false);
 			isActionEditingBibliografia = !isActionEditingBibliografia;
 		}

@@ -423,27 +423,26 @@ const fcs = function(){
 	  const catalogoTipos = (fComun.getVarLocalJ("catalogos")?.catTipoBib) || [];
 	  const tabla = $('#tablaBibliografia').DataTable();
 	  const data = [];
-	  tabla.rows().every(function () {
-	    const fila = $(this.node()).find('td');
-	    const tipoTexto = fila.eq(0).text().trim();
-	    const tipoObj = catalogoTipos.find(([id, nombre]) => nombre.trim().toUpperCase() === tipoTexto.toUpperCase());
-		const clasifTexto = fila.eq(3).text().trim().toLowerCase();
-		const clasif = clasifTexto === 'complementaria' ? 1 : 0;
+	  tabla.rows({ page: 'all' }).data().each(function (rowData, index) {
+	  const tipoTexto = rowData.tipo || rowData[0];
+	  const tipoObj = catalogoTipos.find(([id, nombre]) => nombre.trim().toUpperCase() === tipoTexto.trim().toUpperCase());
+	  const clasifTexto = (rowData.clasifBiblio || rowData[3] || '').toString().trim().toLowerCase();
+	  const clasif = clasifTexto === 'complementaria' ? 1 : 0;
 
-	    data.push({
-	      idTipo: tipoObj ? tipoObj[0] : null,
-	      tipo: tipoTexto,
-	      autor: fila.eq(1).text().trim(),
-	      anio: fila.eq(2).text().trim(),
-		  clasifBiblio: clasif,
-	      titulo: fila.eq(4).text().trim(),
-	      extra1: fila.eq(5).text().trim(),
-	      extra2: fila.eq(6).text().trim(),
-	      extra3: fila.eq(7).text().trim(),
-	      extra4: fila.eq(8).text().trim(),
-	      temas: fila.eq(9).text().trim()
-	    });
+	  data.push({
+		idTipo: tipoObj ? tipoObj[0] : null,
+		tipo: tipoTexto,
+		autor: rowData.autor || rowData[1],
+		anio: rowData.anio || rowData[2],
+		clasifBiblio: clasif,
+		titulo: rowData.titulo || rowData[4],
+		extra1: rowData.extra1 || rowData[5],
+		extra2: rowData.extra2 || rowData[6],
+		extra3: rowData.extra3 || rowData[7],
+		extra4: rowData.extra4 || rowData[8],
+		temas: rowData.temas || rowData[9]
 	  });
+	});
 	
 	  return data;
 	};
