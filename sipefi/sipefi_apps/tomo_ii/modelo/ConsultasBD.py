@@ -52,17 +52,20 @@ class ConsultasBD():
             rol = int(rol)
             estatus = 2 if rol in idsV else 1
             sqlExtra = ""
-            if rol in idsV:
+            if rol in idsV: #Validadores
                 sqlExtra = """ 
-                            a.id_solicitud not in 
+                            and a.id_solicitud not in 
                             (select distinct id_solicitud 
                                 from TD_SOLICITUD_TOMO_II 
                                 where ID_USUARIO_CREACION = '""" + str(id_usuario) + """' and historica = 1
                             )
                 """
-            else:
-                sqlExtra = " a.ID_USUARIO_CREACION = '" + str(id_usuario) + "'"
-     
+                if rol != 17:
+                    sqlExtra += """
+                                and ABS(a.id_perfil - """ + str(rol) + """) <= 1 
+                            """
+            elif rol != 16: #Operadores menos el operador administrador
+                sqlExtra = "and a.ID_USUARIO_CREACION = '" + str(id_usuario) + "'"
             sqlCons = """
                         SELECT 
                             'SIPEFI-'||a.id_solicitud, a.asignatura,
@@ -84,7 +87,7 @@ class ConsultasBD():
                         where 
                             a.historica = 0 
                             and a.id_estatus_solicitud in (""" + str(estatus) + """) 
-                            and """ + sqlExtra + """
+                            """ + sqlExtra + """
                         order by a.id_solicitud desc
             """
             try:

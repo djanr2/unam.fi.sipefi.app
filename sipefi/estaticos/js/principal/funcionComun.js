@@ -220,9 +220,17 @@ const fComun = function(){
 	        success: function (data) {
 	        	handleData(data);
 	        },
-            error: function(xhr, status, error){
-        		console.error("Error:", error);
-            	handleData("No se obtuvo nada");
+            error: function(xhr, statusText, errThrown){
+				// intentar tomar JSON del backend (Django)
+		    	let resp = xhr.responseJSON;
+		      	if (!resp) {
+		        	try { resp = JSON.parse(xhr.responseText || ""); } catch (_) {}
+		      	}
+		      	// construimos un objeto compatible con tu handler
+		      	handleData(resp || {
+		        	code: xhr.status,                          // ej. 409
+		        	error: (resp && resp.error) || errThrown || xhr.statusText || "Error",
+		      	});
             }
 	      });
 	};

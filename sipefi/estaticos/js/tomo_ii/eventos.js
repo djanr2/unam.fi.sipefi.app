@@ -132,16 +132,19 @@ const etii = function(){
 		 */
 		$(".bCancelarSol").unbind("click");
 		$(".bCancelarSol").on("click",function(){
-			let idSol = String($("#numSolicitud").html());
-			let txtH = "Mensaje de alerta";
-			let body = "<div class='form-group'>" +
-			  				"<label for='razonCS'>Por favor escribe la raz&oacute;n por la que deseas cancelar la solicitud SIPEFI-" + idSol + ". " +
-			  				"Tomando en cuenta que si confirmas la petici&oacute;n, se eliminar&aacute; la solicitud de forma permanente.</label>" +
-			  				"<textarea class='form-control' id='razonCS' rows='3'></textarea>" +
-			  				"<br>" +
-			  				"<label for='razonCS'>&#191;Estas seguro de eliminar la solicitud SIPEFI-" + idSol + "&#63;</label>" +
-			  			"</div>";
-			fcs.creaModalAlerta(txtH, body, fcs.realizaCancelacionSolicitud, 0, "", "");
+			//solo se puede usar si la solicitud ya tiene un numero de solicitud asignado
+			if($.isNumeric($("#numSolicitud").html())){
+				let idSol = String($("#numSolicitud").html());
+				let txtH = "Mensaje de alerta";
+				let body = "<div class='form-group'>" +
+				  				"<label for='razonCS'>Por favor escribe la raz&oacute;n por la que deseas cancelar la solicitud SIPEFI-" + idSol + ". " +
+				  				"Tomando en cuenta que si confirmas la petici&oacute;n, se eliminar&aacute; la solicitud de forma permanente.</label>" +
+				  				"<br><br><textarea class='form-control' id='razonCS' rows='3'></textarea>" +
+				  				"<br>" +
+				  				"<label for='razonCS'>&#191;Estas seguro de eliminar la solicitud SIPEFI-" + idSol + "&#63;</label>" +
+				  			"</div>";
+				fComun.creaModalAlerta(txtH, body, fcs.realizaCancelacionSolicitud, 0, "", "");
+			}
 		});
 		
 		/**

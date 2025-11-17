@@ -785,3 +785,99 @@ class Solicitud:
         except ValueError:
             resp = { "estatus": 204 }
         return resp
+    
+    def cancelaSolicitud(self, idSol, idEst, token, rol, usuario, comentario):
+        """
+        Cancela la solicitud (estatus 0) solo si su id_asignatura (idSol) NO está
+        referenciado como seriación en ninguna fila de SIPEFI.TD_REL_LIC_ASIGNATURA.
+        Tras cancelar, elimina la asignatura en SIPEFI.TD_ASIGNATURA.
+    
+        :param idSol: ID de la solicitud (también id_asignatura).
+        :param idEst: Estatus actual.
+        :param token: Token del usuario.
+        :param rol: Rol del usuario (se puede usar para id_perfil en estatus 0).
+        :param usuario: Usuario que ejecuta la cancelación.
+        :param comentario: Motivo de cancelación.
+        :return: Diccionario con estatus resultante.
+        """
+        conn = self.db.conexion()
+        try:
+            self.id_solicitud = int(idSol)
+            self.id_estatus   = int(idEst)
+            self.usuario      = usuario
+            self.token        = token
+            rol               = int(rol)
+            
+            # 0) Validación de integridad: la asignatura NO debe estar referenciada como seriación ===
+            total_refs = self.db.consulta("""
+                SELECT COUNT(*)
+                FROM SIPEFI.TD_REL_LIC_ASIGNATURA
+                WHERE seriacion_ant = :id_asig OR seriacion_cons = :id_asig
+            """, {"id_asig": self.id_solicitud})[0][0]
+    
+            if total_refs > 0:
+                # 409: Conflicto – Hay dependencias
+                raise Exception((
+                    409,
+                    f"No se puede cancelar la solicitud <strong>SIPEFI-{self.id_solicitud}</strong>. "
+                    f"La asignatura está referenciada como seriación en <strong>{total_refs} registro(s).</strong>"
+                ))
+    
+            # Si ya está cancelada, solo registra traza y cierra token
+            if self.id_estatus == 0:
+                self._guardar_traza(comentario, 0, 0, "Cancelada (ya estaba en 0)")
+                self._actualizar_token()
+                conn.commit()
+                return {"idS": self.id_solicitud, "idES": 0, "nomES": "Cancelada"}
+    
+            id_usuario_mod = self.db.getIdUsuario(self.usuario)
+    
+            # 1) Marcar versión actual como histórica
+            self.db.insertar("""
+                UPDATE SIPEFI.TD_SOLICITUD_TOMO_II
+                   SET historica = 1,
+                       fecha_modificacion = SYSDATE,
+                       id_usuario_mod = :id_usuario_mod
+                 WHERE id_solicitud = :id_solicitud
+                   AND id_estatus_solicitud = :id_estatus
+            """, {
+                "id_usuario_mod": id_usuario_mod,
+                "id_solicitud": self.id_solicitud,
+                "id_estatus": self.id_estatus
+            })
+    
+            # 2) Limpiar cualquier residuo en estatus destino (0 = Cancelada)
+            self.limpiar_solicitud(self.id_solicitud, 0)
+    
+            # 3) Clonar versión actual hacia estatus 0
+            self._clonar_version(self.id_solicitud, self.id_estatus, 0, self.usuario)
+    
+            # 4) Ajustar id_perfil en la versión cancelada al rol que ejecuta
+            self.db.insertar("""
+                UPDATE SIPEFI.TD_SOLICITUD_TOMO_II
+                   SET id_perfil = :rol
+                 WHERE id_solicitud = :id_solicitud
+                   AND id_estatus_solicitud = 0
+            """, {
+                "rol": rol,
+                "id_solicitud": self.id_solicitud
+            })
+    
+            # 5) Guardar traza y cerrar token
+            self._guardar_traza(comentario, self.id_estatus, 0, "Cancelada")
+            self._actualizar_token()
+            
+            # 6) Eliminar la asignatura del catálogo de asignatura
+            self.db.insertar("""
+                DELETE FROM SIPEFI.TD_ASIGNATURA
+                WHERE id_asignatura = :id_asig
+            """, {"id_asig": self.id_solicitud})
+    
+            conn.commit()
+            return {"idS": self.id_solicitud, "idES": 0, "nomES": "Cancelada"}
+    
+        except Exception:
+            conn.rollback()
+            raise
+        finally:
+            conn.close()

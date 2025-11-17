@@ -129,13 +129,10 @@ const soltii = function(){
 		if($.inArray(rolUser,idRV) != -1 && canAffect){ //Solo si tiene perfil validador y la solicitud cumple requisitos podra rechazar solicitud
 			$('.menuBotones[target="rechazarSolicitud"]').show();
 			$('.menuBotones[target="#modalComentarios"]').show();
-			//Solo poner boton de cancelar al validador del area
-			let rolSol = parseInt(fComun.getVarLocalS("rolSol"));
-			let compRol = rolUser-rolSol
-			if(compRol == 1 || compRol == 0)
-				$(".bCancelarSol").show();
+			$(".bCancelarSol").show();
 		}else if(canAffect){
 			$('.menuBotones[target="#modalComentarios"]').show();
+			$(".bCancelarSol").show();
 		}
 		$("#seccionBusqSoli").hide();
 	    $("#seccionCapturaSoli").show();

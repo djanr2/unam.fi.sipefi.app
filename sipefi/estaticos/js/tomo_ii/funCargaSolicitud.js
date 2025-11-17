@@ -1109,6 +1109,46 @@ const fcs = function(){
 		accionSolicitud(2);
 	};
 	
+	/**
+	 * Funcion que ayuda a cancelar una solicitud que ya no se requiere en el sistema SIPEFI
+	 * @return {void}
+	 * @method realizaCancelacionSolicitud
+	 * @static
+	 */
+	const realizaCancelacionSolicitud = () => {
+		let param = {
+			numSoli: $("#numSolicitud").html(),
+			estatus: $("#idES").html(),
+			rol: $("#rol").html(),
+			usuario: $("#usuario").html(),
+			token: $("#token").html(),
+			comentario: $("#razonCS").val()
+		};
+		fComun.post2("/SIPEFI/cancelarSolicitud/", param, function(resp){
+			try{
+				let obj = resp;
+				if(obj.code == 200){
+					let modalAprob = "#modalAprobSoliEstatus";
+					let msjConfirm = "La solicitud ha sido cancelada correctamente.";
+					$(modalAprob+" .textoBody").html(msjConfirm);
+					$(modalAprob).modal('show');
+					etii.eventoAprobSoli(".cierraModalAprob", modalAprob);
+				}else{
+					console.log(obj)
+					texto = "No fue posible realizar la cancelaci&oacute;n de la solicitud <br>" +
+							"Contacta al área de soporte SIPEFI <br>" +
+							"<strong><a href=\"mailto:sipefi@fi.unam.edu?subject=Necesito%20ayuda\">" +
+								"sipefi@fi.unam.edu" +
+							"</a></strong>";
+					if(obj.code == 409){
+						texto = obj.error
+					}
+					mostrarModalGuardar(2,texto);
+				}
+			}catch(e){console.log(e)}
+		});
+	};
+	
 	return{
 		cssVistaCaptura:	cssVistaCaptura,
 		cargaCatalogos:	cargaCatalogos,
@@ -1118,6 +1158,7 @@ const fcs = function(){
 		accionSolicitud:	accionSolicitud,
 		cargaSolicitudAccion:	cargaSolicitudAccion,
 		modalRechazoSoli:	modalRechazoSoli,
-		validaSolicitud:	validaSolicitud
+		validaSolicitud:	validaSolicitud,
+		realizaCancelacionSolicitud:	realizaCancelacionSolicitud
 	}
 }();

@@ -145,3 +145,35 @@ def requestCargaSolicitud(request):
     infoBusqueda = request.POST.get('info','')
     obj = infoBusqueda.split("#@@#")
     return JsonResponse(Solicitud().dameDatosSolicitud(obj[0], obj[1], accion))
+
+def requestCancelarSol(request):
+    """
+        La funcion sirve para conectar la peticion cliente - servidor, 
+        en este caso se utiliza para cancelar una solicitud.
+        
+        :return: Se da como respuesta un OK, si se cancelo correctamente la solicitud.
+    """
+    try:
+        # Obtener el objeto desde form-data o body
+        raw = request.POST.get("obj")
+        obj = json.loads(raw)
+        idSol = obj["numSoli"]
+        idEst = obj["estatus"]
+        token = obj["token"]
+        rol = obj["rol"]
+        usuario = obj["usuario"]
+        comentario = obj["comentario"]
+
+        # Ejecutar cancelación
+        resp = Solicitud().cancelaSolicitud(idSol, idEst, token, rol, usuario, comentario)
+        return JsonResponse({"ok": True, "code": 200, "data": resp}, status=200)
+
+    except Exception as e:
+        if isinstance(e.args[0], tuple) and e.args[0][0] == 409:
+            _, msg = e.args[0]
+            return JsonResponse({"ok": False, "code": 409, "error": msg}, status=409)
+
+        return JsonResponse(
+            {"ok": False, "code": 500, "error": str(e)},
+            status=500
+        )

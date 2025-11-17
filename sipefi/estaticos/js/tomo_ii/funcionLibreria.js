@@ -56,6 +56,7 @@ const fl = function(){
 	            		let estatusSoli = parseInt(row[7].split("#@@#")[1]);
 	            		let minusRol =  rol - rolSol;
 	            		let canEdit = (minusRol==0||minusRol==1)?true:false;
+						canEdit = (rol == 16 || rol == 17)?true:canEdit;
 	            		let infoExtra = (canEdit)?"__1":"";
 	            		let selectItem = "<select class='accionSolicitud'>"+
 	            							"<option value='0' selected>Elige acci&oacute;n..</option>"+

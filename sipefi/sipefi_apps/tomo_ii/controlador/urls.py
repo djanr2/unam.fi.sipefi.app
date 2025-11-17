@@ -14,6 +14,7 @@ from sipefi_apps.tomo_ii.controlador.views import (
     requestRecargaPagina,
     requestAccionSolicitud,
     requestCargaSolicitud,
+    requestCancelarSol,
 )
 
 urlpatterns = [
@@ -22,4 +23,5 @@ urlpatterns = [
     path("recargaPagina/", requestRecargaPagina, name='recargaIdx'),
     path('accionSolicitud/', requestAccionSolicitud, name='accionSoli'),
     path('cargaSolicitud/', requestCargaSolicitud, name='cargaSoli'),
+    path('cancelarSolicitud/', requestCancelarSol, name='cancelSol'),
 ]
