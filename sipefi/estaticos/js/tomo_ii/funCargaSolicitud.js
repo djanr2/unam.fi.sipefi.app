@@ -462,43 +462,46 @@ const fcs = function(){
 	  const tabla = $('#tablaRelacionesLic').DataTable();
 	  const data = [];
 
-	  tabla.rows().every(function () {
-	    const fila = $(this.node()).find('td');
+	  tabla.rows({ page: 'all' }).data().each(function (row, index) {
 
-	    const licNombre = fila.eq(0).text().trim();
-	    const semestre = fila.eq(1).text().trim();
-	    const serAntTexto = fila.eq(2).text().trim();
-	    const serConTexto = fila.eq(3).text().trim();
+    // ⚠️ row es un array o un objeto dependiendo del DataTable
+    // Asumiendo que es tipo array = [licenciatura, semestre, serAnt, serCon]
 
-	    // Separar por '|', quitar espacios extras y filtrar vacíos
-	    const serAntArr = serAntTexto.split("|").map(t => t.trim()).filter(t => t);
-	    const serConArr = serConTexto.split("|").map(t => t.trim()).filter(t => t);
+    const licNombre   = (row[0] || "").trim();
+    const semestre    = (row[1] || "").trim();
+    const serAntTexto = (row[2] || "").trim();
+    const serConTexto = (row[3] || "").trim();
 
-	    // Buscar los IDs correspondientes en catálogo
-	    const idAnt = serAntArr.map(nombre =>
-	      (catalogoAsig.find(([id, nom]) => nom.trim() === nombre)?.[0]) || null
-	    );
+    // Separar por '|' y limpiar espacios
+    const serAntArr = serAntTexto.split("|").map(t => t.trim()).filter(t => t);
+    const serConArr = serConTexto.split("|").map(t => t.trim()).filter(t => t);
 
-	    const idCon = serConArr.map(nombre =>
-	      (catalogoAsig.find(([id, nom]) => nom.trim() === nombre)?.[0]) || null
-	    );
+    // Buscar IDs en catálogo de asignaturas
+    const idAnt = serAntArr.map(nombre =>
+      (catalogoAsig.find(([id, nom]) => nom.trim() === nombre)?.[0]) || null
+    );
 
-	    // Buscar ID de licenciatura
-	    const licObj = catalogoLic.find(([id, nombre]) => nombre.trim() === licNombre);
-	    const idLic = licObj ? licObj[0] : null;
+    const idCon = serConArr.map(nombre =>
+      (catalogoAsig.find(([id, nom]) => nom.trim() === nombre)?.[0]) || null
+    );
 
-	    data.push({
-	      idLicenciatura: idLic,
-	      licenciatura: licNombre,
-	      semestre: semestre,
-	      idSeriacionAnterior: idAnt,
-	      seriacionAnterior: serAntArr,
-	      idSeriacionConsecuente: idCon,
-	      seriacionConsecuente: serConArr
-	    });
-	  });
+    // Buscar ID de licenciatura
+    const licObj = catalogoLic.find(([id, nombre]) => nombre.trim() === licNombre);
+    const idLic  = licObj ? licObj[0] : null;
 
-	  return data;
+    // Construir objeto final
+    data.push({
+      idLicenciatura: idLic,
+      licenciatura: licNombre,
+      semestre: semestre,
+      idSeriacionAnterior: idAnt,
+      seriacionAnterior: serAntArr,
+      idSeriacionConsecuente: idCon,
+      seriacionConsecuente: serConArr
+    });
+  });
+
+  return data;
 	};
 	
 	/**
