@@ -282,9 +282,11 @@ def generarPdf(request):
         border_color=color_pdf, fill_ultimo=GRIS_SUAVE, radio=0
     )
 
-    y_actual = siguiente_pagina(p, width, height, top_margin=40)
+    if y_actual < 420: # si hubo salto de pagina y aun no rebasa la mitad de la pagina 420 aprox hace salto de linea para la siguiente seccion
+        y_actual = height - 40
+    else:
+        y_actual = y_actual - 15
 
-    y_actual = height - 40
 
     # 3) Dibujar en bucle
     for t in temas_con_subtemas:
@@ -1068,38 +1070,33 @@ def dibujar_objetivo_general(
 def dibujar_tabla_temas(
     p, x, y, w_total, filas,
     header=("", "Tema", "Horas"),
-    col_ratios=(0.05, 0.80, 0.15),
+    col_ratios=(0.07, 0.78, 0.15),
     font="Helvetica", font_b="Helvetica-Bold",
     fs=10, leading=14,
     col_align=("left", "left", "center"),
     pad_x=8, pad_y=6,
-    # Contorno exterior del cuerpo
     draw_outer_border=True,
     outer_border_color=colors.HexColor("#D1D5DB"),
     outer_border_width=1,
     body_bg=BLANCO,
-    # Divisiones verticales internas
     draw_col_dividers=True,
     col_divider_color=colors.HexColor("#D1D5DB"),
     col_divider_width=1,
-    # Separación entre encabezado y cuerpo
     gap_header_body=4,
+    max_rows_per_page=8  # 👈 Limite de temas para el salto de pagina
 ):
     """
-    Tabla 3 columnas x N filas:
-      • Encabezado SIN borde (solo texto).
-      • Cuerpo con contorno exterior y SOLO líneas verticales internas.
-      • Sin líneas horizontales. Filas autoajustan altura.
-    Devuelve la nueva coordenada y.
+    Ahora soporta salto de página si las filas superan max_rows_per_page.
     """
-    # Anchos por proporción
+
+    # ====== CONFIGURACIÓN DE COLUMNAS ======
     w1 = w_total * col_ratios[0]
     w2 = w_total * col_ratios[1]
     w3 = w_total * col_ratios[2]
     col_ws = (w1, w2, w3)
-    x_cols = (x, x + w1, x + w1 + w2)  # inicio de cada columna
+    x_cols = (x, x + w1, x + w1 + w2)
 
-    # Estilos
+    # ====== ESTILOS ======
     hdr_style = ParagraphStyle("hdr", fontName=font_b, fontSize=fs, leading=fs+2,
                                textColor=NEGRO, alignment=TA_LEFT)
     ta_map = {"left": TA_LEFT, "center": TA_CENTER, "right": TA_RIGHT}
@@ -1112,63 +1109,91 @@ def dibujar_tabla_temas(
                        textColor=NEGRO, alignment=ta_map.get(col_align[2], TA_LEFT)),
     ]
 
-    # ---------- Encabezado (solo texto, sin borde) ----------
-    header_paras = [Paragraph(str(h or ""), hdr_style) for h in header]
-    h_hdrs = []
-    for i, para in enumerate(header_paras):
-        avail_w = max(0, col_ws[i] - 2*pad_x)
-        _, h = para.wrap(avail_w, 10**6)
-        h_hdrs.append(h)
-    h_hdr_row = max(h_hdrs) + 2*pad_y
-
-    for i, para in enumerate(header_paras):
-        para.drawOn(p, x_cols[i] + pad_x, y - pad_y - h_hdrs[i])
-
-    # Top del cuerpo
-    y_body_top = y - h_hdr_row - gap_header_body
-
-    # ---------- Precalcular alturas de filas ----------
-    rows = []
-    body_total_h = 0
-    for fila in filas:
-        textos = [str(fila[0] or ""), str(fila[1] or ""), str(f"{fila[2]:.1f}" or "")]
-        paras  = [Paragraph(textos[i], body_styles[i]) for i in range(3)]
-        h_cells = []
-        for i, para in enumerate(paras):
+    # ===========================
+    # FUNCIÓN INTERNA: dibuja una tabla en la página actual
+    # ===========================
+    def dibujar_bloque(filas_bloque, y_start):
+        # --- Encabezado ---
+        header_paras = [Paragraph(str(h or ""), hdr_style) for h in header]
+        h_hdrs = []
+        for i, para in enumerate(header_paras):
             avail_w = max(0, col_ws[i] - 2*pad_x)
             _, h = para.wrap(avail_w, 10**6)
-            h_cells.append(h)
-        row_h = max(h_cells) + 2*pad_y
-        rows.append((paras, h_cells, row_h))
-        body_total_h += row_h
+            h_hdrs.append(h)
+        h_hdr_row = max(h_hdrs) + 2*pad_y
 
-    # ---------- Cuerpo: fondo + contorno exterior ----------
-    if body_total_h > 0:
-        # Fondo
-        p.setFillColor(body_bg)
-        p.rect(x, y_body_top - body_total_h, w_total, body_total_h, fill=1, stroke=0)
+        # Pintar encabezado
+        for i, para in enumerate(header_paras):
+            para.drawOn(p, x_cols[i] + pad_x, y_start - pad_y - h_hdrs[i])
 
-        # Contorno exterior
-        if draw_outer_border:
-            p.setStrokeColor(outer_border_color)
-            p.setLineWidth(outer_border_width)
-            p.rect(x, y_body_top - body_total_h, w_total, body_total_h, fill=0, stroke=1)
+        y_body_top = y_start - h_hdr_row - gap_header_body
 
-        # Líneas verticales internas (solo entre columnas)
-        if draw_col_dividers:
-            p.setStrokeColor(col_divider_color)
-            p.setLineWidth(col_divider_width)
-            # línea entre col 1 y 2
-            p.line(x_cols[1], y_body_top, x_cols[1], y_body_top - body_total_h)
-            # línea entre col 2 y 3
-            p.line(x_cols[2], y_body_top, x_cols[2], y_body_top - body_total_h)
+        # ---- Calcular alturas del bloque de filas ----
+        rows = []
+        body_total_h = 0
 
-    # ---------- Dibujar textos (sin líneas de celda) ----------
-    y_cursor = y_body_top
-    for paras, h_cells, row_h in rows:
-        for i in range(3):
-            paras[i].drawOn(p, x_cols[i] + pad_x, y_cursor - pad_y - h_cells[i])
-        y_cursor -= row_h
+        for fila in filas_bloque:
+            textos = [str(fila[0] or ""),
+                      str(fila[1] or ""),
+                      str(f"{fila[2]:.1f}" or "")]
+            paras  = [Paragraph(textos[i], body_styles[i]) for i in range(3)]
+            h_cells = []
+            for i, para in enumerate(paras):
+                avail_w = max(0, col_ws[i] - 2*pad_x)
+                _, h = para.wrap(avail_w, 10**6)
+                h_cells.append(h)
+            row_h = max(h_cells) + 2*pad_y
+            rows.append((paras, h_cells, row_h))
+            body_total_h += row_h
+
+        # --- Fondo y bordes ---
+        if body_total_h > 0:
+            p.setFillColor(body_bg)
+            p.rect(x, y_body_top - body_total_h, w_total, body_total_h, fill=1, stroke=0)
+
+            if draw_outer_border:
+                p.setStrokeColor(outer_border_color)
+                p.setLineWidth(outer_border_width)
+                p.rect(x, y_body_top - body_total_h, w_total, body_total_h, fill=0, stroke=1)
+
+            if draw_col_dividers:
+                p.setStrokeColor(col_divider_color)
+                p.setLineWidth(col_divider_width)
+                p.line(x_cols[1], y_body_top, x_cols[1], y_body_top - body_total_h)
+                p.line(x_cols[2], y_body_top, x_cols[2], y_body_top - body_total_h)
+
+        # --- Dibujar contenido ---
+        y_cursor = y_body_top
+        for paras, h_cells, row_h in rows:
+            for i in range(3):
+                paras[i].drawOn(p, x_cols[i] + pad_x, y_cursor - pad_y - h_cells[i])
+            y_cursor -= row_h
+
+        return y_cursor
+
+    # ============================================
+    #      LÓGICA DE DIVISIÓN EN MÚLTIPLES PÁGINAS
+    # ============================================
+
+    # Si no supera el límite → solo dibuja una tabla
+    if len(filas) <= max_rows_per_page:
+        return dibujar_bloque(filas, y)
+
+    # Si supera → dividir en páginas
+    idx = 0
+    y_cursor = y
+
+    while idx < len(filas):
+        bloque = filas[idx: idx + max_rows_per_page]
+        y_cursor = dibujar_bloque(bloque, y_cursor)
+        idx += max_rows_per_page
+
+        if idx < len(filas):  # Si todavía quedan filas
+            alto_pagina = 792  # Carta
+            margen_superior = 60
+            y_inicial = alto_pagina - margen_superior
+            p.showPage()     # ⬅️ Salto de página
+            y_cursor = y_inicial + 100     # Reiniciar correctamente en la parte superior
 
     return y_cursor
 
@@ -1513,29 +1538,6 @@ def _fmt_biblio_item(item):
 
     return ". ".join([p for p in partes if p]).strip(". ") + "."
 
-def _fmt_biblio_item(item):
-    if isinstance(item, str):
-        return item
-    autores   = item.get("autores", "")
-    anio      = item.get("anio", "") or item.get("año", "")
-    titulo    = item.get("titulo", "")
-    editorial = item.get("editorial", "")
-    edicion   = item.get("edicion", "")
-    isbn      = item.get("isbn", "")
-    doi       = item.get("doi", "")
-    url       = item.get("url", "")
-    partes = []
-    if autores:   partes.append(f"{autores}")
-    if anio:      partes.append(f"({anio})")
-    if titulo:    partes.append(f"<i>{titulo}</i>")
-    extra = []
-    if edicion:   extra.append(f"{edicion}")
-    if editorial: extra.append(f"{editorial}")
-    if extra:     partes.append(", ".join(extra))
-    if isbn:      partes.append(f"ISBN: {isbn}")
-    if doi:       partes.append(f"doi:{doi}")
-    if url:       partes.append(f"<a href='{url}' color='blue'>{url}</a>")
-    return ". ".join([p for p in partes if p]).strip(". ") + "."
 
 def dibujar_bibliografia_temas(
     p, x, y, w_total,
