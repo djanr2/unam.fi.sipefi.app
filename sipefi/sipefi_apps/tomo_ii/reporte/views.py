@@ -283,6 +283,7 @@ def generarPdf(request):
     )
 
     if y_actual < 420: # si hubo salto de pagina y aun no rebasa la mitad de la pagina 420 aprox hace salto de linea para la siguiente seccion
+        y_actual = siguiente_pagina(p, width, height, top_margin=40)
         y_actual = height - 40
     else:
         y_actual = y_actual - 15
