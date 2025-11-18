@@ -249,6 +249,11 @@ const etii = function(){
 	     // Solo marca inválido si supera lo restante
 	     actualizaHorasTeoricasRestantes(); // recalcula y aplica la clase 'is-invalid' si corresponde
 	   });
+
+	   $("#s-2-tab").on('click', function(){
+	     // Solo marca inválido si supera lo restante
+	     actualizaHorasTeoricasRestantes(); // recalcula y aplica la clase 'is-invalid' si corresponde
+	   });
 	   
 	};
 	
