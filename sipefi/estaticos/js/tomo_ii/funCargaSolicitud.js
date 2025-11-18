@@ -513,31 +513,35 @@ const fcs = function(){
 	 * @returns {Object} Objeto con dos arreglos: `temas` y `contenidos`.
 	 */
 	const obtenerTemarioYContenido = () => {
+
+	  // =======================
+	  //   TEMAS
+	  // =======================
 	  const temas = [];
 	  const tablaTemasDT = $('#tablaTemas').DataTable();
-	
-	  tablaTemasDT.rows().every(function () {
-	    const data = this.data(); // ← Aquí está la diferencia clave
-	    temas.push({
-	      numeroTema: data[0]?.toString().trim() || '',
-	      nombre: data[1]?.toString().trim() || '',
-	      horas: data[2]?.toString().trim() || '',
-	      objetivo: data[3]?.toString().trim() || ''
-	    });
+
+	  tablaTemasDT.rows({ page: 'all' }).data().each(function (row) {
+		temas.push({
+		  numeroTema: row[0]?.toString().trim() || '',
+		  nombre:     row[1]?.toString().trim() || '',
+		  horas:      row[2]?.toString().trim() || '',
+		  objetivo:   row[3]?.toString().trim() || ''
+		});
 	  });
-	
+	  // =======================
+	  //   CONTENIDOS
+	  // =======================
 	  const contenidos = [];
 	  const tablaContenidosDT = $('#tablaContenidos').DataTable();
-	
-	  tablaContenidosDT.rows().every(function () {
-	    const data = this.data();
-	    contenidos.push({
-	      temaRelacionado: data[0]?.toString().trim() || '',
-	      numeroCont: data[1]?.toString().trim() || '',
-	      contenido: data[2]?.toString().trim() || ''
-	    });
+
+	  tablaContenidosDT.rows({ page: 'all' }).data().each(function (row) {
+		contenidos.push({
+		  temaRelacionado: row[0]?.toString().trim() || '',
+		  numeroCont:      row[1]?.toString().trim() || '',
+		  contenido:       row[2]?.toString().trim() || ''
+		});
 	  });
-	
+
 	  return { temas, contenidos };
 	};
 	
