@@ -57,7 +57,10 @@ class ConsultasBD():
                             and a.id_solicitud not in 
                             (select distinct id_solicitud 
                                 from TD_SOLICITUD_TOMO_II 
-                                where ID_USUARIO_CREACION = '""" + str(id_usuario) + """' and historica = 1
+                                where 
+                                (ID_USUARIO_CREACION = '""" + str(id_usuario) + """'
+                                or ID_USUARIO_MOD = '""" + str(id_usuario) + """') 
+                                and historica = 1
                             )
                 """
                 if rol != 17:
@@ -65,7 +68,7 @@ class ConsultasBD():
                                 and ABS(a.id_perfil - """ + str(rol) + """) <= 1 
                             """
             elif rol != 16: #Operadores menos el operador administrador
-                sqlExtra = "and a.ID_USUARIO_CREACION = '" + str(id_usuario) + "'"
+                sqlExtra = "and (a.ID_USUARIO_CREACION = '" + str(id_usuario) + "' or a.ID_USUARIO_MOD = '" + str(id_usuario) + "')"
             sqlCons = """
                         SELECT 
                             'SIPEFI-'||a.id_solicitud, a.asignatura,
@@ -74,7 +77,7 @@ class ConsultasBD():
                             umod.USUARIO_SISTEMA AS usuario_modificacion,
                             TO_CHAR(a.FECHA_MODIFICACION,'dd/mm/yyyy') fecha_mod,
                             '', a.id_solicitud||'#@@#'||a.id_estatus_solicitud||'#@@#'||a.asignatura||'#@@#'||
-                            umod.USUARIO_SISTEMA||'#@@#'||a.historica||'#@@#'||a.id_perfil
+                            umod.USUARIO_SISTEMA||'#@@#'||a.historica||'#@@#'||a.id_perfil||'#@@#'||ucrea.id_perfil
                         from TD_SOLICITUD_TOMO_II a 
                         inner join catalogo.TC_ESTATUS_SOLICITUD b 
                             on a.id_estatus_solicitud = b.id_estatus_solicitud

@@ -52,8 +52,10 @@ const fl = function(){
 	            {
 	            	"render": function ( data, type, row ) {
 	            		let rolSol = parseInt(row[7].split("#@@#")[5]);
+						let rolSolUcrea = parseInt(row[7].split("#@@#")[6]);
 	            		let rol = parseInt($("#rol").html());
 	            		let estatusSoli = parseInt(row[7].split("#@@#")[1]);
+						rolSol = (rolSol == 16 || rolSol == 17)?rolSolUcrea:rolSol;
 	            		let minusRol =  rol - rolSol;
 	            		let canEdit = (minusRol==0||minusRol==1)?true:false;
 						canEdit = (rol == 16 || rol == 17)?true:canEdit;
