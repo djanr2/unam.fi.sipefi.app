@@ -82,7 +82,7 @@ const fcs = function(){
 		$("span [role='textbox']").css("padding-top","4px");	
 		$(".input-group-text").css("border-style","inset");
 	};
-	
+
 	/**
 	 * Funcion que carga los catalogos iniciales y necesarios en elementos Select para ser usados en el flujo de carga de una solicitud 
 	 * @param {int} opc Parametro que tiene el tipo de visualizacion de la solicitud (nueva, edicion, visualizacion)
@@ -800,6 +800,10 @@ const fcs = function(){
 			$('#h_semestre_teo').val(dg.hSemestreTeoria);
 			$('#h_semestre_pra').val(dg.hSemestrePractica);
 			$('#objetivo').val(dg.objAsig);
+
+			if(dg.tipoModalidad !== 1 && accion == 2){
+				$("#valor_practico").prop("disabled", false);
+			}
 
 			// === 2. RELACIÓN CON LICENCIATURAS (sección tabla) ===
 
