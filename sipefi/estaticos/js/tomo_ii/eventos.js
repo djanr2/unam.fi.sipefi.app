@@ -318,6 +318,11 @@ const etii = function(){
 	  const reconstruirDesdeEstructuras = () => {
 	    const tablaTemasDT = $('#tablaTemas').DataTable();
 	    const tablaContenidosDT = $('#tablaContenidos').DataTable();
+		const isVisible = parseInt(fComun.getVarLocalS("accionSoli"));
+		let visible = '';
+		if (isVisible===1){
+			visible = 'hidden'; //Se ocultan las acciones si esta en modo visulaizador
+		}
 	
 	    tablaTemasDT.clear().draw(false);
 	    tablaContenidosDT.clear().draw(false);
@@ -325,6 +330,7 @@ const etii = function(){
 	
 	    let mapIdTemaToNumero = {};
 	    let mapIdTemaToNombre = {};
+
 	
 	    // === Renderizar temas y construir mapa ===
 	    listaTemas.forEach((tema, idx) => {
@@ -334,7 +340,7 @@ const etii = function(){
 			  tema.nombre,
 	        tema.horas,
 	        tema.objetivo,
-	        `<div>
+	        `<div ${visible}>
 				<button class="btn btn-danger btn-sm" onclick="etii.eliminarTema(${tema.id})">
 				   <i class="fas fa-trash-alt"></i>
 				 </button>
@@ -371,7 +377,7 @@ const etii = function(){
 	        `${numTema}. ${nombreTema}`,
 	        `${idContenido}`,
 	        contenido.texto,
-			`<div>
+			`<div ${visible}>
 				<button class="btn btn-danger btn-sm" onclick="etii.eliminarContenido(this)">
 			     <i class="fas fa-trash-alt"></i>
 			   	</button>

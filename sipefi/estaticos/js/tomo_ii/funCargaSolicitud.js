@@ -194,6 +194,11 @@ const fcs = function(){
 	  }else{
 		   isPdfHidden =   "";
 	  }
+	  const isVisible = parseInt(fComun.getVarLocalS("accionSoli"));
+	  let visible = '';
+	  if (isVisible===1){
+		  visible = 'hidden';
+	  }
 
 	  const txtLic = $("#rel_licenciatura option:selected").text().trim();
 	  const semestre = $("#rel_semestre").val();
@@ -244,7 +249,7 @@ const fcs = function(){
 	  // Botón de eliminar y campo oculto con valores concatenados
 	  const botonEliminar = `
 		<div>
-			<button class="btn btn-sm btn-danger btnEliminarRelacion">
+			<button class="btn btn-sm btn-danger btnEliminarRelacion" ${visible}>
 			  <i class="fas fa-trash-alt"></i>
 			</button>
 			<button class="btn btn-sm btn-danger" onclick="etii.descargaPdf(${idPerfil}, ${idLic}, ${idSolicitud})" ${isPdfHidden}>
@@ -383,12 +388,14 @@ const fcs = function(){
 		    <td>${extra4}</td>
 		    <td>${temas}</td>
 		    <td>
-		      <button class="btn btn-sm btn-danger btn-eliminar-biblio" type="button">
-		        <i class="fas fa-trash-alt"></i>
-		      </button>
-		      <input type="hidden" class="datos-biblio" value="${idTipo}@##@${autor}@##@${anio}@##@${clasif}@##@${titulo}@##@${extra1}@##@${extra2}@##@${extra3}@##@${extra4}@##@${temas}">
-			  <button class="btn btn-sm btn-danger" id = "bibliografia-btnedit-${idBibliografia}" onclick="etii.editarBibliografia(${idBibliografia})"><i class="fas fa-edit"></i></button>
-			  <button class="btn btn-sm btn-danger" id = "bibliografia-btnsave-${idBibliografia}" onclick="etii.saveBibliografia(${idBibliografia})" hidden><i class="fas fa-save"></i></button>
+		    	<div>
+					<button class="btn btn-sm btn-danger btn-eliminar-biblio" type="button">
+					<i class="fas fa-trash-alt"></i>
+					</button>
+					<input type="hidden" class="datos-biblio" value="${idTipo}@##@${autor}@##@${anio}@##@${clasif}@##@${titulo}@##@${extra1}@##@${extra2}@##@${extra3}@##@${extra4}@##@${temas}">
+					<button class="btn btn-sm btn-danger" id = "bibliografia-btnedit-${idBibliografia}" onclick="etii.editarBibliografia(${idBibliografia})"><i class="fas fa-edit"></i></button>
+					<button class="btn btn-sm btn-danger" id = "bibliografia-btnsave-${idBibliografia}" onclick="etii.saveBibliografia(${idBibliografia})" hidden><i class="fas fa-save"></i></button>
+				</div>
 		     </td>
 		  </tr>
 		`;
@@ -731,6 +738,7 @@ const fcs = function(){
 		$("#estatusSoli").html(solicitud.nomEstSoli);
 		$("#idES").html(solicitud.idEstSoli);
 		$("#usuarioSol").html(solicitud.usuarioSoli);
+		let visible = '';
 
 		validarBotonesCambioEstatus(1);
 		if(accion == 2){ // 2-Editar
@@ -738,6 +746,7 @@ const fcs = function(){
 			$('.menuBotones[target="guardarSolicitud"]').show();
 			$('.menuBotones[target="#modalComentarios"]').show();
 		}else if(accion == 1){ // Visualizar
+			visible = 'hidden';
 			$('.menuBotones[target="guardarSolicitud"]').hide();
 			//Ponemos campos como visualizacion
 			//Inputs de texto / números / fechas / etc. → readonly
@@ -843,7 +852,7 @@ const fcs = function(){
 				const hidden = `<input type="hidden" class="datos-biblio" value="${b.idTipo}@##@${b.autor}@##@${b.anio}@##@${b.clasifBiblio}@##@${b.titulo}@##@${b.extra1}@##@${b.extra2}@##@${b.extra3}@##@${b.extra4}@##@${b.temas}">`;
 				tablaBib.row.add([
 					tipoBib, b.autor, b.anio, clasif, b.titulo, b.extra1, b.extra2, b.extra3, b.extra4, b.temas,
-					`<div>
+					`<div ${visible}>
 						<button class="btn btn-sm btn-danger btn-eliminar-biblio"><i class="fas fa-trash-alt"></i></button>${hidden}
 						<button class="btn btn-sm btn-danger" id = "bibliografia-btnedit-${b.id}" onclick="etii.editarBibliografia(${b.id})"><i class="fas fa-edit"></i></button>
 						<button class="btn btn-sm btn-danger" id = "bibliografia-btnsave-${b.id}" onclick="etii.saveBibliografia(${b.id})" hidden><i class="fas fa-save"></i></button>
