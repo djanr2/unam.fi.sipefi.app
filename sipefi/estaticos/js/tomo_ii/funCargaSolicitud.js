@@ -44,7 +44,7 @@ const fcs = function(){
 	      requeridos: [true, true, true, false]
 	    },
 		'PÁGINA WEB': {
-	      labels: ['Nombre del sitio web', 'URL', '', ''],
+	      labels: ['Nombre del sitio web', 'URL', 'Fecha de Consulta: Día y mes', ''],
 	      requeridos: [true, true, false, false]
 	    },
 	    'DEFAULT': {

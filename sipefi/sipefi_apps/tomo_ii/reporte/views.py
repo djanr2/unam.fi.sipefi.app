@@ -2279,6 +2279,23 @@ def get_bibliografia_str(fila):
     if id_ == 9: #Tesis
         titulo = titulo+ "."
         extra1 = f"({extra1})."
+    if id_ == 10: #Tesis
+        titulo = titulo + "."
+        extra1 = extra1 + "."
+        if extra2 != "":
+            extra2 = f"<a href='{extra2}' color='blue'>{extra2}</a>"
+        else:
+            extra2 = ""
+        if extra3 != "":
+            if anio == 0:
+                anio__ = ""
+            else:
+                anio__ = f"{anio}, "
+            extra3 = f"({anio__}{extra3})"
+        else:
+            extra3 = ""
+        extra3 = extra3 + "."
+        extra4 = extra4 + "."
     if id_ == 7 or id_ == 5:  # Material audiovisual & Norma o ley
         if extra1 != "":
             extra1 = f"[{extra1}]."
