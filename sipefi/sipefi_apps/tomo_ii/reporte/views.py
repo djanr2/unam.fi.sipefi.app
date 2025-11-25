@@ -2229,21 +2229,45 @@ def to_snake_case(texto: str) -> str:
 
 def get_bibliografia_str(fila):
     id_, autor, anio, titulo, extra1, extra2, extra3, extra4, temas = fila
-    anio
+
+    id_  = 0 if id is None else id_
+    autor = "" if autor is None else autor;
+    anio = 0 if anio is None else anio;
+    titulo = "" if titulo is None else titulo;
+    extra1 = "" if extra1 is None else extra1;
+    extra2 = "" if extra2 is None else extra2;
+    extra3 = "" if extra3 is None else extra3;
+    extra4 = "" if extra4 is None else extra4;
+    temas = "" if temas is None else temas;
+
+
     if anio == 0:
         anio_ = '(s.f.).'
     else:
         anio_ = f"({anio})."
-    # Libro impreso || Libro electronico || Apuntes de clase || Material Audiovisual || tesis || Informe || web
-    if id_ == 1 or id_ == 2  or id_ == 6 or id_ == 7 or id_ == 8 or id_ == 9 or id_ == 10:
+    # Libro impreso || Libro electronico
+    if id_ == 1 or id_ == 2 :
         titulo =  f"<i>{titulo}</i>."
     if id_ == 1: # Libro impreso
         aux_edi= extra1
-        if extra2 != "" and extra2 is not None:
+        if extra2 != "":
             extra1 = f"({extra2} ed.)."
         else:
             extra1 = ""
         extra2 = aux_edi
+    if id_ == 4: #Apuntes de clase
+        institucion = extra2
+        url = extra3
+        extra1 = f"[{extra1}]."
+        if extra4 != "":
+            extra2 = f"{extra4},"
+        else:
+            extra2 = ""
+        extra3 = institucion+"."
+        if url != "":
+            extra4 = f"<a href='{url}' color='blue'>{url}</a>"
+        else:
+            extra4 = ""
     partes = [
         autor,
         anio_,

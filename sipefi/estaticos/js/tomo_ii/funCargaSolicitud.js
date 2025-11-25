@@ -20,7 +20,7 @@ const fcs = function(){
 	      requeridos: [false, true, true, false]
 	    },
 	    'APUNTES DE CLASE (MATERIAL DE CURSO)': {
-	      labels: ['Tipo de Documento', 'Nombre de la Institución', 'URL/Enlace', ''],
+	      labels: ['Tipo de Documento', 'Nombre de la Institución', 'URL/Enlace', 'Asignatura'],
 	      requeridos: [true, true, false, false]
 	    },
 	    'MATERIAL AUDIOVISUAL DIGITAL': {
