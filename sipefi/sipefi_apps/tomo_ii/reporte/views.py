@@ -2247,8 +2247,9 @@ def get_bibliografia_str(fila):
         anio_ = f"({anio})."
     # Libro impreso || Libro electronico
     if id_ == 1 or id_ == 2 :
-        titulo =  f"<i>{titulo}</i>."
+        titulo =  f"<i>{titulo}</i>"
     if id_ == 1: # Libro impreso
+        titulo = titulo + "."
         aux_edi= extra1
         if extra2 != "":
             extra1 = f"({extra2} ed.)."
@@ -2275,6 +2276,9 @@ def get_bibliografia_str(fila):
         else:
             extra2 = ""
         extra3 = ""
+    if id_ == 9: #Tesis
+        titulo = titulo+ "."
+        extra1 = f"({extra1})."
     if id_ == 7 or id_ == 5:  # Material audiovisual & Norma o ley
         if extra1 != "":
             extra1 = f"[{extra1}]."
