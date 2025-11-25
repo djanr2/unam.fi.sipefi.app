@@ -2255,7 +2255,7 @@ def get_bibliografia_str(fila):
         else:
             extra1 = ""
         extra2 = aux_edi
-    if id_ == 4: #Apuntes de clase
+    if id_ == 6: #Apuntes de clase
         institucion = extra2
         url = extra3
         extra1 = f"[{extra1}]."
@@ -2268,7 +2268,14 @@ def get_bibliografia_str(fila):
             extra4 = f"<a href='{url}' color='blue'>{url}</a>"
         else:
             extra4 = ""
-    if id_ == 5 or id_ == 3:  # Material audiovisual
+    if id_ == 8: #Tesis
+        extra1 = f"[{extra1}, {extra2}]."
+        if extra3 != "":
+            extra2 = f"<a href='{extra3}' color='blue'>{extra3}</a>"
+        else:
+            extra2 = ""
+        extra3 = ""
+    if id_ == 7 or id_ == 5:  # Material audiovisual & Norma o ley
         if extra1 != "":
             extra1 = f"[{extra1}]."
         else:
