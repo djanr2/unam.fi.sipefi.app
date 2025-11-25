@@ -24,7 +24,7 @@ const fcs = function(){
 	      requeridos: [true, true, false, false]
 	    },
 	    'MATERIAL AUDIOVISUAL DIGITAL': {
-	      labels: ['Tipo de Contenido', 'Plataforma/Sitio Web', 'URL', ''],
+	      labels: ['Tipo de Contenido', 'Plataforma/Sitio Web', 'URL', 'Fecha precisa: Día y mes'],
 	      requeridos: [true, true, true, false]
 	    },
 	    'LIBRO ELECTRÓNICO': {
