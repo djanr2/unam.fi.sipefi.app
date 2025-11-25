@@ -1533,7 +1533,7 @@ def _fmt_biblio_item(item):
     if edicion:   extra.append(f"{edicion}")
     if editorial: extra.append(f"{editorial}")
     if extra:     partes.append(", ".join(extra))
-    if isbn:      partes.append(f"ISBN: {isbn}")
+    if isbn:      partes.append(f"ISBN:{isbn}")
     if doi:       partes.append(f"doi:{doi}")
     if url:       partes.append(f"<a href='{url}' color='blue'>{url}</a>")
 
@@ -2231,14 +2231,19 @@ def get_bibliografia_str(fila):
     id_, autor, anio, titulo, extra1, extra2, extra3, extra4, temas = fila
     anio
     if anio == 0:
-        anio_ = 's.f.'
+        anio_ = '(s.f.).'
     else:
         anio_ = f"({anio})."
     # Libro impreso || Libro electronico || Apuntes de clase || Material Audiovisual || tesis || Informe || web
     if id_ == 1 or id_ == 2  or id_ == 6 or id_ == 7 or id_ == 8 or id_ == 9 or id_ == 10:
-        titulo =  f"<i>{titulo}</i>"
-    if id_ == 3 or 4:  #Articulo Impreso || Articulo electronico
-        extra1 = f"<i>{extra1}</i>"
+        titulo =  f"<i>{titulo}</i>."
+    if id_ == 1: # Libro impreso
+        aux_edi= extra1
+        if extra2 != "" and extra2 is not None:
+            extra1 = f"({extra2} ed.)."
+        else:
+            extra1 = ""
+        extra2 = aux_edi
     partes = [
         autor,
         anio_,
