@@ -2268,7 +2268,7 @@ def get_bibliografia_str(fila):
             extra4 = f"<a href='{url}' color='blue'>{url}</a>"
         else:
             extra4 = ""
-    if id_ == 5:  # Material audiovisual
+    if id_ == 5 or id_ == 3:  # Material audiovisual
         if extra1 != "":
             extra1 = f"[{extra1}]."
         else:

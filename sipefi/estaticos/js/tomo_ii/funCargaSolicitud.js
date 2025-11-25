@@ -16,7 +16,7 @@ const fcs = function(){
 	      requeridos: [true, true, true, false]
 	    },
 	    'NORMA O LEY': {
-	      labels: ['Edición/Revisión', 'Editorial/Organización', 'DOI/URL', ''],
+	      labels: ['Edición/Revisión', 'Editorial/Organización', 'DOI/URL', 'Fecha precisa: Día y mes'],
 	      requeridos: [false, true, true, false]
 	    },
 	    'APUNTES DE CLASE (MATERIAL DE CURSO)': {
