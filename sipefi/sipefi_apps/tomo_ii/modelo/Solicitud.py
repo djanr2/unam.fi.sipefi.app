@@ -396,7 +396,7 @@ class Solicitud:
     def _insertar_rel_licenciaturas(self, licenciaturas):
         for lic in licenciaturas:
             id_lic = lic["idLicenciatura"]
-            semestre = lic["semestre"]
+            semestres = lic.get("semestres", [])
             seriaciones_ant = lic.get("idSeriacionAnterior", [])
             seriaciones_cons = lic.get("idSeriacionConsecuente", [])
             
@@ -405,27 +405,37 @@ class Solicitud:
                 seriaciones_ant = [0]
             if not seriaciones_cons:
                 seriaciones_cons = [0]
+            # Recorremos cada semestre y cada combinación de seriaciones
+            for semestre in semestres:
+                # Por si vienen como string del JSON, aseguramos int
+                try:
+                    semestre_val = int(semestre)
+                except (TypeError, ValueError):
+                    semestre_val = None
     
-            # Si hay antecedentes y consecuentes, se inserta cada combinación
-            for ant in seriaciones_ant:
-                for cons in seriaciones_cons:
-                    self.db.insertar("""
-                        INSERT INTO SIPEFI.TD_REL_LIC_ASIGNATURA (
-                            id_solicitud, id_estatus_solicitud, id_licenciatura,
-                            seriacion_ant, seriacion_cons, semestre, busuario
-                        ) VALUES (
-                            :id_solicitud, :id_estatus_solicitud, :id_lic,
-                            :seriacion_ant, :seriacion_cons, :semestre, :busuario
-                        )
-                    """, {
-                        "id_solicitud": self.id_solicitud,
-                        "id_estatus_solicitud": self.id_estatus,
-                        "id_lic": id_lic,
-                        "seriacion_ant": ant,
-                        "seriacion_cons": cons,
-                        "semestre": semestre,
-                        "busuario": self.usuario
-                    })
+                if semestre_val is None:
+                    continue
+                
+                # Si hay antecedentes y consecuentes, se inserta cada combinación
+                for ant in seriaciones_ant:
+                    for cons in seriaciones_cons:
+                        self.db.insertar("""
+                            INSERT INTO SIPEFI.TD_REL_LIC_ASIGNATURA (
+                                id_solicitud, id_estatus_solicitud, id_licenciatura,
+                                seriacion_ant, seriacion_cons, semestre, busuario
+                            ) VALUES (
+                                :id_solicitud, :id_estatus_solicitud, :id_lic,
+                                :seriacion_ant, :seriacion_cons, :semestre, :busuario
+                            )
+                        """, {
+                            "id_solicitud": self.id_solicitud,
+                            "id_estatus_solicitud": self.id_estatus,
+                            "id_lic": id_lic,
+                            "seriacion_ant": ant,
+                            "seriacion_cons": cons,
+                            "semestre": semestre_val,
+                            "busuario": self.usuario
+                        })
                 
     def _insertar_temario(self, temas):
         for tema in temas:
@@ -622,26 +632,28 @@ class Solicitud:
             
             licenciaturas = {}
             for lic_id, s_ant, s_con, semestre, id_solicitud in lics_raw:
-                key = (lic_id, semestre)
+                key = (lic_id, id_solicitud)
                 if key not in licenciaturas:
                     licenciaturas[key] = {
                         "idLic": lic_id,
                         "seriacionAnt": set(),
                         "seriacionCons": set(),
-                        "semestre": semestre,
+                        "semestres": set(),
                         "id_solicitud": id_solicitud
                     }
                 if s_ant and s_ant != 0:
                     licenciaturas[key]["seriacionAnt"].add(s_ant)
                 if s_con and s_con != 0:
                     licenciaturas[key]["seriacionCons"].add(s_con)
+                if semestre and semestre != 0:
+                    licenciaturas[key]["semestres"].add(semestre)
             
             # Convertir a lista y transformar sets en listas
             licenciaturas = [{
                 "idLic": val["idLic"],
                 "seriacionAnt": list(val["seriacionAnt"]),
                 "seriacionCons": list(val["seriacionCons"]),
-                "semestre": val["semestre"],
+                "semestre": sorted(list(val["semestres"])),
                 "idSolicitud":val["id_solicitud"],
             } for val in licenciaturas.values()]
         

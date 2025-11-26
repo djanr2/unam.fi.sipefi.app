@@ -110,7 +110,12 @@ const fcs = function(){
 
 			// Cargar combos del tab "Relación con Licenciaturas"
 			llenaCombo("rel_licenciatura", obj.catLic || [], false);
+			//Semestre multiple
 			llenaCombo("rel_semestre", [...Array(10).keys()].map(i => [i + 1, `Semestre ${i + 1}`]), false); // del 1 al 10
+			$('#rel_semestre').select2({
+			    placeholder: "Selecciona uno o más semestres",
+			    width: '100%'
+			});
 			// seriación antecedente y consecuente (múltiple)
 			$('#ser_anterior').select2({
 			    placeholder: "Selecciona una o más seriaciones",
@@ -201,11 +206,12 @@ const fcs = function(){
 	  }
 
 	  const txtLic = $("#rel_licenciatura option:selected").text().trim();
-	  const semestre = $("#rel_semestre").val();
 	  
 	  // Obtener arrays de selección múltiple (filtrando si hay un "0")
+	  let semestres = $("#rel_semestre").val() || [];   
 	  let serAnt = $("#ser_anterior").val() || [];
 	  let serCon = $("#ser_consecuente").val() || [];
+	  semestres = semestres.filter(val => val !== "0");
 	  serAnt = serAnt.filter(val => val !== "0");
 	  serCon = serCon.filter(val => val !== "0");
 	  
@@ -218,10 +224,10 @@ const fcs = function(){
 	    return;
 	  }
 
-	  // Validación: semestre obligatorio
-	  if (!semestre) {
-	    fComun.mostrarTooltipCampo("#rel_semestre", "Selecciona el semestre");
-	    return;
+	  // Validación: semestre obligatorio (al menos uno)
+	  if (!semestres.length) {
+	  	fComun.mostrarTooltipCampo("#rel_semestre", "Selecciona al menos un semestre");
+	  	return;
 	  }
 	  // Validación: no debe haber elementos comunes entre antecedente y consecuente
 	  const interseccion = serAnt.some(val => serCon.includes(val));
@@ -245,6 +251,7 @@ const fcs = function(){
 	  // Construir textos para mostrar en la tabla
 	  const mostrarAnt = txtAnt.join(" | ");
 	  const mostrarCon = txtCon.join(" | ");
+	  const mostrasSem = semestres.join(" | ");
 	  
 	  // Botón de eliminar y campo oculto con valores concatenados
 	  const botonEliminar = `
@@ -257,13 +264,13 @@ const fcs = function(){
 			</button>
 		</div>
 	    <input type="hidden" class="datos-relacion" 
-	           value="${idLic}@##@${semestre}@##@${serAnt.join(",")}@##@${serCon.join(",")}">
+	           value="${idLic}@##@${semestres.join(",")}@##@${serAnt.join(",")}@##@${serCon.join(",")}">
 	  `;
 
 	  // Agregar nueva fila al DataTable
 	  tablaRelacionesDT.row.add([
 	    txtLic,
-	    semestre,
+	    mostrasSem,
 	    mostrarAnt,
 	    mostrarCon,
 	    botonEliminar
@@ -271,7 +278,7 @@ const fcs = function(){
 
 	  // Limpiar campos después de agregar
 	  $("#rel_licenciatura").val("0");
-	  $("#rel_semestre").val("1");
+	  $("#rel_semestre").val(null).trigger("change");
 	  $("#ser_anterior").val(null).trigger("change");
 	  $("#ser_consecuente").val(null).trigger("change");
 	};
@@ -464,51 +471,54 @@ const fcs = function(){
 	 * @returns {Array<Object>} Arreglo con objetos que representan la relación con licenciaturas.
 	 */
 	const obtenerRelLicAsig = () => {
-	  const catalogoLic = fComun.getVarLocalJ("catalogos")?.catLic || [];
-	  const catalogoAsig = fComun.getVarLocalJ("catalogos")?.catAsig || [];
-	  const tabla = $('#tablaRelacionesLic').DataTable();
-	  const data = [];
+		const catalogoLic = fComun.getVarLocalJ("catalogos")?.catLic || [];
+		const catalogoAsig = fComun.getVarLocalJ("catalogos")?.catAsig || [];
+		const tabla = $('#tablaRelacionesLic').DataTable();
+		const data = [];
+	
+		tabla.rows({ page: 'all' }).data().each(function (row, index) {
 
-	  tabla.rows({ page: 'all' }).data().each(function (row, index) {
-
-    // ⚠️ row es un array o un objeto dependiendo del DataTable
-    // Asumiendo que es tipo array = [licenciatura, semestre, serAnt, serCon]
-
-    const licNombre   = (row[0] || "").trim();
-    const semestre    = (row[1] || "").trim();
-    const serAntTexto = (row[2] || "").trim();
-    const serConTexto = (row[3] || "").trim();
-
-    // Separar por '|' y limpiar espacios
-    const serAntArr = serAntTexto.split("|").map(t => t.trim()).filter(t => t);
-    const serConArr = serConTexto.split("|").map(t => t.trim()).filter(t => t);
-
-    // Buscar IDs en catálogo de asignaturas
-    const idAnt = serAntArr.map(nombre =>
-      (catalogoAsig.find(([id, nom]) => nom.trim() === nombre)?.[0]) || null
-    );
-
-    const idCon = serConArr.map(nombre =>
-      (catalogoAsig.find(([id, nom]) => nom.trim() === nombre)?.[0]) || null
-    );
-
-    // Buscar ID de licenciatura
-    const licObj = catalogoLic.find(([id, nombre]) => nombre.trim() === licNombre);
-    const idLic  = licObj ? licObj[0] : null;
-
-    // Construir objeto final
-    data.push({
-      idLicenciatura: idLic,
-      licenciatura: licNombre,
-      semestre: semestre,
-      idSeriacionAnterior: idAnt,
-      seriacionAnterior: serAntArr,
-      idSeriacionConsecuente: idCon,
-      seriacionConsecuente: serConArr
-    });
-  });
-
-  return data;
+	    // Asumiendo que es tipo array = [licenciatura, semestre, serAnt, serCon]
+	
+	    const licNombre = (row[0] || "").trim();
+	    const semestresTxt = (row[1] || "").trim();
+	    const serAntTexto = (row[2] || "").trim();
+	    const serConTexto = (row[3] || "").trim();
+	
+	    // Separar por '|' y limpiar espacios
+	    const serAntArr = serAntTexto.split("|").map(t => t.trim()).filter(t => t);
+	    const serConArr = serConTexto.split("|").map(t => t.trim()).filter(t => t);
+		const semestresArr = semestresTxt
+		      ? semestresTxt.split("|").map(t => t.trim()).filter(t => t)
+		      : [];
+		const semestresNum = semestresArr.map(v => Number(v));
+	    
+		// Buscar IDs en catálogo de asignaturas
+	    const idAnt = serAntArr.map(nombre =>
+	      (catalogoAsig.find(([id, nom]) => nom.trim() === nombre)?.[0]) || null
+	    );
+	
+	    const idCon = serConArr.map(nombre =>
+	      (catalogoAsig.find(([id, nom]) => nom.trim() === nombre)?.[0]) || null
+	    );
+	
+	    // Buscar ID de licenciatura
+	    const licObj = catalogoLic.find(([id, nombre]) => nombre.trim() === licNombre);
+	    const idLic  = licObj ? licObj[0] : null;
+	
+	    // Construir objeto final
+	    data.push({
+	      idLicenciatura: idLic,
+	      licenciatura: licNombre,
+	      semestres: semestresNum,
+	      idSeriacionAnterior: idAnt,
+	      seriacionAnterior: serAntArr,
+	      idSeriacionConsecuente: idCon,
+	      seriacionConsecuente: serConArr
+	    });
+	  });
+	
+	  return data;
 	};
 	
 	/**
@@ -809,17 +819,18 @@ const fcs = function(){
 
 			(solicitud.relacionLicenciaturas || []).forEach(rel => {
 			  const idLic = rel.idLic;
-			  const semestre = rel.semestre;
+			  const semestre = rel.semestre || [];
 			  const serAnt = rel.seriacionAnt || [];
 			  const serCon = rel.seriacionCons || [];
 			  const idSolicitud = rel.idSolicitud || [];
 
-			  // Establecer licenciatura y semestre
+			  // Establecer licenciatura
 			  $('#rel_licenciatura').val(idLic).trigger('change');
-			  $('#rel_semestre').val(semestre).trigger('change');
 			  $('#rel_solicitud').val(idSolicitud).trigger('change');
 
-
+			  // Cargar select multiple de semestre
+			  $('#rel_semestre').val(semestre).trigger('change');
+			  			  
 			  // Cargar select multiple de seriación antecedente y consecuente
 			  $('#ser_anterior').val(serAnt).trigger('change');
 			  $('#ser_consecuente').val(serCon).trigger('change');
@@ -1154,7 +1165,6 @@ const fcs = function(){
 					$(modalAprob).modal('show');
 					etii.eventoAprobSoli(".cierraModalAprob", modalAprob);
 				}else{
-					console.log(obj)
 					texto = "No fue posible realizar la cancelaci&oacute;n de la solicitud <br>" +
 							"Contacta al área de soporte SIPEFI <br>" +
 							"<strong><a href=\"mailto:sipefi@fi.unam.edu?subject=Necesito%20ayuda\">" +
