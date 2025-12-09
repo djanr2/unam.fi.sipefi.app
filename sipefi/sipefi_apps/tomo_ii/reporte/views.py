@@ -197,7 +197,10 @@ def generarPdf(request):
 
     ancho_total = width - 2 * x_inicio
     fase_pdf= ""
-    if int(semestre_pdf) < 6:
+
+    semestres_num = [int(x.strip()) for x in semestre_pdf.split(",")]
+
+    if any(n < 6 for n in semestres_num):
         fase_pdf = "F1"
     else:
         fase_pdf = "F2"

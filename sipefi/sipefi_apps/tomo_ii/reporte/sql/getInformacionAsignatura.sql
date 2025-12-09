@@ -6,11 +6,11 @@ with VALOR_PRACTICO as (
     where cvp.ID_VALOR_PRACTICO = rvp.ID_VALOR_PRACTICO
       and rvp.ID_SOLICITUD = :id_asignatura
 ), SEMESTRE AS (
-         SELECT DISTINCT SEMESTRE SEMESTRE
-         FROM   SIPEFI.TD_REL_LIC_ASIGNATURA
-         WHERE  ID_SOLICITUD = :id_asignatura
-         AND    ID_LICENCIATURA = :id_licenciatura
-
+         select  LISTAGG(distinct s.SEMESTRE, ', ') WITHIN GROUP (ORDER BY s.SEMESTRE) as SEMESTRE
+        FROM SIPEFI.TD_ASIGNATURA a,
+             SIPEFI.TD_REL_LIC_ASIGNATURA s
+        WHERE s.ID_LICENCIATURA = :id_licenciatura
+          and s.ID_SOLICITUD = :id_asignatura
 ), COLOR AS (
     SELECT '#FFD400'   AS color, 1 AS id FROM dual
     UNION ALL
