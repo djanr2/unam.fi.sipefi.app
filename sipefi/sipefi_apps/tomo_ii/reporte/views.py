@@ -2,7 +2,6 @@ import unicodedata
 import os
 import re
 import json
-
 from io import BytesIO
 from django.conf import settings
 from django.http import HttpResponse
@@ -14,9 +13,8 @@ from reportlab.lib.styles import ParagraphStyle
 from reportlab.platypus import Table, TableStyle
 from reportlab.pdfgen import canvas
 from reportlab.platypus import Paragraph
-
-
-
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
 
 from sipefi_apps.tomo_ii.reporte.ConsultasPDF import ConsultasPDF
 
@@ -24,6 +22,18 @@ BLANCO = colors.white
 NEGRO = colors.black
 GRIS_SUAVE = colors.HexColor("#F3F4F6")
 watermark_on = True  # o False para desactivarla
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+FONT_DIR = os.path.join(BASE_DIR, "fonts")
+
+pdfmetrics.registerFont(
+    TTFont('FreeSans', os.path.join(FONT_DIR, 'FreeSans.ttf'))
+)
+
+pdfmetrics.registerFont(
+    TTFont('FreeSansBold', os.path.join(FONT_DIR, 'FreeSansBold.ttf'))
+)
+
 
 def generarPdf(request):
     obj = json.loads(request.POST.get("obj", ""))
@@ -1553,7 +1563,7 @@ def dibujar_bibliografia_temas(
     col_ratios=(0.85, 0.15),
     col_gap=12,                     # separación entre columnas
     # estilos
-    font="Helvetica", font_b="Helvetica-Bold",
+    font="FreeSans", font_b="FreeSansBold",
     fs_biblio=9, leading_biblio=11,
     fs_tema=9,   leading_tema=11,
     fs_hdr=10,
