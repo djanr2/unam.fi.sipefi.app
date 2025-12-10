@@ -287,7 +287,6 @@ const etii = function(){
 	       const info  = $(this).data("info-util"); 
 		   
 		   console.log(info)
-	       // Ajusta esta URL al endpoint real de Django
 	       //aqui mandar llamar a la funcion que tienes de descarga del PDF
 	   });
 	   
