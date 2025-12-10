@@ -240,8 +240,7 @@ const soltii = function(){
 	    const raw = fComun.getVarLocalJ("infoAsigLic") || [];
 	    const lista = Array.isArray(raw) ? raw : (raw.data || []);
 
-	    const $tbody = $("#tablaAsigXLic tbody");
-	    $tbody.empty();
+	    let html = "";
 
 	    lista.forEach(row => {
 	        const [
@@ -268,48 +267,30 @@ const soltii = function(){
 	            case 3: badgeClass = "bg-success"; break;            // Concluida
 	        }
 
-	        const $tr = $("<tr>").attr("data-id-licenciatura", idLic);
-
-	        $tr.append(
-	            $("<td>", { class: "text-center" }).text(numSoli)
-	        );
-
-	        $tr.append(
-	            $("<td>").html(
-	                `<span class="badge ${badgeClass}">${estatusDesc}</span>`
-	            )
-	        );
-
-	        $tr.append(
-	            $("<td>").text(nomLic)
-	        );
-
-	        $tr.append(
-	            $("<td>").text(nomAsig)
-	        );
-
-	        $tr.append(
-	            $("<td>", { class: "text-center" }).text(fechaMod || "")
-	        );
-
-	        const $btnPdf = $("<button>", {
-	            type: "button",
-	            class: "btn btn-outline-primary btn-sm btnDescargarPDF",
-	            "data-licenciatura-id": idLic,
-	            "data-solicitud-id": numSoli,
-	            "data-info-util": infoUtil
-	        }).html("<i class='fa-solid fa-file-pdf me-1'></i>PDF");
-
-	        $tr.append(
-	            $("<td>", { class: "text-center" }).append($btnPdf)
-	        );
-
-	        $tr.append(
-	            $("<td>", { class: "d-none info-util" }).text(infoUtil)
-	        );
-
-	        $tbody.append($tr);
+	        html += `
+	            <tr data-id-licenciatura="${idLic}">
+	                <td class="text-center">${numSoli}</td>
+	                <td>
+	                    <span class="badge ${badgeClass}">${estatusDesc}</span>
+	                </td>
+	                <td>${nomLic}</td>
+	                <td>${nomAsig}</td>
+	                <td class="text-center">${fechaMod || ""}</td>
+	                <td class="text-center">
+	                    <button type="button"
+	                            class="btn btn-outline-primary btn-sm btnDescargarPDF"
+	                            data-licenciatura-id="${idLic}"
+	                            data-solicitud-id="${numSoli}"
+	                            data-info-util="${infoUtil}">
+	                        <i class="fa-solid fa-file-pdf me-1"></i>PDF
+	                    </button>
+	                </td>
+	                <td class="d-none info-util">${infoUtil}</td>
+	            </tr>
+	        `;
 	    });
+
+	    $("#tablaAsigXLic tbody").html(html);
 	};
 	
 	/**
