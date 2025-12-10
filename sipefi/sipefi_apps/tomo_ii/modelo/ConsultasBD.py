@@ -104,12 +104,51 @@ class ConsultasBD():
                              'estatusTSA': 200 if len(res2) >= 1 else 204,
                              'TSR': res3,
                              'estatusTSR': 200 if len(res3) >= 1 else 204,
-                             'catalogos': self.dameCatalogosIni()
+                             'catalogos': self.dameCatalogosIni(),
+                             "infoAsigLic": self.buscaAsignaturasXLicenciatura(),
                              }
             finally:
                 cursor.close()
             return respTotal
         
+        def buscaAsignaturasXLicenciatura(self):
+            """
+                Funcion que busca todas las asignaturas por licenciatura.
+                
+                :return: Regresa el objeto con la informacion de las asignaturas por licenciatura.
+            """
+            cursor = conBD().cursorBD()
+            try:
+                query = """
+                    SELECT DISTINCT
+                        s.id_solicitud AS num_solicitud,
+                        s.id_estatus_solicitud AS id_estatus,
+                        es.desc_estatus AS estatus_solicitud,
+                        lic.id_licenciatura AS id_licenciatura,
+                        lic.licenciatura AS nombre_licenciatura,
+                        s.asignatura AS nombre_asignatura,
+                        TO_CHAR(s.fecha_modificacion, 'DD/MM/YYYY') AS fecha_modificacion,
+                        s.id_solicitud || '#@@#' || lic.id_licenciatura AS info_util
+                    FROM SIPEFI.TD_SOLICITUD_TOMO_II s
+                    JOIN SIPEFI.TD_REL_LIC_ASIGNATURA rla
+                       ON rla.id_solicitud         = s.id_solicitud
+                      AND rla.id_estatus_solicitud = s.id_estatus_solicitud
+                    JOIN CATALOGO.TC_LICENCIATURA lic
+                       ON lic.id_licenciatura = rla.id_licenciatura
+                    JOIN CATALOGO.TC_ESTATUS_SOLICITUD es
+                       ON es.id_estatus_solicitud = s.id_estatus_solicitud
+                    WHERE s.historica = 0
+                    ORDER BY
+                        lic.licenciatura,
+                        s.id_solicitud
+                """
+                cursor.execute(query)
+                res = cursor.fetchall()
+            finally:
+                cursor.close()
+            return res
+            
+            
         def buscaSolicitudesAvanzadas(self, id_usuario, estatus):
             """
                 Funcion que busca todas las solicitudes en las que ha participado el usuario logueado.

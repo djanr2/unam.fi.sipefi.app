@@ -9,6 +9,7 @@ from django.http.response import HttpResponsePermanentRedirect
 from django.http import JsonResponse
 from django.views.decorators.cache import never_cache
 from django.views.decorators.csrf import csrf_exempt
+from django.db import transaction
 import json
 
 from sipefi_apps.tomo_ii.modelo.ConsultasBD import ConsultasBD as CBD
@@ -114,8 +115,9 @@ def requestAccionSolicitud(request):
 
         datos = json.loads(obj_json)
 
-        procesador = Solicitud()
-        resultado = procesador.procesar(datos)
+        with transaction.atomic():
+            procesador = Solicitud()
+            resultado = procesador.procesar(datos)
 
         return JsonResponse({"estatus": 200, "respuesta": resultado})
 
@@ -125,13 +127,15 @@ def requestAccionSolicitud(request):
     except Exception as e:
         status = 500
         message = str(e)
-    
+
         # si lanzamos Exception((codigo, mensaje))
         if e.args and isinstance(e.args[0], tuple) and len(e.args[0]) == 2:
             code, msg = e.args[0]
             if isinstance(code, int):
                 status, message = code, msg
-    
+
+        # la excepción ya hizo rollback dentro de atomic,
+        # aquí solo formateamos la respuesta.
         return JsonResponse({"estatus": status, "error": message})
     
 def requestCargaSolicitud(request):
@@ -154,9 +158,9 @@ def requestCancelarSol(request):
         :return: Se da como respuesta un OK, si se cancelo correctamente la solicitud.
     """
     try:
-        # Obtener el objeto desde form-data o body
         raw = request.POST.get("obj")
         obj = json.loads(raw)
+
         idSol = obj["numSoli"]
         idEst = obj["estatus"]
         token = obj["token"]
@@ -164,15 +168,18 @@ def requestCancelarSol(request):
         usuario = obj["usuario"]
         comentario = obj["comentario"]
 
-        # Ejecutar cancelación
-        resp = Solicitud().cancelaSolicitud(idSol, idEst, token, rol, usuario, comentario)
+        with transaction.atomic():
+            resp = Solicitud().cancelaSolicitud(idSol, idEst, token, rol, usuario, comentario)
+
         return JsonResponse({"ok": True, "code": 200, "data": resp}, status=200)
 
     except Exception as e:
-        if isinstance(e.args[0], tuple) and e.args[0][0] == 409:
+        # Si es un error "controlado" tipo (409, mensaje)
+        if e.args and isinstance(e.args[0], tuple) and e.args[0][0] == 409:
             _, msg = e.args[0]
             return JsonResponse({"ok": False, "code": 409, "error": msg}, status=409)
 
+        # Otros errores → 500
         return JsonResponse(
             {"ok": False, "code": 500, "error": str(e)},
             status=500

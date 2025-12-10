@@ -257,3 +257,14 @@ input[readonly] {
 .campos-obl-red {
 	 color: red;
 }
+
+/* Estilo para tabla principal seccion coordinador*/
+
+#tablaAsigXLic thead th {
+    white-space: nowrap;
+}
+
+#tablaAsigXLic td,
+#tablaAsigXLic th {
+    vertical-align: middle;
+}

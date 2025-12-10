@@ -108,6 +108,7 @@ DATABASES = {
     'USER':     desencripta(dataDB[4],key),
     'PASSWORD': desencripta(dataDB[5],key),
     'CONN_MAX_AGE': 1800,  # 30 minutos despues de conexion inactiva
+    'ATOMIC_REQUESTS': True,
   }
 }
 

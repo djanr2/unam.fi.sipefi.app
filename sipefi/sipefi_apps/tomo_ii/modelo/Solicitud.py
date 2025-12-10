@@ -48,7 +48,6 @@ class Solicitud:
             return int(valor) if str(valor).isdigit() else None
     
         try:
-            conn = self.db.conexion()
             accion = "Guardado o Edición"
             datos = obj.get("datosGenerales", {})
             estrategias = obj.get("estrategiasEvaluacion", {})
@@ -160,15 +159,11 @@ class Solicitud:
             
             #Actualizamos token
             self._actualizar_token()
-            conn.commit()
             return {"idS": self.id_solicitud, "idES": self.id_estatus, "nomES": self.nom_estatus}
 
         except Exception as e:
             print(e)
-            conn.rollback()
             raise
-        finally:
-            conn.close()
 
     def procesar_aprobacion(self, obj):
         """
@@ -178,7 +173,6 @@ class Solicitud:
         :param obj: Objeto completo de solicitud.
         :return: Diccionario con estatus actualizado.
         """
-        conn = self.db.conexion()
         try:
             self.id_solicitud = int(obj.get("metadatos", {}).get("numSolicitud"))
             self.id_estatus   = int(obj.get("metadatos", {}).get("idEstSoli"))
@@ -208,13 +202,9 @@ class Solicitud:
             self._guardar_traza(comentario, self.id_estatus, nuevo_estatus, accion)
             self._actualizar_token()
     
-            conn.commit()
             return {"idS": self.id_solicitud, "idES": nuevo_estatus, "nomES": self.obtener_nombre_estatus(nuevo_estatus)}
         except Exception:
-            conn.rollback()
             raise
-        finally:
-            conn.close()
 
     def rechazar_solicitud(self, obj):
         """
@@ -223,7 +213,6 @@ class Solicitud:
         :param obj: Objeto de solicitud.
         :return: Diccionario de confirmación.
         """
-        conn = self.db.conexion()
         try:
             self.id_solicitud = int(obj.get("metadatos", {}).get("numSolicitud"))
             self.id_estatus   = int(obj.get("metadatos", {}).get("idEstSoli"))
@@ -253,13 +242,9 @@ class Solicitud:
             self._guardar_traza(comentario, self.id_estatus, estatus_anterior, "Rechazada")
             self._actualizar_token()
     
-            conn.commit()
             return {"idS": self.id_solicitud, "idES": estatus_anterior, "nomES": self.obtener_nombre_estatus(estatus_anterior)}
         except Exception:
-            conn.rollback()
             raise
-        finally:
-            conn.close()
             
     def _clonar_version(self, id_soli, est_origen, est_destino, usuario_mod):
         """Clonamos la solicitud para guardar el nuevo estatus de la solicitud."""
@@ -812,7 +797,6 @@ class Solicitud:
         :param comentario: Motivo de cancelación.
         :return: Diccionario con estatus resultante.
         """
-        conn = self.db.conexion()
         try:
             self.id_solicitud = int(idSol)
             self.id_estatus   = int(idEst)
@@ -839,7 +823,6 @@ class Solicitud:
             if self.id_estatus == 0:
                 self._guardar_traza(comentario, 0, 0, "Cancelada (ya estaba en 0)")
                 self._actualizar_token()
-                conn.commit()
                 return {"idS": self.id_solicitud, "idES": 0, "nomES": "Cancelada"}
     
             id_usuario_mod = self.db.getIdUsuario(self.usuario)
@@ -884,12 +867,8 @@ class Solicitud:
                 DELETE FROM SIPEFI.TD_ASIGNATURA
                 WHERE id_asignatura = :id_asig
             """, {"id_asig": self.id_solicitud})
-    
-            conn.commit()
+            
             return {"idS": self.id_solicitud, "idES": 0, "nomES": "Cancelada"}
     
         except Exception:
-            conn.rollback()
             raise
-        finally:
-            conn.close()

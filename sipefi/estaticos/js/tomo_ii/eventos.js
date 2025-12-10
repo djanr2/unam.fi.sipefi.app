@@ -255,6 +255,42 @@ const etii = function(){
 	     actualizaHorasTeoricasRestantes(); // recalcula y aplica la clase 'is-invalid' si corresponde
 	   });
 	   
+	   /**
+	    * .::| Evento que inicializa el filtro de Licenciaturas en la vista de Coordinador |::.
+	    * @event module:etii~.filtroLicenciaturas
+	    * @type {object}
+	    * @listens change
+	    */
+	   $("#filtroLicenciatura").unbind("change");
+	   $("#filtroLicenciatura").on("change", function () {
+
+	       try {
+	           let idLicSel = $(this).val(); 
+			   
+	           soltii.pintaTablaAsigXLic(idLicSel || "");
+
+	       } catch (e) {
+	           console.error("Error al filtrar por licenciatura:", e);
+	       }
+	   });
+	   
+	   /**
+	    * .::| Evento que descarga el PDF de la asignatura seleccionada |::.
+	    * @event module:etii~.btnDescargarPDF
+	    * @type {object}
+	    * @listens click
+	    */
+	   $(document).off("click", ".btnDescargarPDF");
+	   $(document).on("click", ".btnDescargarPDF", function () {
+	       const idLic = $(this).data("licenciatura-id");
+	       const idAsig = $(this).data("solicitud-id");
+	       const info  = $(this).data("info-util"); 
+		   
+		   console.log(info)
+	       // Ajusta esta URL al endpoint real de Django
+	       //aqui mandar llamar a la funcion que tienes de descarga del PDF
+	   });
+	   
 	};
 	
 	  /**
@@ -721,7 +757,7 @@ const etii = function(){
 			let valor = parseInt($("#selectRol").val());
 			let texto = $("#selectRol option:selected").text();
 			if(valor != 0){
-				soltii.iniciaComponentes(valor);
+				soltii.iniciaComponentes(valor, texto);
 				soltii.pintaRolUsuario(texto);
 				if (document.activeElement) document.activeElement.blur(); // evitar warning accesibilidad
 				$(objM).modal('hide');

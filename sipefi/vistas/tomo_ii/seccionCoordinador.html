@@ -1,0 +1,55 @@
+{% csrf_token %}
+<div class="container my-5">
+    <div class="card shadow-sm border-0">
+        <!-- Encabezado de la tarjeta -->
+        <div class="card-header bg-light d-flex flex-column flex-md-row justify-content-between align-items-md-center">
+            <div class="mb-2 mb-md-0">
+                <h5 class="mb-0">
+                    <i class="fa-solid fa-graduation-cap me-2"></i>
+                    Asignaturas por licenciatura
+                </h5>
+                <small class="text-muted">
+                    Consulta las asignaturas registradas y descarga el PDF por licenciatura.
+                </small>
+            </div>
+
+            <!-- Filtro de licenciatura -->
+            <div class="d-flex align-items-center gap-2" style="min-width: 380px;">
+                <label for="filtroLicenciatura" class="form-label form-label-sm mb-0 me-1">
+                    <strong>Licenciatura:</strong>
+                </label>
+                <select id="filtroLicenciatura" class="form-select form-select-sm">
+                    <option value="">Todas</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Cuerpo con tabla -->
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table id="tablaAsigXLic"
+                       class="table table-striped table-hover table-sm align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="text-center">Núm. solicitud</th>
+                            <th>Estatus solicitud</th>
+                            <th>Licenciatura</th>
+                            <th>Nombre asignatura</th>
+                            <th class="text-center">Fecha modificación</th>
+                            <th class="text-center">Acción</th>
+                            <th class="d-none info-util">infoUtil</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="card-footer text-muted small">
+            <i class="fa-regular fa-circle-question me-1"></i>
+            Usa el filtro de licenciatura para acotar la lista y descarga el PDF de la asignatura seleccionada.
+        </div>
+    </div>
+</div>

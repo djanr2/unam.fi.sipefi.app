@@ -26,7 +26,7 @@ const soltii = function(){
 		if(tamRol>1){ //tiene opcion de mas de un perfil
 			eligeRol(roles);
 		}else{ //perfil unico
-			iniciaComponentes(roles.resp[0].id);
+			iniciaComponentes(roles.resp[0].id, roles.resp[0].rol);
 			pintaRolUsuario(roles.resp[0].rol);
 		}
 	};
@@ -40,6 +40,8 @@ const soltii = function(){
 			icono = '<i class="fas fa-edit"></i>';
 		}else if(rol.includes("Validador")){
 			icono = '<i class="fas fa-clipboard-check"></i>';
+		}else if(rol.includes("Coordinador")){
+			icono = '<i class="fas fa-user-tie"></i>';
 		}
 		
 		$("#usuario").after(
@@ -49,26 +51,31 @@ const soltii = function(){
 
 	/**
 	 * Funcion que inicializa los componentes en el sistema de acuerdo al perfil y usuario logueado.
-	 * @param {int} valor Contiene el perfil del usuario logueado.
+	 * @param {int} rol Contiene el perfil del usuario logueado.
+	 * @param {String} nomRol Contiene el nombre del perfil logueado.
 	 * @return {void} 
 	 * @method iniciaComponentes
 	 * @static
 	 */
-	const iniciaComponentes = (valor) => {
-		$("#rol").html(valor);
-		//Quitamos opcion de crear solicitudes nuevas al validador
-		let idRV = fComun.getVarLocalJ("idsValidador");
-		$("button[target|='aprobarSolicitud']").html("Solicitar validaci&oacute;n");
-		$(".creaSolicitud").show();
-		$("#tablaSRU").show();
-		if($.inArray(valor,idRV) != -1){
-			$(".creaSolicitud").hide();
-			$("#tablaSoliUsuario").parent().css("margin-top", "100px");
-			$("button[target|='aprobarSolicitud']").html("Aprobar");
+	const iniciaComponentes = (rol, nomRol) => {
+		$("#rol").html(rol);
+		if(nomRol.includes("Coordinador")){
+			cargaInfoTablasP1(2);
 		}else{
-			$("#tablaSRU").hide();
+			//Quitamos opcion de crear solicitudes nuevas al validador
+			let idRV = fComun.getVarLocalJ("idsValidador");
+			$("button[target|='aprobarSolicitud']").html("Solicitar validaci&oacute;n");
+			$(".creaSolicitud").show();
+			$("#tablaSRU").show();
+			if($.inArray(rol, idRV) != -1){
+				$(".creaSolicitud").hide();
+				$("#tablaSoliUsuario").parent().css("margin-top", "100px");
+				$("button[target|='aprobarSolicitud']").html("Aprobar");
+			}else{
+				$("#tablaSRU").hide();
+			}
+			cargaInfoTablasP1(1);
 		}
-		cargaInfoTablasP1();
 		etii.cargaEventosPrincipales();
 		fComun.validadorForm(".inputNumber");
 		fComun.validadorForm(".inputPorcentaje");
@@ -142,11 +149,13 @@ const soltii = function(){
 	/**
 	 * Funcion que carga la informacion de las tres tablas principales en la pantalla inicial del sistema,
 	 * en donde se muestran las solicitudes procesadas por los usuarios.
+	 * @param {int} opcion Parametro que contiene la opcion deseada, 1 - Vistas normales, 2 - Vista coordinador
 	 * @return {void} 
 	 * @method cargaInfoTablasP1
 	 * @static
 	 */
-    const cargaInfoTablasP1 = () => {
+    const cargaInfoTablasP1 = (opcion) => {
+		opcion = parseInt(opcion)
     	let param = {
     			user: $("#usuario").html(),
     			rol: $("#rol").html()
@@ -155,26 +164,153 @@ const soltii = function(){
 			try{
 				let obj = resp;
 				fComun.guardaVarLocal("catalogos",obj.catalogos)
-				$(".tituloTablas").removeClass("esconder");
-				/*Primero validamos informacion de solicitudes
-				 * realizadas por el usuario logueado*/
-				if(obj.estatusTSU == 200){
-					fComun.refrescaTabla("#tablaSoliUsuario",obj.TSU);
-				}
-				/*Solicitudes donde participo el usuario logueado
-				 * y que ha mandado a siguienes estatus*/
-				if(obj.estatusTSA == 200){
-					fComun.refrescaTabla("#tablaSoliAvanzadas",obj.TSA);
-				}
-				/*De igual manera validamos y obtenemos las solicitudes que
-				 * han sido realizadas en el rango de hoy - 30 dias*/
-				if(obj.estatusTSR == 200){
-					fComun.refrescaTabla("#tablaSoliRecientes",obj.TSR);
+				if(opcion == 1){
+					$(".tituloTablas").removeClass("esconder");
+					/*Primero validamos informacion de solicitudes
+					 * realizadas por el usuario logueado*/
+					if(obj.estatusTSU == 200){
+						fComun.refrescaTabla("#tablaSoliUsuario",obj.TSU);
+					}
+					/*Solicitudes donde participo el usuario logueado
+					 * y que ha mandado a siguienes estatus*/
+					if(obj.estatusTSA == 200){
+						fComun.refrescaTabla("#tablaSoliAvanzadas",obj.TSA);
+					}
+					/*De igual manera validamos y obtenemos las solicitudes que
+					 * han sido realizadas en el rango de hoy - 30 dias*/
+					if(obj.estatusTSR == 200){
+						fComun.refrescaTabla("#tablaSoliRecientes",obj.TSR);
+					}
+				}else{
+					fComun.guardaVarLocal("infoAsigLic",obj.infoAsigLic)
+					pintaVistaCoordinador();
 				}
 				soltii.cargaEstilosTablas();
 			}catch(e){console.log(e)}
 		});
     };
+	
+	/**
+	 * Funcion que ayuda a pintar la información de la vista del coordinador
+	 * @return {void} 
+	 * @method cargaEstilosTablas
+	 * @static
+	 */
+	const pintaVistaCoordinador = () => {
+		$(".opcSeccIni").hide();
+		$(".creaSolicitud").hide();
+		$("#seccionCoord").show();
+		
+       	const obj = fComun.getVarLocalJ("catalogos") || {};
+		
+       	const catLic = obj.catLic || [];
+
+	    const $selLic = $("#filtroLicenciatura");
+
+       	// Limpiamos y agregamos opción "Todas"
+       	$selLic.empty().append(
+           $('<option>', { value: '' }).text('Todas')
+       	);
+
+       	catLic.forEach(([id, nombre]) => {
+           $selLic.append(
+               $('<option>', { value: id }).text(nombre)
+           );
+       	});
+
+       	if ($.fn.select2) {
+           $selLic.select2({
+               placeholder: "Todas las licenciaturas",
+               width: '100%',
+               allowClear: true,
+               language: "es"
+           });
+       	}
+		
+		pintaTablaAsigXLic("");
+	};
+	
+	/**
+	 * .::| Función que pinta la tabla de Asignaturas por Licenciatura |::.
+	 * @function pintaTablaAsigXLic
+	 * @param {string|number} idLicFiltro ID de licenciatura a filtrar, o ""/null para todas
+	 * @return {void}
+	 */
+	const pintaTablaAsigXLic = (idLicFiltro = "") => {
+	    const raw = fComun.getVarLocalJ("infoAsigLic") || [];
+	    const lista = Array.isArray(raw) ? raw : (raw.data || []);
+
+	    const $tbody = $("#tablaAsigXLic tbody");
+	    $tbody.empty();
+
+	    lista.forEach(row => {
+	        const [
+	            numSoli,          // 0
+	            idEst,            // 1
+	            estatusDesc,      // 2
+	            idLic,            // 3
+	            nomLic,           // 4
+	            nomAsig,          // 5
+	            fechaMod,         // 6
+	            infoUtil          // 7
+	        ] = row;
+
+	        // Si hay filtro y no coincide la licenciatura, saltamos
+	        if (idLicFiltro && String(idLic) !== String(idLicFiltro)) {
+	            return;
+	        }
+
+	        let badgeClass = "bg-secondary";
+	        switch (Number(idEst)) {
+	            case 0: badgeClass = "bg-danger"; break;             // Cancelada
+	            case 1: badgeClass = "bg-secondary"; break;          // Elaboración
+	            case 2: badgeClass = "bg-warning text-dark"; break;  // Revisión
+	            case 3: badgeClass = "bg-success"; break;            // Concluida
+	        }
+
+	        const $tr = $("<tr>").attr("data-id-licenciatura", idLic);
+
+	        $tr.append(
+	            $("<td>", { class: "text-center" }).text(numSoli)
+	        );
+
+	        $tr.append(
+	            $("<td>").html(
+	                `<span class="badge ${badgeClass}">${estatusDesc}</span>`
+	            )
+	        );
+
+	        $tr.append(
+	            $("<td>").text(nomLic)
+	        );
+
+	        $tr.append(
+	            $("<td>").text(nomAsig)
+	        );
+
+	        $tr.append(
+	            $("<td>", { class: "text-center" }).text(fechaMod || "")
+	        );
+
+	        const $btnPdf = $("<button>", {
+	            type: "button",
+	            class: "btn btn-outline-primary btn-sm btnDescargarPDF",
+	            "data-licenciatura-id": idLic,
+	            "data-solicitud-id": numSoli,
+	            "data-info-util": infoUtil
+	        }).html("<i class='fa-solid fa-file-pdf me-1'></i>PDF");
+
+	        $tr.append(
+	            $("<td>", { class: "text-center" }).append($btnPdf)
+	        );
+
+	        $tr.append(
+	            $("<td>", { class: "d-none info-util" }).text(infoUtil)
+	        );
+
+	        $tbody.append($tr);
+	    });
+	};
 	
 	/**
 	 * Funcion que ayuda a modificar los estilos de las tablas que estan siendo trabajadas en el sistema.
@@ -266,6 +402,7 @@ const soltii = function(){
 		realizaAccionSolicitud:	realizaAccionSolicitud,
 		iniciaComponentes:	iniciaComponentes,
 		pintaSolicitud:	pintaSolicitud,
-		pintaRolUsuario: pintaRolUsuario
+		pintaRolUsuario: pintaRolUsuario,
+		pintaTablaAsigXLic:	pintaTablaAsigXLic
 	}
 }();
