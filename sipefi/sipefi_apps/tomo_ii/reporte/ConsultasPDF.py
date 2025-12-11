@@ -157,8 +157,9 @@ class ConsultasPDF():
         cursor = conBD().cursorBD()
         str_validador = "Validador%"
         str_administrador = "Administrador%"
+        str_coordinador = "Coordinador%"
         try:
-            cursor.execute(sql, {"id_perfil": id_perfil,"str_validador": str_validador,"str_administrador": str_administrador})
+            cursor.execute(sql, {"id_perfil": id_perfil,"str_validador": str_validador,"str_administrador": str_administrador, "str_coordinador": str_coordinador})
             res = cursor.fetchall()
         except Exception as e:
             print(f"Error en getDocumentoOficialByRol archivo de consulta: {e}")

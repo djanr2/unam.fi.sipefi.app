@@ -239,6 +239,7 @@ const soltii = function(){
 	const pintaTablaAsigXLic = (idLicFiltro = "") => {
 	    const raw = fComun.getVarLocalJ("infoAsigLic") || [];
 	    const lista = Array.isArray(raw) ? raw : (raw.data || []);
+		const idPerfil = $("#rol").html();
 
 	    let html = "";
 
@@ -281,8 +282,8 @@ const soltii = function(){
 	                            class="btn btn-outline-primary btn-sm btnDescargarPDF"
 	                            data-licenciatura-id="${idLic}"
 	                            data-solicitud-id="${numSoli}"
-	                            data-info-util="${infoUtil}">
-	                        <i class="fa-solid fa-file-pdf me-1"></i>PDF
+	                            data-info-util="${infoUtil}" onclick="etii.descargaPdf(${idPerfil}, ${idLic}, ${numSoli})">
+	                        <i class="fa-solid fa-file-pdf me-1"></i>PDFq
 	                    </button>
 	                </td>
 	                <td class="d-none info-util">${infoUtil}</td>
