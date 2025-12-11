@@ -15,6 +15,7 @@ from reportlab.pdfgen import canvas
 from reportlab.platypus import Paragraph
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
+from reportlab.platypus import Frame
 
 from sipefi_apps.tomo_ii.reporte.ConsultasPDF import ConsultasPDF
 
@@ -2129,7 +2130,10 @@ def dibujar_parrafo_with_title(
     color=colors.ReportLabBlueOLD,
 ):
     """
-    Versión robusta que maneja casos donde Paragraph.blPara no existe.
+    Implementación robusta con Frame:
+    - Usa Frame.addFromList(...) para que ReportLab haga el corte correcto de párrafos.
+    - Dibuja la cajita del tamaño del contenido si cabe; si no cabe, la cajita ocupa la altura máxima disponible.
+    - Continúa en la siguiente página conservando el estilo.
     """
 
     # ---------- Estilos ----------
@@ -2151,105 +2155,29 @@ def dibujar_parrafo_with_title(
     p.roundRect(x, y - h_hdr_box, w_total, h_hdr_box, radius=hdr_radio, fill=1, stroke=0)
     para_hdr.drawOn(p, x + hdr_pad_x, y - hdr_pad_y - h_hdr_txt)
 
-    # Punto de inicio del cuerpo
+    # Punto de inicio del cuerpo (arriba de la primera cajita)
     y_cursor = y - (h_hdr_box + gap_after_header)
 
     # ---------- Preparar texto ----------
     avail_w = max(0, w_total - 2*body_pad_x)
     remaining_text = texto or ""
-    remaining = Paragraph(remaining_text, style_body)
+    remaining_para = Paragraph(remaining_text, style_body)
 
     def _page_y_start():
         if callable(draw_page_header_fn) and page_width and page_height:
             return draw_page_header_fn(p, page_width, page_height)
         return (page_height or 842) - top_margin
 
-    # ---------- Helper: split seguro ----------
-    def _split_paragraph_safe(paragraph_obj, paragraph_text, avail_w_local, inner_h_local, style):
-        """
-        Intenta particionar `paragraph_obj` en (this_part, rest_paragraph).
-        1) Si paragraph_obj tiene blPara, usamos el método rápido (breakLines).
-        2) Si no, hacemos una búsqueda binaria por número de 'tokens' (palabras+espacios)
-           para encontrar el máximo prefijo que cabe en inner_h_local.
-        Devuelve: (Paragraph this_part, Paragraph rest_or_None, rest_text_str_or_empty)
-        """
-        # Intento rápido: usar blPara.breakLines() si existe
-        if hasattr(paragraph_obj, "blPara"):
-            try:
-                bl = paragraph_obj.blPara
-                lines = bl.breakLines(avail_w_local)
-                if not lines:
-                    return None, None, ""
-                taken, rest = [], []
-                used_h = 0
-                for line, h in lines:
-                    if used_h + h <= inner_h_local:
-                        taken.append(line.text)
-                        used_h += h
-                    else:
-                        rest.append(line.text)
-                taken_text = "\n".join(taken)
-                rest_text = "\n".join(rest)
-                this_part = Paragraph(taken_text, style)
-                rest_par = Paragraph(rest_text, style) if rest_text.strip() else None
-                return this_part, rest_par, rest_text
-            except Exception:
-                # si algo falla, caemos al método seguro
-                pass
-
-        # ---------- Método seguro (búsqueda binaria por tokens) ----------
-        # Tokenizar preservando espacios: \S+ (palabra) o \s+ (espacio)
-        tokens = re.findall(r'\S+|\s+', paragraph_text or "")
-        if not tokens:
-            return None, None, ""
-
-        # Función que evalúa si prefix formado por n tokens cabe
-        def _fits(n_tokens):
-            prefix = "".join(tokens[:n_tokens]).strip()
-            if not prefix:
-                return False
-            try:
-                p_try = Paragraph(prefix, style)
-                _, h_try = p_try.wrap(avail_w_local, inner_h_local)
-                return h_try <= inner_h_local
-            except Exception:
-                # si Paragraph falla con ese fragmento, consideramos que no cabe
-                return False
-
-        # Búsqueda binaria para hallar el mayor n que cabe
-        lo, hi = 1, len(tokens)
-        best = 0
-        while lo <= hi:
-            mid = (lo + hi) // 2
-            if _fits(mid):
-                best = mid
-                lo = mid + 1
-            else:
-                hi = mid - 1
-
-        if best == 0:
-            # No cabe ni el token más pequeño → forzamos al menos algo (tomar 1 token)
-            best = 1
-
-        prefix_text = "".join(tokens[:best]).strip()
-        suffix_text = "".join(tokens[best:]).lstrip()
-
-        this_part = Paragraph(prefix_text, style)
-        rest_par = Paragraph(suffix_text, style) if suffix_text.strip() else None
-        return this_part, rest_par, suffix_text
-
-    # ===========================================================
-    # ========== BUCLE DE FLUJO MULTIPÁGINA ROBUSTO =============
-    # ===========================================================
-    while remaining_text and remaining is not None:
-        # ¿Cabe una cajita mínima en esta página?
+    # ---------- Bucle principal ----------
+    while remaining_text and remaining_para is not None:
+        # espacio mínimo para una caja
         min_h = fs + 2 * body_pad_y + 2
         if y_cursor - bottom_margin < min_h:
             dibujar_marca_agua(p, page_width, page_height, habilitada=watermark_on)
             p.showPage()
             y_cursor = _page_y_start()
 
-        # Área disponible
+        # altura disponible para el contenido interno (sin paddings)
         avail_h_panel = y_cursor - bottom_margin
         inner_h = max(0, avail_h_panel - 2*body_pad_y)
 
@@ -2259,48 +2187,80 @@ def dibujar_parrafo_with_title(
             y_cursor = _page_y_start()
             continue
 
-        # Si ancho inválido, saltar página (defensa)
         if avail_w <= 0:
             dibujar_marca_agua(p, page_width, page_height, habilitada=watermark_on)
             p.showPage()
             y_cursor = _page_y_start()
             continue
 
-        # Obtener fragmento que cabe (safe split)
-        this_part, rest_par, rest_text = _split_paragraph_safe(remaining, remaining_text, avail_w, inner_h, style_body)
+        # Armamos la "story" con el paragraph completo restante
+        story = [remaining_para]
 
-        # Si no se pudo crear this_part por alguna razón, terminamos para evitar bucle
-        if this_part is None:
-            break
+        # Frame en el interior de la cajita (x LL = x + body_pad_x ; y LL = y_cursor - body_pad_y - inner_h)
+        frame_x = x + body_pad_x
+        frame_y = y_cursor - body_pad_y - inner_h
+        frame_w = avail_w
+        frame_h = inner_h
 
-        # Medir altura real del fragmento
-        _, h_part = this_part.wrap(avail_w, inner_h)
-        box_h = h_part + 2*body_pad_y
+        # Usar Frame.addFromList para que ReportLab determine cuánto cabe
+        frame = Frame(frame_x, frame_y, frame_w, frame_h, leftPadding=0, bottomPadding=0,
+                      rightPadding=0, topPadding=0, showBoundary=0)
+        # addFromList consumirá de 'story' lo que quepa; si queda algo, story tendrá el resto
+        frame.addFromList(story, p)
 
-        # ---------- Dibujar cajita ----------
-        p.setFillColor(BLANCO); p.setStrokeColor(color); p.setLineWidth(1)
-        p.roundRect(x, y_cursor - box_h, w_total, box_h, radius=body_radius, fill=1, stroke=1)
+        # Si story quedó vacío => todo el texto entró en esta cajita
+        if not story:
+            # Medir la altura real del párrafo completo (para dibujar caja justo a su medida)
+            try:
+                _, h_total = remaining_para.wrap(avail_w, 10**6)
+                used_h = h_total
+            except Exception:
+                used_h = inner_h  # fallback
 
-        # Texto dentro
-        this_part.drawOn(p, x + body_pad_x, y_cursor - body_pad_y - h_part)
+            # Altura de la caja incluyendo paddings
+            box_h = used_h + 2*body_pad_y
 
-        # Avanzar cursor
-        y_cursor -= box_h
+            # Dibujar cajita de la altura real usada (no necesariamente full inner_h)
+            p.setFillColor(BLANCO); p.setStrokeColor(color); p.setLineWidth(1)
+            p.roundRect(x, y_cursor - box_h, w_total, box_h, radius=body_radius, fill=1, stroke=1)
 
-        # Preparar siguiente iteración
-        if rest_par is None:
-            # ya no queda texto
-            remaining = None
+            # Ya hemos dibujado el contenido con frame.addFromList; avanzar cursor
+            y_cursor -= box_h
+
+            # no queda texto
+            remaining_para = None
             remaining_text = ""
             break
-        else:
-            remaining = rest_par
-            remaining_text = rest_text
 
-            # Salto de página y seguir (no re-dibujar encabezado del componente)
+        else:
+            # Quedó contenido en 'story' => significa que el párrafo fue demasiado grande y Frame consumió hasta llenar inner_h.
+            # story[0] es un Paragraph con el resto. Intentamos recuperar su texto (preferir mantener HTML si está en .text)
+            rest_para = story[0]
+            # extraer texto restante intentando mantener formato
+            rest_text = getattr(rest_para, "text", None)
+            if not rest_text:
+                try:
+                    rest_text = rest_para.getPlainText()
+                except Exception:
+                    rest_text = ""
+
+            # En este caso, la cajita ocupa la altura máxima disponible (inner_h)
+            box_h = inner_h + 2*body_pad_y
+
+            # Dibujar la cajita de altura completa disponible
+            p.setFillColor(BLANCO); p.setStrokeColor(color); p.setLineWidth(1)
+            p.roundRect(x, y_cursor - box_h, w_total, box_h, radius=body_radius, fill=1, stroke=1)
+
+            # (El texto visible ya fue pintado por frame.addFromList)
+            # Preparar siguiente iteración con el texto restante
+            remaining_text = rest_text or ""
+            remaining_para = Paragraph(remaining_text, style_body) if remaining_text.strip() else None
+
+            # Salto de página y continuar (no redibujar el header del componente)
             dibujar_marca_agua(p, page_width, page_height, habilitada=watermark_on)
             p.showPage()
             y_cursor = _page_y_start()
+            continue
 
     return y_cursor
 
