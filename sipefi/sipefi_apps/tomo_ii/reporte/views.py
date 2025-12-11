@@ -2127,16 +2127,29 @@ def dibujar_parrafo_with_title(
     auto_paginacion=True, page_width=None, page_height=None,
     top_margin=40, bottom_margin=40,
     draw_page_header_fn=None,
-    color=colors.ReportLabBlueOLD,
+    color=colors.HexColor("#0B5FA5"),  # azul por defecto
 ):
     """
-    Implementación robusta con Frame:
-    - Usa Frame.addFromList(...) para que ReportLab haga el corte correcto de párrafos.
-    - Dibuja la cajita del tamaño del contenido si cabe; si no cabe, la cajita ocupa la altura máxima disponible.
-    - Continúa en la siguiente página conservando el estilo.
+    Dibuja:
+      - Encabezado relleno (titulo) en caja redondeada.
+      - Una cajita redondeada (solo borde) debajo que contiene 'texto'.
+      - Si el texto excede la cajita/página, se generan páginas nuevas hasta completar el texto.
+    Devuelve la nueva 'y' en la última página usada.
     """
 
-    # ---------- Estilos ----------
+    # --- Helper: obtener tamaño de página real ---
+    page_w, page_h = (p._pagesize if (page_width is None or page_height is None) else (page_width, page_height))
+
+    def _page_y_start():
+        if callable(draw_page_header_fn) and page_w and page_h:
+            # draw_page_header_fn puede dibujar algo y debe devolver la y inicial del cuerpo
+            try:
+                return draw_page_header_fn(p, page_w, page_h)
+            except Exception:
+                # si falla, usar el margen superior por defecto
+                return page_h - top_margin
+        return page_h - top_margin
+
     style_hdr = ParagraphStyle(
         "hdr", fontName=font_b, fontSize=hdr_fs, leading=hdr_leading,
         textColor=BLANCO, alignment=TA_LEFT
@@ -2146,121 +2159,127 @@ def dibujar_parrafo_with_title(
         textColor=NEGRO, alignment=TA_JUSTIFY
     )
 
-    # ---------- Encabezado ----------
+    # ---------- Encabezado (cajita rellena) ----------
     para_hdr = Paragraph(titulo, style_hdr)
     _, h_hdr_txt = para_hdr.wrap(max(0, w_total - 2*hdr_pad_x), 10**6)
     h_hdr_box = max(hdr_fs + 2*hdr_pad_y, h_hdr_txt + 2*hdr_pad_y)
 
-    p.setFillColor(color); p.setStrokeColor(color)
+    p.setFillColor(color)
+    p.setStrokeColor(color)
     p.roundRect(x, y - h_hdr_box, w_total, h_hdr_box, radius=hdr_radio, fill=1, stroke=0)
+    # dibujar texto del título
     para_hdr.drawOn(p, x + hdr_pad_x, y - hdr_pad_y - h_hdr_txt)
 
-    # Punto de inicio del cuerpo (arriba de la primera cajita)
+    # punto inicial para la cajita del cuerpo (debajo del header)
     y_cursor = y - (h_hdr_box + gap_after_header)
 
-    # ---------- Preparar texto ----------
+    # ancho útil para el texto dentro del borde
     avail_w = max(0, w_total - 2*body_pad_x)
+
+    # preparar paragraph completo inicial
     remaining_text = texto or ""
+    if not remaining_text.strip():
+        # si no hay texto, dibujar solo la cajita vacía (borde) y retornar
+        box_h = fs + 2*body_pad_y
+        p.setFillColor(colors.white); p.setStrokeColor(color); p.setLineWidth(1)
+        p.roundRect(x, y_cursor - box_h, w_total, box_h, radius=body_radius, fill=0, stroke=1)
+        return y_cursor - box_h
+
     remaining_para = Paragraph(remaining_text, style_body)
 
-    def _page_y_start():
-        if callable(draw_page_header_fn) and page_width and page_height:
-            return draw_page_header_fn(p, page_width, page_height)
-        return (page_height or 842) - top_margin
-
-    # ---------- Bucle principal ----------
-    while remaining_text and remaining_para is not None:
-        # espacio mínimo para una caja
-        min_h = fs + 2 * body_pad_y + 2
-        if y_cursor - bottom_margin < min_h:
-            dibujar_marca_agua(p, page_width, page_height, habilitada=watermark_on)
+    # ---------- Bucle: llenar la cajita y paginar si es necesario ----------
+    while True:
+        # comprobar espacio mínimo
+        min_box_h = fs + 2*body_pad_y + 2
+        if y_cursor - bottom_margin < min_box_h:
+            # saltar página
             p.showPage()
+            # re-dibujar encabezado general de página si existe
             y_cursor = _page_y_start()
 
-        # altura disponible para el contenido interno (sin paddings)
+        # espacio disponible para la parte interna del panel en esta página
         avail_h_panel = y_cursor - bottom_margin
         inner_h = max(0, avail_h_panel - 2*body_pad_y)
 
         if inner_h <= 0:
-            dibujar_marca_agua(p, page_width, page_height, habilitada=watermark_on)
+            # nada cabe en esta página; forza salto
             p.showPage()
             y_cursor = _page_y_start()
             continue
 
-        if avail_w <= 0:
-            dibujar_marca_agua(p, page_width, page_height, habilitada=watermark_on)
-            p.showPage()
-            y_cursor = _page_y_start()
-            continue
+        # Medir altura total requerida por el paragraph completo
+        try:
+            _, h_total = remaining_para.wrap(avail_w, 10**7)
+        except Exception:
+            # si wrap falla, forzar un valor razonable
+            h_total = inner_h + 1
 
-        # Armamos la "story" con el paragraph completo restante
-        story = [remaining_para]
-
-        # Frame en el interior de la cajita (x LL = x + body_pad_x ; y LL = y_cursor - body_pad_y - inner_h)
-        frame_x = x + body_pad_x
-        frame_y = y_cursor - body_pad_y - inner_h
-        frame_w = avail_w
-        frame_h = inner_h
-
-        # Usar Frame.addFromList para que ReportLab determine cuánto cabe
-        frame = Frame(frame_x, frame_y, frame_w, frame_h, leftPadding=0, bottomPadding=0,
-                      rightPadding=0, topPadding=0, showBoundary=0)
-        # addFromList consumirá de 'story' lo que quepa; si queda algo, story tendrá el resto
-        frame.addFromList(story, p)
-
-        # Si story quedó vacío => todo el texto entró en esta cajita
-        if not story:
-            # Medir la altura real del párrafo completo (para dibujar caja justo a su medida)
-            try:
-                _, h_total = remaining_para.wrap(avail_w, 10**6)
-                used_h = h_total
-            except Exception:
-                used_h = inner_h  # fallback
-
-            # Altura de la caja incluyendo paddings
+        if h_total <= inner_h:
+            # TODO: todo el párrafo cabe en esta cajita: dibujar caja ajustada a su contenido
+            used_h = h_total
             box_h = used_h + 2*body_pad_y
 
-            # Dibujar cajita de la altura real usada (no necesariamente full inner_h)
-            p.setFillColor(BLANCO); p.setStrokeColor(color); p.setLineWidth(1)
-            p.roundRect(x, y_cursor - box_h, w_total, box_h, radius=body_radius, fill=1, stroke=1)
+            # dibujar caja (solo borde, sin relleno)
+            p.setFillColor(colors.white); p.setStrokeColor(color); p.setLineWidth(1)
+            p.roundRect(x, y_cursor - box_h, w_total, box_h, radius=body_radius, fill=0, stroke=1)
 
-            # Ya hemos dibujado el contenido con frame.addFromList; avanzar cursor
+            # crear Frame con exactamente la altura del contenido (sin paddings)
+            frame_x = x + body_pad_x
+            frame_y = y_cursor - body_pad_y - used_h
+            frame = Frame(frame_x, frame_y, avail_w, used_h, leftPadding=0, bottomPadding=0, rightPadding=0, topPadding=0, showBoundary=0)
+
+            # story con el paragraph completo
+            story = [remaining_para]
+            frame.addFromList(story, p)  # consumirá todo el paragraph
+
+            # avanzar cursor y terminar
             y_cursor -= box_h
-
-            # no queda texto
-            remaining_para = None
-            remaining_text = ""
             break
 
         else:
-            # Quedó contenido en 'story' => significa que el párrafo fue demasiado grande y Frame consumió hasta llenar inner_h.
-            # story[0] es un Paragraph con el resto. Intentamos recuperar su texto (preferir mantener HTML si está en .text)
-            rest_para = story[0]
-            # extraer texto restante intentando mantener formato
-            rest_text = getattr(rest_para, "text", None)
-            if not rest_text:
-                try:
-                    rest_text = rest_para.getPlainText()
-                except Exception:
-                    rest_text = ""
-
-            # En este caso, la cajita ocupa la altura máxima disponible (inner_h)
+            # El paragraph NO cabe completamente: llenamos hasta inner_h y dejamos el resto
             box_h = inner_h + 2*body_pad_y
 
-            # Dibujar la cajita de altura completa disponible
-            p.setFillColor(BLANCO); p.setStrokeColor(color); p.setLineWidth(1)
-            p.roundRect(x, y_cursor - box_h, w_total, box_h, radius=body_radius, fill=1, stroke=1)
+            # dibujar caja que usa la altura máxima disponible
+            p.setFillColor(colors.white); p.setStrokeColor(color); p.setLineWidth(1)
+            p.roundRect(x, y_cursor - box_h, w_total, box_h, radius=body_radius, fill=0, stroke=1)
 
-            # (El texto visible ya fue pintado por frame.addFromList)
-            # Preparar siguiente iteración con el texto restante
-            remaining_text = rest_text or ""
-            remaining_para = Paragraph(remaining_text, style_body) if remaining_text.strip() else None
+            # Frame con la altura máxima (inner_h) para que ReportLab pinte lo que quepa
+            frame_x = x + body_pad_x
+            frame_y = y_cursor - body_pad_y - inner_h
+            frame = Frame(frame_x, frame_y, avail_w, inner_h, leftPadding=0, bottomPadding=0, rightPadding=0, topPadding=0, showBoundary=0)
 
-            # Salto de página y continuar (no redibujar el header del componente)
-            dibujar_marca_agua(p, page_width, page_height, habilitada=watermark_on)
+            story = [remaining_para]
+            frame.addFromList(story, p)
+            # si story quedó con contenido significa que hay texto restante
+            if story:
+                rest_para = story[0]
+                # intentar extraer texto restante manteniendo HTML si está en attribute .text
+                rest_text = getattr(rest_para, "text", None)
+                if not rest_text:
+                    try:
+                        rest_text = rest_para.getPlainText()
+                    except Exception:
+                        rest_text = ""
+
+                # preparar para la siguiente iteración
+                remaining_text = rest_text or ""
+                remaining_para = Paragraph(remaining_text, style_body) if remaining_text.strip() else None
+            else:
+                # raro: frame consumió todo (aunque h_total > inner_h); terminar
+                remaining_para = None
+                remaining_text = ""
+
+            # Saltar de página y continuar pintando el resto (no volver a dibujar el título)
             p.showPage()
             y_cursor = _page_y_start()
-            continue
+
+            # si no queda más texto, salir
+            if not remaining_para:
+                break
+            else:
+                # continuar loop para dibujar la siguiente cajita en la nueva página
+                continue
 
     return y_cursor
 
