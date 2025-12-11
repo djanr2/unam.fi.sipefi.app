@@ -2191,9 +2191,48 @@ def dibujar_parrafo_with_title(
             continue
 
         # Partir el párrafo para esta página
+        # correcion de ecepcion de parrafo init
+        # ---------- Partir el párrafo para esta página (con defensas) ----------
+        # Si el ancho disponible no es válido, no podremos dibujar
+        if avail_w <= 0:
+            # Forzamos salto de página para evitar bucle infinito
+            dibujar_marca_agua(p, page_width, page_height, habilitada=watermark_on)
+            p.showPage()
+            y_cursor = _page_y_start()
+            continue
+
+        # Intento normal de split()
         parts = remaining.split(avail_w, inner_h)
+
+        # Si split() devolvió lista vacía, aplicar defensas
+        if not parts:
+            # Obtener texto plano del párrafo
+            try:
+                text_plain = remaining.getPlainText()
+            except Exception:
+                text_plain = ""
+
+            # Remover tags HTML que puedan romper el parser
+            import re
+            text_plain = re.sub(r"<[^>]+>", "", text_plain or "").strip()
+
+            # Si no queda texto útil → terminar componente
+            if not text_plain:
+                break
+
+            # Reintentar creándolo como Paragraph simple
+            remaining = Paragraph(text_plain, style_body)
+            parts = remaining.split(avail_w, inner_h)
+
+            # Si aun así sigue vacío, forzar un único fragmento para avanzar
+            if not parts:
+                forced = Paragraph(text_plain, style_body)
+                parts = [forced]
+
+        # Ahora sí, garantizado que parts tiene al menos 1 elemento
         this_part = parts[0]
         _, h_part = this_part.wrap(avail_w, inner_h)
+        # correcion de ecepcion de parrafo end
 
         # Altura real de la cajita para esta página
         box_h = h_part + 2*body_pad_y
