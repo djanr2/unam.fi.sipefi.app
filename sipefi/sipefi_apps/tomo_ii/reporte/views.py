@@ -2129,11 +2129,9 @@ def dibujar_parrafo_with_title(
     color=colors.ReportLabBlueOLD,
 ):
     """
-    Dibuja:
-      1) Encabezado azul redondeado con 'Formación integral'.
-      2) Un panel en forma de cajita redondeada que contiene texto largo.
-         El texto se parte en varias páginas sin cortarse.
+    Versión robusta que maneja casos donde Paragraph.blPara no existe.
     """
+
     # ---------- Estilos ----------
     style_hdr = ParagraphStyle(
         "hdr", fontName=font_b, fontSize=hdr_fs, leading=hdr_leading,
@@ -2158,17 +2156,92 @@ def dibujar_parrafo_with_title(
 
     # ---------- Preparar texto ----------
     avail_w = max(0, w_total - 2*body_pad_x)
-    remaining = Paragraph(texto or "", style_body)
+    remaining_text = texto or ""
+    remaining = Paragraph(remaining_text, style_body)
 
     def _page_y_start():
         if callable(draw_page_header_fn) and page_width and page_height:
             return draw_page_header_fn(p, page_width, page_height)
         return (page_height or 842) - top_margin
 
+    # ---------- Helper: split seguro ----------
+    def _split_paragraph_safe(paragraph_obj, paragraph_text, avail_w_local, inner_h_local, style):
+        """
+        Intenta particionar `paragraph_obj` en (this_part, rest_paragraph).
+        1) Si paragraph_obj tiene blPara, usamos el método rápido (breakLines).
+        2) Si no, hacemos una búsqueda binaria por número de 'tokens' (palabras+espacios)
+           para encontrar el máximo prefijo que cabe en inner_h_local.
+        Devuelve: (Paragraph this_part, Paragraph rest_or_None, rest_text_str_or_empty)
+        """
+        # Intento rápido: usar blPara.breakLines() si existe
+        if hasattr(paragraph_obj, "blPara"):
+            try:
+                bl = paragraph_obj.blPara
+                lines = bl.breakLines(avail_w_local)
+                if not lines:
+                    return None, None, ""
+                taken, rest = [], []
+                used_h = 0
+                for line, h in lines:
+                    if used_h + h <= inner_h_local:
+                        taken.append(line.text)
+                        used_h += h
+                    else:
+                        rest.append(line.text)
+                taken_text = "\n".join(taken)
+                rest_text = "\n".join(rest)
+                this_part = Paragraph(taken_text, style)
+                rest_par = Paragraph(rest_text, style) if rest_text.strip() else None
+                return this_part, rest_par, rest_text
+            except Exception:
+                # si algo falla, caemos al método seguro
+                pass
+
+        # ---------- Método seguro (búsqueda binaria por tokens) ----------
+        # Tokenizar preservando espacios: \S+ (palabra) o \s+ (espacio)
+        tokens = re.findall(r'\S+|\s+', paragraph_text or "")
+        if not tokens:
+            return None, None, ""
+
+        # Función que evalúa si prefix formado por n tokens cabe
+        def _fits(n_tokens):
+            prefix = "".join(tokens[:n_tokens]).strip()
+            if not prefix:
+                return False
+            try:
+                p_try = Paragraph(prefix, style)
+                _, h_try = p_try.wrap(avail_w_local, inner_h_local)
+                return h_try <= inner_h_local
+            except Exception:
+                # si Paragraph falla con ese fragmento, consideramos que no cabe
+                return False
+
+        # Búsqueda binaria para hallar el mayor n que cabe
+        lo, hi = 1, len(tokens)
+        best = 0
+        while lo <= hi:
+            mid = (lo + hi) // 2
+            if _fits(mid):
+                best = mid
+                lo = mid + 1
+            else:
+                hi = mid - 1
+
+        if best == 0:
+            # No cabe ni el token más pequeño → forzamos al menos algo (tomar 1 token)
+            best = 1
+
+        prefix_text = "".join(tokens[:best]).strip()
+        suffix_text = "".join(tokens[best:]).lstrip()
+
+        this_part = Paragraph(prefix_text, style)
+        rest_par = Paragraph(suffix_text, style) if suffix_text.strip() else None
+        return this_part, rest_par, suffix_text
+
     # ===========================================================
     # ========== BUCLE DE FLUJO MULTIPÁGINA ROBUSTO =============
     # ===========================================================
-    while remaining:
+    while remaining_text and remaining is not None:
         # ¿Cabe una cajita mínima en esta página?
         min_h = fs + 2 * body_pad_y + 2
         if y_cursor - bottom_margin < min_h:
@@ -2186,36 +2259,19 @@ def dibujar_parrafo_with_title(
             y_cursor = _page_y_start()
             continue
 
-        # -------- SPLIT NORMAL --------
-        parts = remaining.split(avail_w, inner_h)
+        # Si ancho inválido, saltar página (defensa)
+        if avail_w <= 0:
+            dibujar_marca_agua(p, page_width, page_height, habilitada=watermark_on)
+            p.showPage()
+            y_cursor = _page_y_start()
+            continue
 
-        # --------- Si SPLIT falla → usar breakLines() ---------
-        if not parts:
-            bl = remaining.blPara
-            lines = bl.breakLines(avail_w)
+        # Obtener fragmento que cabe (safe split)
+        this_part, rest_par, rest_text = _split_paragraph_safe(remaining, remaining_text, avail_w, inner_h, style_body)
 
-            if not lines:
-                break
-
-            taken, rest = [], []
-            used_h = 0
-
-            for line, h in lines:
-                if used_h + h <= inner_h:
-                    taken.append(line.text)
-                    used_h += h
-                else:
-                    rest.append(line.text)
-
-            taken_text = "\n".join(taken)
-            rest_text  = "\n".join(rest)
-
-            this_part = Paragraph(taken_text, style_body)
-            remaining = Paragraph(rest_text, style_body) if rest_text.strip() else None
-
-        else:
-            this_part = parts[0]
-            remaining = parts[1] if len(parts) > 1 else None
+        # Si no se pudo crear this_part por alguna razón, terminamos para evitar bucle
+        if this_part is None:
+            break
 
         # Medir altura real del fragmento
         _, h_part = this_part.wrap(avail_w, inner_h)
@@ -2231,15 +2287,22 @@ def dibujar_parrafo_with_title(
         # Avanzar cursor
         y_cursor -= box_h
 
-        # ¿Queda texto?
-        if remaining:
+        # Preparar siguiente iteración
+        if rest_par is None:
+            # ya no queda texto
+            remaining = None
+            remaining_text = ""
+            break
+        else:
+            remaining = rest_par
+            remaining_text = rest_text
+
+            # Salto de página y seguir (no re-dibujar encabezado del componente)
             dibujar_marca_agua(p, page_width, page_height, habilitada=watermark_on)
             p.showPage()
             y_cursor = _page_y_start()
 
     return y_cursor
-
-
 
 def to_snake_case(texto: str) -> str:
     # Normalizar y eliminar acentos
