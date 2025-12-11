@@ -2114,28 +2114,27 @@ def dibujar_formas_evaluacion(
 
 def dibujar_parrafo_with_title(
     p, x, y, w_total,
-    texto,                                  # contenido largo (puede tener <b>, <i>, <br/>, etc.)
+    texto,
     titulo="Formación integral",
     # Encabezado del componente
     hdr_fs=11, hdr_leading=14, hdr_pad_x=10, hdr_pad_y=8, hdr_radio=6,
     gap_after_header=10,
-    # Panel 1x1 (cajita) que fluye
+    # Panel interno
     body_pad_x=10, body_pad_y=10, body_radius=6,
     fs=10, leading=14, font="Helvetica", font_b="Helvetica-Bold",
-    # Auto-paginación
+    # Auto paginación
     auto_paginacion=True, page_width=None, page_height=None,
     top_margin=40, bottom_margin=40,
-    draw_page_header_fn=None,   # función opcional para redibujar TU encabezado general por página
-    color = colors.ReportLabBlueOLD,
+    draw_page_header_fn=None,
+    color=colors.ReportLabBlueOLD,
 ):
     """
     Dibuja:
       1) Encabezado azul redondeado con 'Formación integral'.
-      2) Un panel 1x1 (cajita redondeada) que contiene 'texto' y se parte en varias páginas si es necesario.
-    Al continuar en páginas siguientes, NO repite el encabezado del componente.
-    Devuelve la nueva y de la ÚLTIMA página usada.
+      2) Un panel en forma de cajita redondeada que contiene texto largo.
+         El texto se parte en varias páginas sin cortarse.
     """
-    # ----- Estilos -----
+    # ---------- Estilos ----------
     style_hdr = ParagraphStyle(
         "hdr", fontName=font_b, fontSize=hdr_fs, leading=hdr_leading,
         textColor=BLANCO, alignment=TA_LEFT
@@ -2145,120 +2144,101 @@ def dibujar_parrafo_with_title(
         textColor=NEGRO, alignment=TA_JUSTIFY
     )
 
-    # ----- Medición del encabezado -----
+    # ---------- Encabezado ----------
     para_hdr = Paragraph(titulo, style_hdr)
     _, h_hdr_txt = para_hdr.wrap(max(0, w_total - 2*hdr_pad_x), 10**6)
     h_hdr_box = max(hdr_fs + 2*hdr_pad_y, h_hdr_txt + 2*hdr_pad_y)
 
-    # ----- Dibujo del encabezado -----
     p.setFillColor(color); p.setStrokeColor(color)
     p.roundRect(x, y - h_hdr_box, w_total, h_hdr_box, radius=hdr_radio, fill=1, stroke=0)
     para_hdr.drawOn(p, x + hdr_pad_x, y - hdr_pad_y - h_hdr_txt)
 
-    # Coordenada para empezar el panel 1x1
+    # Punto de inicio del cuerpo
     y_cursor = y - (h_hdr_box + gap_after_header)
 
-    # ----- Preparar el texto a fluir -----
+    # ---------- Preparar texto ----------
     avail_w = max(0, w_total - 2*body_pad_x)
     remaining = Paragraph(texto or "", style_body)
 
     def _page_y_start():
-        """Devuelve la y inicial al cambiar de página (sin repetir este encabezado de componente)."""
         if callable(draw_page_header_fn) and page_width and page_height:
             return draw_page_header_fn(p, page_width, page_height)
-        # si no hay header general, usa margen superior
-        return (page_height or 842) - top_margin  # 842 ≈ A4 alto por si no pasan page_height
+        return (page_height or 842) - top_margin
 
-    # ----- Loop de flujo en múltiples páginas -----
-    while True:
-        # ¿Hay espacio mínimo en esta página para dibujar una cajita?
-        min_box_h = fs + 2*body_pad_y + 2
-        if y_cursor - bottom_margin < min_box_h:
-            # Salta de página y NO redibuja el encabezado de la sección
-            dibujar_marca_agua(p, page_width, page_height, habilitada = watermark_on)
+    # ===========================================================
+    # ========== BUCLE DE FLUJO MULTIPÁGINA ROBUSTO =============
+    # ===========================================================
+    while remaining:
+        # ¿Cabe una cajita mínima en esta página?
+        min_h = fs + 2 * body_pad_y + 2
+        if y_cursor - bottom_margin < min_h:
+            dibujar_marca_agua(p, page_width, page_height, habilitada=watermark_on)
             p.showPage()
             y_cursor = _page_y_start()
 
-        # Altura disponible para el CONTENIDO interno del panel en esta página
+        # Área disponible
         avail_h_panel = y_cursor - bottom_margin
         inner_h = max(0, avail_h_panel - 2*body_pad_y)
 
-        # Si ni siquiera cabe el padding mínimo, salta página otra vez
         if inner_h <= 0:
-            dibujar_marca_agua(p, page_width, page_height, habilitada = watermark_on)
-            p.showPage()
-            y_cursor = _page_y_start()
-            continue
-
-        # Partir el párrafo para esta página
-        # correcion de ecepcion de parrafo init
-        # ---------- Partir el párrafo para esta página (con defensas) ----------
-        # Si el ancho disponible no es válido, no podremos dibujar
-        if avail_w <= 0:
-            # Forzamos salto de página para evitar bucle infinito
             dibujar_marca_agua(p, page_width, page_height, habilitada=watermark_on)
             p.showPage()
             y_cursor = _page_y_start()
             continue
 
-        # Intento normal de split()
+        # -------- SPLIT NORMAL --------
         parts = remaining.split(avail_w, inner_h)
 
-        # Si split() devolvió lista vacía, aplicar defensas
+        # --------- Si SPLIT falla → usar breakLines() ---------
         if not parts:
-            # Obtener texto plano del párrafo
-            try:
-                text_plain = remaining.getPlainText()
-            except Exception:
-                text_plain = ""
+            bl = remaining.blPara
+            lines = bl.breakLines(avail_w)
 
-            # Remover tags HTML que puedan romper el parser
-            import re
-            text_plain = re.sub(r"<[^>]+>", "", text_plain or "").strip()
-
-            # Si no queda texto útil → terminar componente
-            if not text_plain:
+            if not lines:
                 break
 
-            # Reintentar creándolo como Paragraph simple
-            remaining = Paragraph(text_plain, style_body)
-            parts = remaining.split(avail_w, inner_h)
+            taken, rest = [], []
+            used_h = 0
 
-            # Si aun así sigue vacío, forzar un único fragmento para avanzar
-            if not parts:
-                forced = Paragraph(text_plain, style_body)
-                parts = [forced]
+            for line, h in lines:
+                if used_h + h <= inner_h:
+                    taken.append(line.text)
+                    used_h += h
+                else:
+                    rest.append(line.text)
 
-        # Ahora sí, garantizado que parts tiene al menos 1 elemento
-        this_part = parts[0]
+            taken_text = "\n".join(taken)
+            rest_text  = "\n".join(rest)
+
+            this_part = Paragraph(taken_text, style_body)
+            remaining = Paragraph(rest_text, style_body) if rest_text.strip() else None
+
+        else:
+            this_part = parts[0]
+            remaining = parts[1] if len(parts) > 1 else None
+
+        # Medir altura real del fragmento
         _, h_part = this_part.wrap(avail_w, inner_h)
-        # correcion de ecepcion de parrafo end
-
-        # Altura real de la cajita para esta página
         box_h = h_part + 2*body_pad_y
 
-        # Dibujo de cajita redondeada (panel 1x1 en esta página)
+        # ---------- Dibujar cajita ----------
         p.setFillColor(BLANCO); p.setStrokeColor(color); p.setLineWidth(1)
         p.roundRect(x, y_cursor - box_h, w_total, box_h, radius=body_radius, fill=1, stroke=1)
 
         # Texto dentro
         this_part.drawOn(p, x + body_pad_x, y_cursor - body_pad_y - h_part)
 
-        # Actualizar y
+        # Avanzar cursor
         y_cursor -= box_h
 
-        # ¿Queda texto por dibujar?
-        if len(parts) == 1:
-            break  # ya terminamos
-        else:
-            # continuar con el resto en la siguiente página
-            remaining = parts[1]
-            dibujar_marca_agua(p, page_width, page_height, habilitada = watermark_on)
+        # ¿Queda texto?
+        if remaining:
+            dibujar_marca_agua(p, page_width, page_height, habilitada=watermark_on)
             p.showPage()
             y_cursor = _page_y_start()
-            # IMPORTANTE: NO redibujar el encabezado del componente
 
     return y_cursor
+
 
 
 def to_snake_case(texto: str) -> str:
