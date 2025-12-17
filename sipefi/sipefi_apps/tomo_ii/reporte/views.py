@@ -1610,6 +1610,8 @@ def dibujar_bibliografia_temas(
     Devuelve la nueva y.
     """
 
+    SANGRIA_FRANCESA = 12
+
     # ancho útil descontando el gap
     w_eff = max(0, w_total - col_gap)
     w_left  = w_eff * col_ratios[0]
@@ -1624,7 +1626,8 @@ def dibujar_bibliografia_temas(
     style_hdr_right = ParagraphStyle("hdrR", fontName=font_b, fontSize=fs_hdr, leading=fs_hdr+2,
                                      textColor=BLANCO, alignment=TA_LEFT)
     style_biblio = ParagraphStyle("bib", fontName="FreeSans", fontSize=fs_biblio, leading=leading_biblio,
-                                  textColor=NEGRO, alignment=TA_LEFT)
+                                  textColor=NEGRO, alignment=TA_LEFT, leftIndent=SANGRIA_FRANCESA,
+                                  firstLineIndent=-SANGRIA_FRANCESA)
     style_tema   = ParagraphStyle("tema", fontName="FreeSans", fontSize=fs_tema,   leading=leading_tema,
                                   textColor=NEGRO, alignment=TA_LEFT)
 
