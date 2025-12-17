@@ -2350,7 +2350,7 @@ def get_bibliografia_str(fila):
             extra1 = f"({extra2}.ª ed.)."
         else:
             extra1 = ""
-        extra2 = aux_edi
+        extra2 = aux_edi + "."
     if id_ == 6: #Apuntes de clase
         institucion = extra2
         url = extra3
