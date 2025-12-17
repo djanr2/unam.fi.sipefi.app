@@ -2347,9 +2347,12 @@ def get_bibliografia_str(fila):
         titulo = titulo + "."
         aux_edi= extra1
         if extra2 != "":
-            extra1 = f"({extra2}.ª ed.)."
+            if extra2.isdigit():
+                extra1 = f"({extra2}.ª ed.)."
+            else:
+                extra1 = f"({extra2})."
         else:
-            extra1 = ""
+            extra1 = "."
         extra2 = aux_edi + "."
     if id_ == 6: #Apuntes de clase
         institucion = extra2
