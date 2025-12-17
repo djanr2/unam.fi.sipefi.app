@@ -2409,6 +2409,9 @@ def get_bibliografia_str(fila):
         extra3 = extra3 + "."
         if extra4 != "":
             extra4 = f"<a href='{extra4}' color='blue'>{extra4}</a>"
+    if id_ == 5 or id_ == 7:
+        extra2 = extra2 + "."
+
 
     partes = [
         autor,
