@@ -2,3 +2,4 @@ select distinct ID_TIPO_BIBLIOGRAFIA tipo, AUTOR, PUBLICACION,TITULO, CAMPO_1, C
 from TD_BIBLIOGRAFIA
 where ID_SOLICITUD = :id_asignatura
 and ES_COMPLEMENTARIA = 1
+order by AUTOR
