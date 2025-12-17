@@ -2329,7 +2329,7 @@ def get_bibliografia_str(fila):
         titulo = titulo + "."
         aux_edi= extra1
         if extra2 != "":
-            extra1 = f"({extra2} ed.)."
+            extra1 = f"({extra2}ª ed.)."
         else:
             extra1 = ""
         extra2 = aux_edi
