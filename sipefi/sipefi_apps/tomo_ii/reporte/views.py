@@ -16,6 +16,7 @@ from reportlab.platypus import Paragraph
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.platypus import Frame
+from reportlab.pdfbase.pdfmetrics import registerFontFamily
 
 from sipefi_apps.tomo_ii.reporte.ConsultasPDF import ConsultasPDF
 
@@ -35,6 +36,21 @@ pdfmetrics.registerFont(
     TTFont('FreeSansBold', os.path.join(FONT_DIR, 'FreeSansBold.ttf'))
 )
 
+pdfmetrics.registerFont(
+    TTFont("FreeSans-Oblique", os.path.join(FONT_DIR, 'FreeSansOblique.ttf'))
+)
+
+pdfmetrics.registerFont(
+    TTFont("FreeSans-BoldOblique", os.path.join(FONT_DIR, 'FreeSansBoldOblique.ttf'))
+)
+
+registerFontFamily(
+    "FreeSans",
+    normal="FreeSans",
+    bold="FreeSans-Bold",
+    italic="FreeSans-Oblique",
+    boldItalic="FreeSans-BoldOblique"
+)
 
 def generarPdf(request):
     obj = json.loads(request.POST.get("obj", ""))
@@ -1607,9 +1623,9 @@ def dibujar_bibliografia_temas(
                                      textColor=BLANCO, alignment=TA_LEFT)
     style_hdr_right = ParagraphStyle("hdrR", fontName=font_b, fontSize=fs_hdr, leading=fs_hdr+2,
                                      textColor=BLANCO, alignment=TA_LEFT)
-    style_biblio = ParagraphStyle("bib", fontName=font, fontSize=fs_biblio, leading=leading_biblio,
+    style_biblio = ParagraphStyle("bib", fontName="FreeSans", fontSize=fs_biblio, leading=leading_biblio,
                                   textColor=NEGRO, alignment=TA_LEFT)
-    style_tema   = ParagraphStyle("tema", fontName=font, fontSize=fs_tema,   leading=leading_tema,
+    style_tema   = ParagraphStyle("tema", fontName="FreeSans", fontSize=fs_tema,   leading=leading_tema,
                                   textColor=NEGRO, alignment=TA_LEFT)
 
     # normalizar longitudes
