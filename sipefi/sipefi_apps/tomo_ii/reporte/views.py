@@ -2378,19 +2378,17 @@ def get_bibliografia_str(fila):
     if id_ == 9: #Tesis
         titulo = titulo+ "."
         extra1 = f"({extra1})."
-    if id_ == 10: #Tesis
+    if id_ == 10: #Pagina web
         titulo = titulo + "."
         extra1 = extra1 + "."
         if extra2 != "":
             extra2 = f"<a href='{extra2}' color='blue'>{extra2}</a>"
         else:
             extra2 = ""
+        anio__ = anio
         if extra3 != "":
-            if anio == 0:
-                anio__ = ""
-            else:
-                anio__ = f"{anio}, "
-            extra3 = f"({anio__}{extra3})"
+            anio_ = "(s.f)."
+            extra3 = f"(Consultado el {extra3} de {anio__})"
         else:
             extra3 = ""
         extra3 = extra3 + "."
