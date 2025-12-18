@@ -2379,9 +2379,10 @@ def get_bibliografia_str(fila):
         else:
             extra2 = ""
         extra3 = ""
-    if id_ == 9: #Tesis
+    if id_ == 9: #informe
         titulo = titulo+ "."
         extra1 = f"({extra1})."
+        extra2 = extra2 + "."
     if id_ == 10: #Pagina web
         titulo = titulo + "."
         extra1 = extra1 + "."
@@ -2398,6 +2399,9 @@ def get_bibliografia_str(fila):
         extra3 = extra3 + "."
         extra4 = extra4 + "."
     if id_ == 7 or id_ == 5:  # Material audiovisual & Norma o ley
+        if id_ == 5:
+            titulo = titulo + "."
+        extra2 = extra2 + "."
         if extra1 != "":
             extra1 = f"[{extra1}]."
         else:
@@ -2406,13 +2410,12 @@ def get_bibliografia_str(fila):
            anio_ = f"({anio}, {extra4})."
            extra4 = ""
     if id_ == 3 or id_ == 4:  # Articulo Impreso
+        titulo = titulo+ "."
         extra1 = f"<i>{extra1}</i>, "
         extra2 = f"<i>{extra2}</i>, "
         extra3 = extra3 + "."
         if extra4 != "":
             extra4 = f"<a href='{extra4}' color='blue'>{extra4}</a>"
-    if id_ == 5 or id_ == 7:
-        extra2 = extra2 + "."
 
 
     partes = [
