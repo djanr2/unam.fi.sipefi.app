@@ -2336,8 +2336,8 @@ def get_bibliografia_str(fila):
     else:
         anio_ = f"({anio})."
     # Libro impreso || Libro electronico
-    if id_ != 3:
-        titulo =  f"<i>{titulo}</i>" # Todos los titulos en cursiva a excepcion de articulo impreso puesto que es el nombre de la revista.
+    if id_ != 3 and id_ != 4:
+        titulo =  f"<i>{titulo}</i>" # Todos los titulos en cursiva a excepcion de articulo impreso y electronico puesto que es el nombre de la revista.
     if id_ == 1 or id_ == 2 : # Libro impreso
         aux_edi= extra1
         if extra2 != "":
@@ -2403,7 +2403,7 @@ def get_bibliografia_str(fila):
         if extra4 != "":
            anio_ = f"({anio}, {extra4})."
            extra4 = ""
-    if id_ == 3 or id_ == 4:  # Articulo Impreso
+    if id_ == 3 or id_ == 4:  # Articulo Impreso y electronico
         titulo = titulo+ "."
         extra1 = f"<i>{extra1}</i>, "
         extra2 = f"<i>{extra2}</i>, "
