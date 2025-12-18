@@ -1060,13 +1060,7 @@ def dibujar_objetivo_general(
         textColor=NEGRO, alignment=TA_JUSTIFY
     )
     # Algunas versiones soportan estas banderas:
-    if justificar_ultima_linea:
-        # Evita crashear si la versión no las tiene
-        try:
-            box_style.justifyLastLine = 1         # intenta justificar la última línea
-            box_style.justifyBreaks   = 1         # extiende justificado en saltos
-        except Exception:
-            pass
+    pass
 
     # Medir encabezado
     hdr = Paragraph(titulo, hdr_style)
