@@ -2345,15 +2345,19 @@ def get_bibliografia_str(fila):
     if id_ != 3:
         titulo =  f"<i>{titulo}</i>" # Todos los titulos en cursiva a excepcion de articulo impreso puesto que es el nombre de la revista.
     if id_ == 1 or id_ == 2 : # Libro impreso
-        titulo = titulo + "."
         aux_edi= extra1
         if extra2 != "":
             if extra2.isdigit():
-                extra1 = f"({extra2}.ª ed.)."
+                if extra2 == "1":
+                    titulo = titulo + "."
+                    extra1 = ""
+                else:
+                    extra1 = f"({extra2}.ª ed.)."
             else:
                 extra1 = f"({extra2})."
         else:
-            extra1 = "."
+            extra1 = ""
+            titulo = titulo + "."
         extra2 = aux_edi + "."
     if id_ == 6: #Apuntes de clase
         institucion = extra2
