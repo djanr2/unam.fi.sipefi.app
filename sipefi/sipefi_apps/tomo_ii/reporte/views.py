@@ -2367,7 +2367,7 @@ def get_bibliografia_str(fila):
         else:
             extra4 = ""
     if id_ == 8: #Tesis
-        extra1 = f"[{extra1}, {extra2}]."
+        extra1 = f"({extra1}, {extra2})."
         if extra3 != "":
             extra2 = f"<a href='{extra3}' color='blue'>{extra3}</a>"
         else:
