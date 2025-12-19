@@ -707,7 +707,7 @@ def tala_columnas(p, x_inicio, y_inicio, ancho_total,
         filas = [
             ("Modalidad", modalidad),
             ("Tipo", tipo),
-            ("Caracter", caracter),
+            ("Carácter", caracter),
             ("Valor práctico", valor),
         ]
         return dibujar_tabla_interna_2c(
@@ -2390,8 +2390,6 @@ def get_bibliografia_str(fila):
             extra3 = f"(Consultado el {extra3} de {anio__})"
         else:
             extra3 = ""
-        extra3 = extra3 + "."
-        extra4 = extra4 + "."
     if id_ == 7 or id_ == 5:  # Material audiovisual & Norma o ley
         if id_ == 5:
             titulo = titulo + "."
