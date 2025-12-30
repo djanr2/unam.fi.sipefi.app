@@ -89,7 +89,7 @@ class ConsultasBD():
                             ON a.ID_USUARIO_MOD = umod.ID_USUARIO
                         where 
                             a.historica = 0 
-                            and a.id_estatus_solicitud in (""" + str(estatus) + """) 
+                            and a.id_estatus_solicitud in (""" + str(estatus) + """)
                             """ + sqlExtra + """
                         order by a.id_solicitud desc
             """
@@ -138,6 +138,7 @@ class ConsultasBD():
                     JOIN CATALOGO.TC_ESTATUS_SOLICITUD es
                        ON es.id_estatus_solicitud = s.id_estatus_solicitud
                     WHERE s.historica = 0
+                        and s.id_estatus_solicitud != 0
                     ORDER BY
                         lic.licenciatura,
                         s.id_solicitud
@@ -218,7 +219,7 @@ class ConsultasBD():
                                 a.historica = 0 and
                                 """ + extraCond + """
                             ) g 
-                            where g.id_estatus_solicitud != '""" + str(estatus) + """' 
+                            where g.id_estatus_solicitud not in ('""" + str(estatus) + """', '0') 
                             order by g.id_solicitud desc
                 """)
                 res = [app for app in data]
