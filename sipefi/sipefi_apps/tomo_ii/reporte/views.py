@@ -146,7 +146,7 @@ def generarPdf(request):
         watermark_on= False
 
     # Quitar esta linea para quitar el watermark
-    watermark_on = True
+    watermark_on = False
 
     subtemas_por_id = {}  # dict auxiliar para juntar las listas
     for r in subtemas_inf:
