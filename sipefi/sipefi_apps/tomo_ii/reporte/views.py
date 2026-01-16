@@ -1712,7 +1712,7 @@ def dibujar_estrategias_evaluacion(
     p, x, y, w_total,
     items,                                 # [(int_0_1, "texto"), ...] o [{"checked":0/1, "texto":str}, ...]
     # --- encabezado del componente ---
-    titulo="Estrategias de evaluación",
+    titulo="Estrategias didácticas",
     hdr_fs=11, hdr_leading=14, hdr_pad_x=10, hdr_pad_y=8, hdr_radio=6,
     gap_after_header=8,
     # --- tabla (SIN headers): 4 columnas = [cajita, texto] | [cajita, texto]
