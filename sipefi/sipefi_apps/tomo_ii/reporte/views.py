@@ -1732,198 +1732,171 @@ def dibujar_bibliografia_temas(
 
 def dibujar_estrategias_evaluacion(
     p, x, y, w_total,
-    items,                                 # [(int_0_1, "texto"), ...] o [{"checked":0/1, "texto":str}, ...]
-    # --- encabezado del componente ---
+    items,
     titulo="Estrategias didácticas",
     hdr_fs=11, hdr_leading=14, hdr_pad_x=10, hdr_pad_y=8, hdr_radio=6,
     gap_after_header=8,
-    # --- tabla (SIN headers): 4 columnas = [cajita, texto] | [cajita, texto]
     table_col_ratios=(0.06, 0.44, 0.06, 0.44),
     table_pad=8, cell_pad_x=6, cell_pad_y=3,
     table_radius=6, draw_table_outline=True,
-    # --- tipografías / compactación ---
     fs=9, leading=11, font="Helvetica", font_b="Helvetica-Bold",
-    # --- cajitas de check (tamaño fijo) ---
-    chk_border_color=colors.HexColor("#D1D5DB"), chk_border_width=1, chk_box_size=11, x_mark="X",
-    # --- paginación por filas (continúa tabla en páginas siguientes) ---
+    chk_border_color=colors.HexColor("#D1D5DB"),
+    chk_border_width=1, chk_box_size=11, x_mark="X",
     auto_paginar_filas=True, page_width=None, page_height=None,
     top_margin=40, bottom_margin=40,
-    draw_page_header_fn=None, # función opcional para redibujar tu encabezado GENERAL de página
-    color = colors.ReportLabBlueOLD,
+    draw_page_header_fn=None,
+    color=colors.ReportLabBlueOLD,
 ):
     """
-    Dibuja 'Estrategias de evaluación' con una tabla dinámica SIN headers:
-      - Partimos 'items' en dos mitades: IZQ -> (cajita,texto), DER -> (cajita,texto).
-      - 'checked' es ENTERO (1/0). Si falta un lado en una fila, NO se dibuja cajita ahí.
-      - La tabla se parte por páginas si no cabe. El título del componente se dibuja SOLO una vez.
-    Devuelve la nueva y en la última página usada.
+    Encabezado + tabla paginada por filas.
+    El encabezado nunca queda huérfano.
     """
 
-    # ---- Normalización de items: soporta (int,texto) y dict {"checked":1/0,"texto":"..."} ----
+    # ---------- Normalización ----------
     def _normalize(it):
-        if it is None:
-            return None
         if isinstance(it, dict):
-            ch = it.get("checked", 0)
-            tx = it.get("texto", "") or ""
-            return (1 if int(ch) == 1 else 0), str(tx)
+            return (1 if int(it.get("checked", 0)) == 1 else 0, str(it.get("texto", "")))
         if isinstance(it, (tuple, list)) and len(it) >= 2:
             try:
-                ch = 1 if int(it[0]) == 1 else 0
+                return (1 if int(it[0]) == 1 else 0, str(it[1]))
             except Exception:
-                ch = 0
-            return (ch, str(it[1] or ""))
-        # si no cumple, lo ignoramos
+                return (0, str(it[1]))
         return None
 
-    items = [ _normalize(it) for it in (items or []) if _normalize(it) is not None ]
+    items = [_normalize(it) for it in (items or []) if _normalize(it) is not None]
 
-    # Partimos en dos mitades (izquierda/derecha)
     mid = (len(items) + 1) // 2
     left_items  = items[:mid]
     right_items = items[mid:]
 
-    # Estilos
-    style_hdr = ParagraphStyle("hdr", fontName=font_b, fontSize=hdr_fs, leading=hdr_leading,
-                               textColor=BLANCO, alignment=TA_LEFT)
-    style_txt = ParagraphStyle("tx",  fontName=font,   fontSize=fs,     leading=leading,
-                               textColor=NEGRO, alignment=TA_LEFT)
+    # ---------- Estilos ----------
+    style_hdr = ParagraphStyle(
+        "hdr", fontName=font_b, fontSize=hdr_fs,
+        leading=hdr_leading, textColor=BLANCO, alignment=TA_LEFT
+    )
+    style_txt = ParagraphStyle(
+        "tx", fontName=font, fontSize=fs,
+        leading=leading, textColor=NEGRO, alignment=TA_LEFT
+    )
 
-    # ---- Título (se dibuja UNA sola vez) ----
+    # ---------- Encabezado (medición previa) ----------
     para_hdr = Paragraph(titulo, style_hdr)
-    _, h_hdr_txt = para_hdr.wrap(max(0, w_total - 2*hdr_pad_x), 10**6)
-    h_hdr_box = max(hdr_fs + 2*hdr_pad_y, h_hdr_txt + 2*hdr_pad_y)
+    _, h_hdr_txt = para_hdr.wrap(w_total - 2 * hdr_pad_x, 10**6)
+    h_hdr_box = max(h_hdr_txt + 2 * hdr_pad_y, hdr_fs + 2 * hdr_pad_y)
 
-    p.setFillColor(color); p.setStrokeColor(color)
-    p.roundRect(x, y - h_hdr_box, w_total, h_hdr_box, radius=hdr_radio, fill=1, stroke=0)
-    para_hdr.drawOn(p, x + hdr_pad_x, y - hdr_pad_y - h_hdr_txt)
-    y_cursor = y - (h_hdr_box + gap_after_header)
+    # ---------- Altura mínima del BLOQUE (header + 1 fila) ----------
+    min_row_h = chk_box_size + 2 * cell_pad_y
+    min_panel_h = 2 * table_pad + min_row_h
+    min_block_h = h_hdr_box + gap_after_header + min_panel_h
 
-    # Geometría de columnas internas
-    inner_w = max(0, w_total - 2*table_pad)
-    cw = [inner_w * r for r in table_col_ratios]   # [c1,c2,c3,c4]
-    x_cols = []
-    acc = 0
-    for w in cw:
-        x_cols.append(acc)
-        acc += w
-
-    # Preparamos todas las filas (alto variable) para poder paginar
-    n_rows_total = max(len(left_items), len(right_items))
-    rows = []
-    for i in range(n_rows_total):
-        L = left_items[i]  if i < len(left_items)  else None
-        R = right_items[i] if i < len(right_items) else None
-
-        # Texto por lado
-        pL = Paragraph(L[1], style_txt) if (L and L[1]) else Paragraph("", style_txt)
-        pR = Paragraph(R[1], style_txt) if (R and R[1]) else Paragraph("", style_txt)
-
-        _, hL = pL.wrap(max(0, cw[1] - 2*cell_pad_x), 10**6)
-        _, hR = pR.wrap(max(0, cw[3] - 2*cell_pad_x), 10**6)
-
-        need_box_L = L is not None            # hay registro; si no, NO dibujar cajita
-        need_box_R = R is not None
-        min_h_from_box = 0
-        if need_box_L: min_h_from_box = max(min_h_from_box, chk_box_size)
-        if need_box_R: min_h_from_box = max(min_h_from_box, chk_box_size)
-
-        row_h = max(hL, hR, min_h_from_box) + 2*cell_pad_y
-
-        rows.append(dict(
-            pL=pL, hL=hL, need_box_L=need_box_L, is_checked_L=(L[0] == 1) if L else False,
-            pR=pR, hR=hR, need_box_R=need_box_R, is_checked_R=(R[0] == 1) if R else False,
-            row_h=row_h
-        ))
-
-    # Función para obtener y de inicio al cambiar de página (solo encabezado GENERAL si lo pasas)
+    # ---------- salto preventivo (evita encabezado huérfano) ----------
     def _y_start_new_page():
         if callable(draw_page_header_fn) and page_width and page_height:
             return draw_page_header_fn(p, page_width, page_height)
         return (page_height or 842) - top_margin
 
-    # ---- Paginación por filas: panel por página con su contorno ----
-    idx = 0
-    while idx < n_rows_total:
-        # ¿Cabe al menos el panel vacío?
-        avail_h = y_cursor - bottom_margin
-        min_panel_h = 2*table_pad + (chk_box_size + 2*cell_pad_y)  # aprox min con 1 fila breve
-        if avail_h < min_panel_h and auto_paginar_filas and page_width and page_height:
-            dibujar_marca_agua(p, page_width, page_height, habilitada = watermark_on)
+    if auto_paginar_filas and page_width and page_height:
+        if y - min_block_h < bottom_margin:
+            dibujar_marca_agua(p, page_width, page_height, habilitada=watermark_on)
             p.showPage()
-            y_cursor = _y_start_new_page()
-            # no re-dibujar el título del componente
+            y = _y_start_new_page()
 
-        # Empaquetamos filas que caben en esta página
-        used_h = 2*table_pad
-        start_idx = idx
-        while idx < n_rows_total:
-            next_h = rows[idx]["row_h"]
-            if used_h + next_h <= (y_cursor - bottom_margin):
-                used_h += next_h
-                idx += 1
-            else:
-                # si no cabe ninguna fila, forzamos al menos una
-                if idx == start_idx:
-                    used_h += next_h
-                    idx += 1
-                break
+    # ---------- Dibujar encabezado ----------
+    p.setFillColor(color); p.setStrokeColor(color)
+    p.roundRect(x, y - h_hdr_box, w_total, h_hdr_box, hdr_radio, fill=1, stroke=0)
+    para_hdr.drawOn(p, x + hdr_pad_x, y - hdr_pad_y - h_hdr_txt)
+    y_cursor = y - (h_hdr_box + gap_after_header)
 
-        # Dibuja panel (contorno) para este tramo
-        table_h = used_h
+    # ---------- Geometría de columnas ----------
+    inner_w = w_total - 2 * table_pad
+    cw = [inner_w * r for r in table_col_ratios]
+    x_cols, acc = [], 0
+    for w in cw:
+        x_cols.append(acc)
+        acc += w
+
+    # ---------- Preparar filas ----------
+    n_rows = max(len(left_items), len(right_items))
+    rows = []
+
+    for i in range(n_rows):
+        L = left_items[i]  if i < len(left_items)  else None
+        R = right_items[i] if i < len(right_items) else None
+
+        pL = Paragraph(L[1], style_txt) if L else Paragraph("", style_txt)
+        pR = Paragraph(R[1], style_txt) if R else Paragraph("", style_txt)
+
+        _, hL = pL.wrap(cw[1] - 2 * cell_pad_x, 10**6)
+        _, hR = pR.wrap(cw[3] - 2 * cell_pad_x, 10**6)
+
+        row_h = max(hL, hR, chk_box_size) + 2 * cell_pad_y
+
+        rows.append(dict(
+            pL=pL, hL=hL, chkL=L and L[0] == 1,
+            pR=pR, hR=hR, chkR=R and R[0] == 1,
+            hasL=L is not None, hasR=R is not None,
+            row_h=row_h
+        ))
+
+    # ================= PAGINACIÓN POR FILAS =================
+    idx = 0
+    while idx < n_rows:
+
+        avail_h = y_cursor - bottom_margin
+        used_h = 2 * table_pad
+        start = idx
+
+        while idx < n_rows and used_h + rows[idx]["row_h"] <= avail_h:
+            used_h += rows[idx]["row_h"]
+            idx += 1
+
+        if start == idx:
+            used_h += rows[idx]["row_h"]
+            idx += 1
+
+        # ---------- Panel ----------
         if draw_table_outline:
             p.setFillColor(BLANCO); p.setStrokeColor(color); p.setLineWidth(1)
-            p.roundRect(x, y_cursor - table_h, w_total, table_h, radius=table_radius, fill=1, stroke=1)
+            p.roundRect(x, y_cursor - used_h, w_total, used_h, table_radius, fill=1, stroke=1)
 
-        # Área interna de este panel
         x_in = x + table_pad
-        y_rows = y_cursor - table_pad
+        y_row = y_cursor - table_pad
 
-        # Dibuja filas del tramo
-        for j in range(start_idx, idx):
-            Rj = rows[j]
-            y_top_row = y_rows
-            row_h = Rj["row_h"]
+        for j in range(start, idx):
+            R = rows[j]
+            rh = R["row_h"]
 
-            # Cajita izquierda (si hay dato)
-            if Rj["need_box_L"]:
-                box = chk_box_size
-                y_box = y_top_row - row_h/2 - box/2
-                p.setStrokeColor(chk_border_color); p.setLineWidth(chk_border_width); p.setFillColor(BLANCO)
-                p.roundRect(x_in + x_cols[0] + (cw[0] - box)/2, y_box, box, box, radius=box/4, fill=1, stroke=1)
-                if Rj["is_checked_L"]:
-                    p.setFillColor(NEGRO); p.setFont(font_b, fs)
-                    tw = p.stringWidth(x_mark, font_b, fs)
-                    p.drawString(x_in + x_cols[0] + (cw[0] - tw)/2, y_box + (box - fs)/2, x_mark)
-
-            # Texto izquierdo
-            Rj["pL"].drawOn(p, x_in + x_cols[1] + cell_pad_x, y_top_row - cell_pad_y - Rj["hL"])
-
-            # Cajita derecha (si hay dato)
-            if Rj["need_box_R"]:
-                box = chk_box_size
-                y_box = y_top_row - row_h/2 - box/2
+            if R["hasL"]:
+                bx = x_in + x_cols[0] + (cw[0] - chk_box_size) / 2
+                by = y_row - rh/2 - chk_box_size/2
                 p.setStrokeColor(chk_border_color); p.setFillColor(BLANCO)
-                p.roundRect(x_in + x_cols[2] + (cw[2] - box)/2, y_box, box, box, radius=box/4, fill=1, stroke=1)
-                if Rj["is_checked_R"]:
-                    p.setFillColor(NEGRO); p.setFont(font_b, fs)
+                p.roundRect(bx, by, chk_box_size, chk_box_size, chk_box_size/4, fill=1, stroke=1)
+                if R["chkL"]:
+                    p.setFont(font_b, fs)
                     tw = p.stringWidth(x_mark, font_b, fs)
-                    p.drawString(x_in + x_cols[2] + (cw[2] - tw)/2, y_box + (box - fs)/2, x_mark)
+                    p.drawString(bx + (chk_box_size - tw)/2, by + (chk_box_size - fs)/2, x_mark)
 
-            # Texto derecho
-            Rj["pR"].drawOn(p, x_in + x_cols[3] + cell_pad_x, y_top_row - cell_pad_y - Rj["hR"])
+            R["pL"].drawOn(p, x_in + x_cols[1] + cell_pad_x, y_row - cell_pad_y - R["hL"])
 
-            y_rows -= row_h
+            if R["hasR"]:
+                bx = x_in + x_cols[2] + (cw[2] - chk_box_size) / 2
+                by = y_row - rh/2 - chk_box_size/2
+                p.setStrokeColor(chk_border_color); p.setFillColor(BLANCO)
+                p.roundRect(bx, by, chk_box_size, chk_box_size, chk_box_size/4, fill=1, stroke=1)
+                if R["chkR"]:
+                    p.setFont(font_b, fs)
+                    tw = p.stringWidth(x_mark, font_b, fs)
+                    p.drawString(bx + (chk_box_size - tw)/2, by + (chk_box_size - fs)/2, x_mark)
 
-        # Avanza Y para siguientes paneles/filas
-        y_cursor -= table_h
+            R["pR"].drawOn(p, x_in + x_cols[3] + cell_pad_x, y_row - cell_pad_y - R["hR"])
+            y_row -= rh
 
-        # Si aún quedan filas, nueva página
-        if idx < n_rows_total and auto_paginar_filas and page_width and page_height:
-            dibujar_marca_agua(p, page_width, page_height, habilitada = watermark_on)
+        y_cursor -= used_h
+
+        if idx < n_rows and auto_paginar_filas and page_width and page_height:
+            dibujar_marca_agua(p, page_width, page_height, habilitada=watermark_on)
             p.showPage()
             y_cursor = _y_start_new_page()
-            # (no redibujamos el título del componente)
 
     return y_cursor
 
