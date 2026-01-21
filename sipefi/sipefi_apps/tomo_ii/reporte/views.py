@@ -1591,22 +1591,21 @@ def dibujar_bibliografia_temas(
     outline_width=1,
     outline_over_header=False,   # False => contorno no cubre el header
     outline_radius=6,
-    # 👉 Auto-paginación (mueve el bloque completo a la siguiente página si no cabe)
+    # 👉 Auto-paginación
     auto_paginacion=True,
     page_width=None, page_height=None,
     top_margin=40, bottom_margin=40,
-    draw_header_fn=None,         # función opcional: def fn(p,width,height)->nuevo_y
-    color = colors.ReportLabBlueOLD,
+    draw_header_fn=None,
+    color=colors.ReportLabBlueOLD,
 ):
     """
-    Dibuja el bloque de Bibliografía (85%) y Temas (15%) con encabezados en cajita azul,
-    filas sincronizadas y contorno redondeado SOLO del cuerpo. Si no cabe, salta de página.
-    Devuelve la nueva y.
+    Bloque Bibliografía / Temas con paginación por filas.
+    Firma original preservada.
     """
 
     SANGRIA_FRANCESA = 12
 
-    # ancho útil descontando el gap
+    # ---------- tamaños ----------
     w_eff = max(0, w_total - col_gap)
     w_left  = w_eff * col_ratios[0]
     w_right = w_eff * col_ratios[1]
@@ -1614,99 +1613,122 @@ def dibujar_bibliografia_temas(
     x_left  = x
     x_right = x + w_left + col_gap
 
-    # estilos
-    style_hdr_left  = ParagraphStyle("hdrL", fontName=font_b, fontSize=fs_hdr, leading=fs_hdr+2,
-                                     textColor=BLANCO, alignment=TA_LEFT)
-    style_hdr_right = ParagraphStyle("hdrR", fontName=font_b, fontSize=fs_hdr, leading=fs_hdr+2,
-                                     textColor=BLANCO, alignment=TA_LEFT)
-    style_biblio = ParagraphStyle("bib", fontName="FreeSans", fontSize=fs_biblio, leading=leading_biblio,
-                                  textColor=NEGRO, alignment=TA_LEFT, leftIndent=SANGRIA_FRANCESA,
-                                  firstLineIndent=-SANGRIA_FRANCESA)
-    style_tema   = ParagraphStyle("tema", fontName="FreeSans", fontSize=fs_tema,   leading=leading_tema,
-                                  textColor=NEGRO, alignment=TA_LEFT)
+    # ---------- estilos ----------
+    style_hdr_left = ParagraphStyle(
+        "hdrL", fontName=font_b, fontSize=fs_hdr,
+        leading=fs_hdr + 2, textColor=BLANCO, alignment=TA_LEFT
+    )
+    style_hdr_right = ParagraphStyle(
+        "hdrR", fontName=font_b, fontSize=fs_hdr,
+        leading=fs_hdr + 2, textColor=BLANCO, alignment=TA_LEFT
+    )
+    style_biblio = ParagraphStyle(
+        "bib", fontName=font, fontSize=fs_biblio,
+        leading=leading_biblio, textColor=NEGRO,
+        leftIndent=SANGRIA_FRANCESA,
+        firstLineIndent=-SANGRIA_FRANCESA
+    )
+    style_tema = ParagraphStyle(
+        "tema", fontName=font, fontSize=fs_tema,
+        leading=leading_tema, textColor=NEGRO
+    )
 
-    # normalizar longitudes
+    # ---------- normalizar filas ----------
     n_left  = len(bibliografias or [])
     n_right = len(temas or [])
     n_rows  = max(n_left, n_right)
 
-    # medir encabezados (altura compartida)
-    para_hdrL = Paragraph(titulo_izq, style_hdr_left)
-    para_hdrR = Paragraph(titulo_der, style_hdr_right)
-    _, h_hdrL_txt = para_hdrL.wrap(max(0, w_left  - 2*hdr_pad_x),  10**6)
-    _, h_hdrR_txt = para_hdrR.wrap(max(0, w_right - 2*hdr_pad_x), 10**6)
-    hdr_h = max(h_hdrL_txt, h_hdrR_txt) + 2*hdr_pad_y
-
-    # medir filas sincronizadas
     rows = []
-    total_rows_h = 0
     for i in range(n_rows):
         bib_txt  = _fmt_biblio_item(bibliografias[i]) if i < n_left else ""
         tema_txt = temas[i] if i < n_right else ""
 
-        para_bib  = Paragraph(bib_txt,  style_biblio)
+        para_bib  = Paragraph(bib_txt, style_biblio)
         para_tema = Paragraph(str(tema_txt), style_tema)
 
-        _, h_bib  = para_bib.wrap(max(0, w_left  - 2*row_pad_x),  10**6)
-        _, h_tema = para_tema.wrap(max(0, w_right - 2*row_pad_x), 10**6)
+        _, h_bib  = para_bib.wrap(w_left  - 2 * row_pad_x,  10**6)
+        _, h_tema = para_tema.wrap(w_right - 2 * row_pad_x, 10**6)
 
-        row_h = max(h_bib, h_tema) + 2*row_pad_y
+        row_h = max(h_bib, h_tema) + 2 * row_pad_y
         rows.append((para_bib, h_bib, para_tema, h_tema, row_h))
-        total_rows_h += row_h
 
-    # alturas
-    col_body_h  = total_rows_h                     # solo el cuerpo (filas)
-    col_total_h = hdr_h + gap_hdr_body + col_body_h
+    row_idx = 0
 
-    # -------- Auto-paginación (mueve TODO el bloque) --------
-    if auto_paginacion and page_width and page_height:
-        if y - col_total_h < bottom_margin:
-            dibujar_marca_agua(p, page_width, page_height, habilitada = watermark_on)
+    # ================= LOOP DE PAGINAS =================
+    while row_idx < n_rows:
+
+        # -------- salto previo --------
+        if auto_paginacion and page_width and page_height:
+            if y < bottom_margin + 60:
+                p.showPage()
+                if callable(draw_header_fn):
+                    y = draw_header_fn(p, page_width, page_height)
+                else:
+                    y = page_height - top_margin
+
+        # -------- encabezados --------
+        para_hdrL = Paragraph(titulo_izq, style_hdr_left)
+        para_hdrR = Paragraph(titulo_der, style_hdr_right)
+
+        _, h_hdrL = para_hdrL.wrap(w_left  - 2 * hdr_pad_x, 10**6)
+        _, h_hdrR = para_hdrR.wrap(w_right - 2 * hdr_pad_x, 10**6)
+        hdr_h = max(h_hdrL, h_hdrR) + 2 * hdr_pad_y
+
+        p.setFillColor(color)
+        p.setStrokeColor(color)
+        p.roundRect(x_left,  y - hdr_h, w_left,  hdr_h, hdr_radio, fill=1, stroke=0)
+        p.roundRect(x_right, y - hdr_h, w_right, hdr_h, hdr_radio, fill=1, stroke=0)
+
+        para_hdrL.drawOn(p, x_left  + hdr_pad_x, y - hdr_pad_y - h_hdrL)
+        para_hdrR.drawOn(p, x_right + hdr_pad_x, y - hdr_pad_y - h_hdrR)
+
+        y_body_top = y - hdr_h - gap_hdr_body
+        y_cursor = y_body_top
+
+        # -------- filas que caben --------
+        rows_start_y = y_cursor
+        rows_drawn = []
+
+        while row_idx < n_rows:
+            row_h = rows[row_idx][4]
+            if y_cursor - row_h < bottom_margin:
+                break
+            rows_drawn.append(rows[row_idx])
+            y_cursor -= row_h
+            row_idx += 1
+
+        body_h = rows_start_y - y_cursor
+
+        # -------- contornos --------
+        if draw_column_outline and body_h > 0:
+            p.setStrokeColor(outline_color)
+            p.setLineWidth(outline_width)
+
+            if outline_over_header:
+                total_h = hdr_h + gap_hdr_body + body_h
+                p.roundRect(x_left,  y - total_h, w_left,  total_h, outline_radius, fill=0, stroke=1)
+                p.roundRect(x_right, y - total_h, w_right, total_h, outline_radius, fill=0, stroke=1)
+            else:
+                p.roundRect(x_left,  rows_start_y - body_h, w_left,  body_h, outline_radius, fill=0, stroke=1)
+                p.roundRect(x_right, rows_start_y - body_h, w_right, body_h, outline_radius, fill=0, stroke=1)
+
+        # -------- dibujar filas --------
+        y_row = rows_start_y
+        for para_bib, h_bib, para_tema, h_tema, row_h in rows_drawn:
+            para_bib.drawOn(p,  x_left  + row_pad_x,  y_row - row_pad_y - h_bib)
+            para_tema.drawOn(p, x_right + row_pad_x, y_row - row_pad_y - h_tema)
+            y_row -= row_h
+
+        # -------- siguiente página --------
+        y = y_cursor
+        if row_idx < n_rows:
             p.showPage()
             if callable(draw_header_fn):
                 y = draw_header_fn(p, page_width, page_height)
             else:
                 y = page_height - top_margin
 
-    # Recalcular top del cuerpo después del posible salto
-    y_cursor   = y
-    y_body_top = y_cursor - hdr_h - gap_hdr_body
-
-    # ----- Encabezados (cajitas) -----
-    p.setFillColor(color); p.setStrokeColor(color)
-    p.roundRect(x_left,  y_cursor - hdr_h, w_left,  hdr_h, radius=hdr_radio, fill=1, stroke=0)
-    p.roundRect(x_right, y_cursor - hdr_h, w_right, hdr_h, radius=hdr_radio, fill=1, stroke=0)
-    para_hdrL.drawOn(p, x_left  + hdr_pad_x,  y_cursor - hdr_pad_y - h_hdrL_txt)
-    para_hdrR.drawOn(p, x_right + hdr_pad_x,  y_cursor - hdr_pad_y - h_hdrR_txt)
-
-    # ----- Contorno del cuerpo (redondeado, sin tocar encabezado) -----
-    if draw_column_outline and col_body_h > 0:
-        p.setStrokeColor(outline_color); p.setLineWidth(outline_width)
-        if outline_over_header:
-            # (opcional) contorno incluyendo header
-            if outline_radius and outline_radius > 0:
-                p.roundRect(x_left,  y_cursor - col_total_h, w_left,  col_total_h, radius=outline_radius, fill=0, stroke=1)
-                p.roundRect(x_right, y_cursor - col_total_h, w_right, col_total_h, radius=outline_radius, fill=0, stroke=1)
-            else:
-                p.rect(x_left,  y_cursor - col_total_h, w_left,  col_total_h, fill=0, stroke=1)
-                p.rect(x_right, y_cursor - col_total_h, w_right, col_total_h, fill=0, stroke=1)
-        else:
-            # 👇 solo el cuerpo
-            if outline_radius and outline_radius > 0:
-                p.roundRect(x_left,  y_body_top - col_body_h, w_left,  col_body_h, radius=outline_radius, fill=0, stroke=1)
-                p.roundRect(x_right, y_body_top - col_body_h, w_right, col_body_h, radius=outline_radius, fill=0, stroke=1)
-            else:
-                p.rect(x_left,  y_body_top - col_body_h, w_left,  col_body_h, fill=0, stroke=1)
-                p.rect(x_right, y_body_top - col_body_h, w_right, col_body_h, fill=0, stroke=1)
-
-    # ----- Cuerpo (sin líneas internas) -----
-    y_rows = y_body_top
-    for para_bib, h_bib, para_tema, h_tema, row_h in rows:
-        para_bib.drawOn(p,  x_left  + row_pad_x,  y_rows - row_pad_y - h_bib)
-        para_tema.drawOn(p, x_right + row_pad_x,  y_rows - row_pad_y - h_tema)
-        y_rows -= row_h
-
-    return y - col_total_h
+    return y
 
 def dibujar_estrategias_evaluacion(
     p, x, y, w_total,
