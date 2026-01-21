@@ -219,7 +219,7 @@ def generarPdf(request):
         y=y_actual,
         width=ancho_total,
         color=color_pdf,
-        clave=clave_pdf,
+        clave="",
         nombre=asignatura_pdf
     )
 
