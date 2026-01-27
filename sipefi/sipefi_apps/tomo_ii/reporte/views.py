@@ -1264,7 +1264,20 @@ def dibujar_tabla_resumen_horas(
 
     y_cursor = y
 
-    for idx in range(len(labels)):
+    filtrados = []
+
+    for lbl, val in zip(labels, valores):
+        try:
+            v = float(val)
+        except Exception:
+            v = 0.0
+
+        if v != 0.0:
+            filtrados.append((lbl, v))
+
+    labels_f, valores_f = zip(*filtrados) if filtrados else ((), ())
+
+    for idx in range(len(labels_f)):
         label_txt = str(labels[idx] or "")
         val_txt = f"{float(valores[idx]):.1f}" if idx < len(valores) and str(valores[idx]).strip() != '' else "0.0"
 
