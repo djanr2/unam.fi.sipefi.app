@@ -1873,6 +1873,7 @@ def dibujar_estrategias_evaluacion(
                 p.roundRect(bx, by, chk_box_size, chk_box_size, chk_box_size/4, fill=1, stroke=1)
                 if R["chkL"]:
                     p.setFont(font_b, fs)
+                    p.setFillColor(NEGRO)
                     tw = p.stringWidth(x_mark, font_b, fs)
                     p.drawString(bx + (chk_box_size - tw)/2, by + (chk_box_size - fs)/2, x_mark)
 
@@ -1885,6 +1886,7 @@ def dibujar_estrategias_evaluacion(
                 p.roundRect(bx, by, chk_box_size, chk_box_size, chk_box_size/4, fill=1, stroke=1)
                 if R["chkR"]:
                     p.setFont(font_b, fs)
+                    p.setFillColor(NEGRO)
                     tw = p.stringWidth(x_mark, font_b, fs)
                     p.drawString(bx + (chk_box_size - tw)/2, by + (chk_box_size - fs)/2, x_mark)
 
