@@ -15,7 +15,6 @@ from reportlab.pdfgen import canvas
 from reportlab.platypus import Paragraph
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
-from reportlab.platypus import Frame
 from reportlab.pdfbase.pdfmetrics import registerFontFamily
 
 from sipefi_apps.tomo_ii.reporte.ConsultasPDF import ConsultasPDF
@@ -86,6 +85,9 @@ def generarPdf(request):
     formacion_integral_pdf =  asignatura_inf[0][15] if asignatura_inf and asignatura_inf[0][15] is not None else ""
     perfil_profesiografico_pdf = asignatura_inf[0][16] if asignatura_inf and asignatura_inf[0][16] is not None else ""
     color_hex = asignatura_inf[0][17] if asignatura_inf and asignatura_inf[0][17] is not None else "#F3F4F6"
+    text_actividades_practicas_pdf = 'Actividades prácticas'
+    if modalidad_pdf == 'Curso teórico-práctico' and 'L' in valor_practico_pdf:
+        text_actividades_practicas_pdf = 'Laboratorio'
 
     color_pdf = colors.HexColor(color_hex)
 
@@ -98,7 +100,6 @@ def generarPdf(request):
     resumen_temario_inf = consultas.get_resumen_temario(id_asignatura)
     suma_horas_temario_pdf = resumen_temario_inf[0][0] if resumen_temario_inf and resumen_temario_inf[0][0] is not None else ""
     actividades_practicas_horas_pdf =resumen_temario_inf[0][1] if resumen_temario_inf and resumen_temario_inf[0][1] is not None else ""
-
 
     subtemas_inf = consultas.get_subtemas(id_asignatura)
 
@@ -310,7 +311,7 @@ def generarPdf(request):
     y_actual = dibujar_tabla_resumen_horas(
         p, x=30, y=y_actual, w_total=width - 60,
         valores=(suma_horas_temario_pdf, actividades_practicas_horas_pdf, (suma_horas_temario_pdf + actividades_practicas_horas_pdf)),
-        labels=("Horas en el Semestre", "Actividades prácticas", "TOTAL"),
+        labels=("Horas en el Semestre", text_actividades_practicas_pdf, "TOTAL"),
         fs=9, leading=12, pad_x=8, pad_y=4, row_min_h=18,  #  compacto
         border_color=color_pdf, fill_ultimo=GRIS_SUAVE, radio=0
     )
@@ -1224,7 +1225,6 @@ def dibujar_tabla_temas(
             y_cursor = y_inicial + 100     # Reiniciar correctamente en la parte superior
 
     return y_cursor
-
 def dibujar_tabla_resumen_horas(
     p, x, y, w_total,
     valores=(0.0, 0.0, 0.0),
