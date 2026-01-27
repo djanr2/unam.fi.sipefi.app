@@ -1278,8 +1278,8 @@ def dibujar_tabla_resumen_horas(
     labels_f, valores_f = zip(*filtrados) if filtrados else ((), ())
 
     for idx in range(len(labels_f)):
-        label_txt = str(labels[idx] or "")
-        val_txt = f"{float(valores[idx]):.1f}" if idx < len(valores) and str(valores[idx]).strip() != '' else "0.0"
+        label_txt = str(labels_f[idx] or "")
+        val_txt = f"{valores_f[idx]:.1f}"
 
         para_label = Paragraph(label_txt, style_label)
         para_val   = Paragraph(val_txt,   style_val)
@@ -1300,7 +1300,7 @@ def dibujar_tabla_resumen_horas(
         # col.3: cajita (contorno; última sombreada)
         p.setLineWidth(border_width)
         p.setStrokeColor(border_color)
-        p.setFillColor(fill_ultimo if idx == len(labels) - 1 else BLANCO)
+        p.setFillColor(fill_ultimo if idx == len(labels_f) - 1 else BLANCO)
         if radio and radio > 0:
             p.roundRect(x3, y_cursor - row_h, w3, row_h, radius=radio, fill=1, stroke=1)
         else:
