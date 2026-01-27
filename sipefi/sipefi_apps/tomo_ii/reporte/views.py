@@ -1733,7 +1733,7 @@ def dibujar_bibliografia_temas(
 def dibujar_estrategias_evaluacion(
     p, x, y, w_total,
     items,
-    titulo="Estrategias didácticas",
+    titulo="Estrategias didácticas sugeridas",
     hdr_fs=11, hdr_leading=14, hdr_pad_x=10, hdr_pad_y=8, hdr_radio=6,
     gap_after_header=8,
     table_col_ratios=(0.06, 0.44, 0.06, 0.44),
