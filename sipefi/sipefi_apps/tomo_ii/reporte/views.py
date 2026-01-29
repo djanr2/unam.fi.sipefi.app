@@ -2560,13 +2560,32 @@ def draw_info_table(c: canvas.Canvas, x: float, y: float, width: float, color,
     text_y = y + height / 2 - 3  # centrado vertical
 
     # ---- Encabezados ----
+    extra_header_text = "Sistema Escolarizado, Modalidad Presencial."
     headers = ["Semestre", "Créditos", "Fase", "Licenciatura"]
     c.setFont("Helvetica-Bold", 11)
     c.setFillColor(colors.black)
 
     x_pos = x
     for i, header in enumerate(headers):
-        c.drawString(x_pos, y + height + 8, header)
+
+        if i == 3:
+            # Header izquierdo: "Licenciatura"
+            c.drawString(x_pos, y + height + 8, header)
+
+            # Texto adicional alineado a la derecha
+            c.setFont("Helvetica-Bold", 11)
+            tw = c.stringWidth(extra_header_text, "Helvetica-Bold", 11)
+            c.drawString(
+                x_pos + col_widths[i] - tw,
+                y + height + 8,
+                extra_header_text
+            )
+
+            # Restaurar estilo del header
+            c.setFont("Helvetica-Bold", 11)
+        else:
+            c.drawString(x_pos, y + height + 8, header)
+
         if i < 3:
             x_pos += col_widths[i] + col_gap
         else:
