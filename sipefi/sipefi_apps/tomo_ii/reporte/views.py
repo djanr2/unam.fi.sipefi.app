@@ -2387,7 +2387,10 @@ def get_bibliografia_str(fila):
             titulo = titulo + "."
         extra2 = extra2 + "."
         if extra1 != "":
-            extra1 = f"({extra1})."
+            if id_ == 5:
+                extra1 = f"({extra1})."
+            if id_ == 7:
+                extra1 = f"[{extra1}]."
         else:
             extra1 = ""
         if extra4 != "":
