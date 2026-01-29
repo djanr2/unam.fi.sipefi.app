@@ -208,7 +208,7 @@ def generarPdf(request):
     p.drawString((width - text_width) / 2, top_y + (logo_height / 2) - 12, text_fi)
 
     y_line = top_y + (logo_height / 2) - 40
-    dibujar_linea_con_texto(p, y_line, "PROGRAMA DE ESTUDIO", width)
+    dibujar_linea_con_texto(p, y_line, "PROGRAMA DE ESTUDIOS", width)
 
     x_inicio = 30
     y_actual = height - 130
@@ -2387,7 +2387,7 @@ def get_bibliografia_str(fila):
             titulo = titulo + "."
         extra2 = extra2 + "."
         if extra1 != "":
-            extra1 = f"[{extra1}]."
+            extra1 = f"({extra1})."
         else:
             extra1 = ""
         if extra4 != "":
