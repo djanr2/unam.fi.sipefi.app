@@ -106,8 +106,11 @@ def generarPdf(request):
     bibliografia_basica_inf = consultas.get_bibliografia_basica(id_asignatura)
     bibliografia_basica_pdf = []
     temas_bibliografia_basica_pdf = []
+    bibliografia_basica_leyenda = False
 
     for fila in bibliografia_basica_inf:
+        if fila and fila[0] == 5:
+            bibliografia_basica_leyenda = True
         _, _, _, _, _, _, _, _, temas = fila
         format_string = get_bibliografia_str(fila)
         bibliografia_basica_pdf.append(format_string)
@@ -116,8 +119,11 @@ def generarPdf(request):
     bibliografia_complementaria_inf = consultas.get_bibliografia_complementaria(id_asignatura)
     bibliografia_complementaria_pdf = []
     temas_bibliografia_complementaria_pdf = []
+    bibliografia_complementaria_leyenda = False
 
     for fila in bibliografia_complementaria_inf:
+        if fila and fila[0] == 5:
+            bibliografia_complementaria_leyenda = True
         _, _, _, _, _, _, _, _, temas = fila
         format_string = get_bibliografia_str(fila)
         bibliografia_complementaria_pdf.append(format_string)
@@ -350,7 +356,8 @@ def generarPdf(request):
         #  auto-paginación
         auto_paginacion=True, page_width=width, page_height=height,
         top_margin=40, bottom_margin=40,
-        draw_header_fn=None  # o None si no quieres redibujar nada
+        draw_header_fn=None,  # o None si no quieres redibujar nada
+        norma_o_ley_label =  bibliografia_basica_leyenda
     )
 
     y_actual = y_actual - 10
@@ -366,7 +373,8 @@ def generarPdf(request):
         #  auto-paginación
         auto_paginacion=True, page_width=width, page_height=height,
         top_margin=40, bottom_margin=40,
-        draw_header_fn=None  # o None si no quieres redibujar nada
+        draw_header_fn=None,  # o None si no quieres redibujar nada
+        norma_o_ley_label = bibliografia_complementaria_leyenda
     )
 
     y_actual = y_actual - 10
@@ -1610,6 +1618,7 @@ def dibujar_bibliografia_temas(
     top_margin=40, bottom_margin=40,
     draw_header_fn=None,
     color=colors.ReportLabBlueOLD,
+    norma_o_ley_label=False,
 ):
     """
     Bloque Bibliografía / Temas con paginación por filas.
@@ -1617,6 +1626,7 @@ def dibujar_bibliografia_temas(
     """
 
     SANGRIA_FRANCESA = 12
+    LEYENDA_TXT = "* Para leyes o normas se recomienda consultar la versión vigente o reciente."
 
     # ---------- tamaños ----------
     w_eff = max(0, w_total - col_gap)
@@ -1645,6 +1655,15 @@ def dibujar_bibliografia_temas(
         "tema", fontName=font, fontSize=fs_tema,
         leading=leading_tema, textColor=NEGRO
     )
+    style_leyenda = ParagraphStyle(
+        "leyenda",
+        fontName=font,
+        fontSize=8,  # ← requerido
+        leading=11,
+        textColor=NEGRO,
+        leftIndent=0,
+        firstLineIndent=0,
+    )
 
     # ---------- normalizar filas ----------
     n_left  = len(bibliografias or [])
@@ -1665,7 +1684,18 @@ def dibujar_bibliografia_temas(
         row_h = max(h_bib, h_tema) + 2 * row_pad_y
         rows.append((para_bib, h_bib, para_tema, h_tema, row_h))
 
+    if norma_o_ley_label:
+        para_leyenda = Paragraph(LEYENDA_TXT, style_leyenda)
+        _, h_leyenda = para_leyenda.wrap(w_left - 2 * row_pad_x, 10 ** 6)
+        leyenda_row_h = h_leyenda + 2 * row_pad_y
+
+        # fila: solo columna izquierda, derecha vacía
+        rows.append((para_leyenda, h_leyenda, None, 0, leyenda_row_h))
+        n_rows += 1
+
     row_idx = 0
+
+    header_drawn = False
 
     # ================= LOOP DE PAGINAS =================
     while row_idx < n_rows:
@@ -1680,22 +1710,26 @@ def dibujar_bibliografia_temas(
                     y = page_height - top_margin
 
         # -------- encabezados --------
-        para_hdrL = Paragraph(titulo_izq, style_hdr_left)
-        para_hdrR = Paragraph(titulo_der, style_hdr_right)
+        if not header_drawn:
+            para_hdrL = Paragraph(titulo_izq, style_hdr_left)
+            para_hdrR = Paragraph(titulo_der, style_hdr_right)
 
-        _, h_hdrL = para_hdrL.wrap(w_left  - 2 * hdr_pad_x, 10**6)
-        _, h_hdrR = para_hdrR.wrap(w_right - 2 * hdr_pad_x, 10**6)
-        hdr_h = max(h_hdrL, h_hdrR) + 2 * hdr_pad_y
+            _, h_hdrL = para_hdrL.wrap(w_left - 2 * hdr_pad_x, 10 ** 6)
+            _, h_hdrR = para_hdrR.wrap(w_right - 2 * hdr_pad_x, 10 ** 6)
+            hdr_h = max(h_hdrL, h_hdrR) + 2 * hdr_pad_y
 
-        p.setFillColor(color)
-        p.setStrokeColor(color)
-        p.roundRect(x_left,  y - hdr_h, w_left,  hdr_h, hdr_radio, fill=1, stroke=0)
-        p.roundRect(x_right, y - hdr_h, w_right, hdr_h, hdr_radio, fill=1, stroke=0)
+            p.setFillColor(color)
+            p.setStrokeColor(color)
+            p.roundRect(x_left, y - hdr_h, w_left, hdr_h, hdr_radio, fill=1, stroke=0)
+            p.roundRect(x_right, y - hdr_h, w_right, hdr_h, hdr_radio, fill=1, stroke=0)
 
-        para_hdrL.drawOn(p, x_left  + hdr_pad_x, y - hdr_pad_y - h_hdrL)
-        para_hdrR.drawOn(p, x_right + hdr_pad_x, y - hdr_pad_y - h_hdrR)
+            para_hdrL.drawOn(p, x_left + hdr_pad_x, y - hdr_pad_y - h_hdrL)
+            para_hdrR.drawOn(p, x_right + hdr_pad_x, y - hdr_pad_y - h_hdrR)
 
-        y_body_top = y - hdr_h - gap_hdr_body
+            y_body_top = y - hdr_h - gap_hdr_body
+            header_drawn = True
+        else:
+            y_body_top = y
         y_cursor = y_body_top
 
         # -------- filas que caben --------
@@ -1728,8 +1762,18 @@ def dibujar_bibliografia_temas(
         # -------- dibujar filas --------
         y_row = rows_start_y
         for para_bib, h_bib, para_tema, h_tema, row_h in rows_drawn:
-            para_bib.drawOn(p,  x_left  + row_pad_x,  y_row - row_pad_y - h_bib)
-            para_tema.drawOn(p, x_right + row_pad_x, y_row - row_pad_y - h_tema)
+            para_bib.drawOn(
+                p,
+                x_left + row_pad_x,
+                y_row - row_pad_y - h_bib
+            )
+
+            if para_tema:
+                para_tema.drawOn(
+                    p,
+                    x_right + row_pad_x,
+                    y_row - row_pad_y - h_tema
+                )
             y_row -= row_h
 
         # -------- siguiente página --------
@@ -2404,6 +2448,8 @@ def get_bibliografia_str(fila):
         if extra4 != "":
             extra4 = f"<a href='{extra4}' color='blue'>{extra4}</a>"
 
+    if id_ == 5:
+        extra4 = extra4 + "*"
 
     partes = [
         autor,
