@@ -2609,7 +2609,7 @@ def draw_info_table(c: canvas.Canvas, x: float, y: float, width: float, color,
     text_y = y + height / 2 - 3  # centrado vertical
 
     # ---- Encabezados ----
-    extra_header_text = "Sistema Escolarizado, Modalidad Presencial."
+    extra_header_text = "Sistema Escolarizado Modalidad Presencial"
     headers = ["Semestre", "Créditos", "Fase", "Licenciatura"]
     c.setFont("Helvetica-Bold", 11)
     c.setFillColor(colors.black)
