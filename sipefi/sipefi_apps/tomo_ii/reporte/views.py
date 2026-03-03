@@ -51,20 +51,12 @@ registerFontFamily(
     boldItalic="FreeSans-BoldOblique"
 )
 
-def generarPdf(request):
-    obj = json.loads(request.POST.get("obj", ""))
-    perfil= int(obj['idPerfil'])
-    licenciatura= int(obj['idLic'])
-    asignatura = int(obj['idSolicitud'])
-
+def generar_pdf_bytes(id_perfil, id_licenciatura, id_asignatura):
     consultas = ConsultasPDF()
     '''
     [('Ingeniería en Computación', 'ASIGNATURA', 'CXXXXXX', 8, 4, 'Ingeniería Aplicada', 'Curso práctico', 'Práctico', 'Obligatoria', 
     'P+, P+', 1, 2, 16, 32, 'El alumno reforzará los conceptos de trigonometría para lograr una mejor comprensión del álgebra.')]
     '''
-    id_licenciatura = licenciatura
-    id_asignatura = asignatura
-    id_perfil = perfil
     # LICENCIATURA
     asignatura_inf = consultas.get_informacion_asignatura(id_licenciatura, id_asignatura)
     licenciatura_pdf = asignatura_inf[0][0] if asignatura_inf and asignatura_inf[0][0] is not None else ""
@@ -439,6 +431,22 @@ def generarPdf(request):
     dibujar_marca_agua(p, width, height, habilitada = watermark_on)
     p.showPage()
     p.save()
+
+    return buffer, nombre_archivo_pdf
+
+def generarPdf(request):
+    obj = json.loads(request.POST.get("obj", ""))
+
+    id_perfil = int(obj['idPerfil'])
+    id_licenciatura = int(obj['idLic'])
+    id_asignatura = int(obj['idSolicitud'])
+
+    buffer, nombre_archivo_pdf = generar_pdf_bytes(
+        id_perfil,
+        id_licenciatura,
+        id_asignatura
+    )
+
     buffer.seek(0)
 
     return HttpResponse(

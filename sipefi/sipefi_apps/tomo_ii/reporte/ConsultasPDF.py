@@ -168,4 +168,17 @@ class ConsultasPDF():
             cursor.close()
         return res
 
+    def get_ids_asignaturas_ordered_by_semestre_name(self, id_licenciatura: int):
+        sql = self._load_sql("getIdsAsignatura.sql")
+        cursor = conBD().cursorBD()
+        try:
+            cursor.execute(sql, {"id_licenciatura": id_licenciatura})
+            res = cursor.fetchall()
+        except Exception as e:
+            print(f"Error en getIdsAsignatura archivo de consulta: {e}")
+            res = []
+        finally:
+            cursor.close()
+        return res
+
 
