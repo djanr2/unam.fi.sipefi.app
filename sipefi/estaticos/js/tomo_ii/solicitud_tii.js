@@ -283,7 +283,7 @@ const soltii = function(){
 	                            data-licenciatura-id="${idLic}"
 	                            data-solicitud-id="${numSoli}"
 	                            data-info-util="${infoUtil}" onclick="etii.descargaPdf(${idPerfil}, ${idLic}, ${numSoli})">
-	                        <i class="fa-solid fa-file-pdf me-1"></i>PDFq
+	                        <i class="fa-solid fa-file-pdf me-1"></i>PDF
 	                    </button>
 	                </td>
 	                <td class="d-none info-util">${infoUtil}</td>

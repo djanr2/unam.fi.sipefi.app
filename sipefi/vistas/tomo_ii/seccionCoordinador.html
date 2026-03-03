@@ -14,14 +14,20 @@
             </div>
 
             <!-- Filtro de licenciatura -->
-            <div class="d-flex align-items-center gap-2" style="min-width: 380px;">
-                <label for="filtroLicenciatura" class="form-label form-label-sm mb-0 me-1">
-                    <strong>Licenciatura:</strong>
-                </label>
-                <select id="filtroLicenciatura" class="form-select form-select-sm">
-                    <option value="">Todas</option>
-                </select>
-            </div>
+            <div class="d-flex align-items-center gap-2" style="min-width: 520px;">
+			    <label for="filtroLicenciatura" class="form-label form-label-sm mb-0 me-1">
+			        <strong>Licenciatura:</strong>
+			    </label>
+			    <select id="filtroLicenciatura" class="form-select form-select-sm">
+			        <option value="">Todas</option>
+			    </select>
+			
+			    <!-- Descarga masiva -->
+			    <button id="btnDescargarAllPdf" type="button" class="btn btn-outline-danger btn-sm">
+			        <i class="fa-solid fa-file-pdf me-1"></i>
+			        Descargar PDF (Tomo II)
+			    </button>
+			</div>
         </div>
 
         <!-- Cuerpo con tabla -->

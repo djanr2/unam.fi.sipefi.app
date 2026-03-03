@@ -290,6 +290,21 @@ const etii = function(){
 	       //aqui mandar llamar a la funcion que tienes de descarga del PDF
 	   });
 	   
+	   
+	   $("#btnDescargarAllPdf").off("click");
+	   $("#btnDescargarAllPdf").on("click", function () {
+	       const idPerfil = parseInt($("#rol").html(), 10) || 0;
+	       const idLic = $("#filtroLicenciatura").val();
+
+	       if (!idLic) {
+	           return fComun.mostrarModalAdvertencia(
+	               "Selecciona una licenciatura en el filtro para descargar masivamente el PDF del Tomo II."
+	           );
+	       }
+
+	       etii.descargaAllPdf(idPerfil, idLic);
+	   });
+	   
 	};
 	
 	  /**
@@ -881,12 +896,21 @@ const etii = function(){
 		};
 		fComun.postFileDownload("/SIPEFI/reporte/generarPdf/", param, function(resp){});
 	};
+	
 	const descargaAllPdf = (idPerfil, idLic) => {
-		let param = {
-				idPerfil: idPerfil,
-				idLic: idLic
-		};
-		fComun.postFileDownload("/SIPEFI/reporte/generarPdf/", param, function(resp){});
+	    const idPerfilOk = parseInt(idPerfil, 10) || (parseInt($("#rol").html(), 10) || 0);
+	    const idLicOk = (idLic !== undefined && idLic !== null && String(idLic).trim() !== "")
+	        ? idLic
+	        : $("#filtroLicenciatura").val();
+
+	    if (!idLicOk) {
+	        return fComun.mostrarModalAdvertencia(
+	            "Selecciona al menos una licenciatura para descargar masivamente el PDF del Tomo II."
+	        );
+	    }
+
+	    let param = { idPerfil: idPerfilOk, idLic: idLicOk };
+	    fComun.postFileDownload("/SIPEFI/reporte/generarPdf/", param, function(resp){});
 	};
 
 
