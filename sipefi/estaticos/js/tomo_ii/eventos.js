@@ -881,6 +881,13 @@ const etii = function(){
 		};
 		fComun.postFileDownload("/SIPEFI/reporte/generarPdf/", param, function(resp){});
 	};
+	const descargaAllPdf = (idPerfil, idLic) => {
+		let param = {
+				idPerfil: idPerfil,
+				idLic: idLic
+		};
+		fComun.postFileDownload("/SIPEFI/reporte/generarPdf/", param, function(resp){});
+	};
 
 
 	
@@ -899,6 +906,7 @@ const etii = function(){
 		saveContenido: saveContenido,
 		editarBibliografia: editarBibliografia,
 		saveBibliografia: saveBibliografia,
-		descargaPdf: descargaPdf
+		descargaPdf: descargaPdf,
+		descargaAllPdf:  descargaAllPdf
 	}
 }();

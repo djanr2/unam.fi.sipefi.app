@@ -51,403 +51,426 @@ registerFontFamily(
     boldItalic="FreeSans-BoldOblique"
 )
 
-def generar_pdf_bytes(id_perfil, id_licenciatura, id_asignatura):
+def generar_pdf_bytes(id_perfil, id_licenciatura, lista_id_asignaturas):
     consultas = ConsultasPDF()
     '''
     [('Ingeniería en Computación', 'ASIGNATURA', 'CXXXXXX', 8, 4, 'Ingeniería Aplicada', 'Curso práctico', 'Práctico', 'Obligatoria', 
     'P+, P+', 1, 2, 16, 32, 'El alumno reforzará los conceptos de trigonometría para lograr una mejor comprensión del álgebra.')]
     '''
-    # LICENCIATURA
-    asignatura_inf = consultas.get_informacion_asignatura(id_licenciatura, id_asignatura)
-    licenciatura_pdf = asignatura_inf[0][0] if asignatura_inf and asignatura_inf[0][0] is not None else ""
-    asignatura_pdf = asignatura_inf[0][1] if asignatura_inf and asignatura_inf[0][1] is not None else ""
-    clave_pdf = asignatura_inf[0][2] if asignatura_inf and asignatura_inf[0][2] is not None else ""
-    semestre_pdf = str(asignatura_inf[0][3] if asignatura_inf and asignatura_inf[0][3] is not None else "")
-    creditos_pdf =  str(asignatura_inf[0][4] if asignatura_inf and asignatura_inf[0][4] is not None else "")
-    area_conocimiento_pdf = asignatura_inf[0][5] if asignatura_inf and asignatura_inf[0][5] is not None else ""
-    modalidad_pdf =  asignatura_inf[0][6] if asignatura_inf and asignatura_inf[0][6] is not None else ""
-    tipo_pdf = asignatura_inf[0][7] if asignatura_inf and asignatura_inf[0][7] is not None else ""
-    caracter_pdf = asignatura_inf[0][8] if asignatura_inf and asignatura_inf[0][8] is not None else ""
-    valor_practico_pdf = asignatura_inf[0][9] if asignatura_inf and asignatura_inf[0][9] else ""
-    horas_teoricas_semanales_pdf = asignatura_inf[0][10] if asignatura_inf and asignatura_inf[0][10] is not None else 0
-    horas_practicas_semanales_pdf = asignatura_inf[0][11] if asignatura_inf and asignatura_inf[0][11] is not None else 0
-    horas_teoricas_semestrales_pdf = asignatura_inf[0][12] if asignatura_inf and asignatura_inf[0][12] is not None else 0
-    horas_practicas_semestrales_pdf = asignatura_inf[0][13] if asignatura_inf and asignatura_inf[0][13] is not None else 0
-    objetivo_pdf =  asignatura_inf[0][14] if asignatura_inf and asignatura_inf[0][14] is not None else ""
-    formacion_integral_pdf =  asignatura_inf[0][15] if asignatura_inf and asignatura_inf[0][15] is not None else ""
-    perfil_profesiografico_pdf = asignatura_inf[0][16] if asignatura_inf and asignatura_inf[0][16] is not None else ""
-    color_hex = asignatura_inf[0][17] if asignatura_inf and asignatura_inf[0][17] is not None else "#F3F4F6"
-    text_actividades_practicas_pdf = 'Actividades prácticas'
-    if modalidad_pdf == 'Curso teórico-práctico' and 'L' in valor_practico_pdf:
-        text_actividades_practicas_pdf = 'Laboratorio'
-
-    color_pdf = colors.HexColor(color_hex)
-
-    seriaciones_inf = consultas.get_seriaciones(id_licenciatura,id_asignatura)
-    seriacion_antecedente_pdf = seriaciones_inf[0][0] if seriaciones_inf and seriaciones_inf[0][0] is not None else ""
-    seriacion_consecuente_pdf = seriaciones_inf[0][1] if seriaciones_inf and seriaciones_inf[0][1] is not None else ""
-
-    temario_inf = consultas.get_temario(id_asignatura)
-
-    resumen_temario_inf = consultas.get_resumen_temario(id_asignatura)
-    suma_horas_temario_pdf = resumen_temario_inf[0][0] if resumen_temario_inf and resumen_temario_inf[0][0] is not None else ""
-    actividades_practicas_horas_pdf =resumen_temario_inf[0][1] if resumen_temario_inf and resumen_temario_inf[0][1] is not None else ""
-
-    subtemas_inf = consultas.get_subtemas(id_asignatura)
-
-    bibliografia_basica_inf = consultas.get_bibliografia_basica(id_asignatura)
-    bibliografia_basica_pdf = []
-    temas_bibliografia_basica_pdf = []
-    bibliografia_basica_leyenda = False
-
-    for fila in bibliografia_basica_inf:
-        if fila and fila[0] == 5:
-            bibliografia_basica_leyenda = True
-        _, _, _, _, _, _, _, _, temas = fila
-        format_string = get_bibliografia_str(fila)
-        bibliografia_basica_pdf.append(format_string)
-        temas_bibliografia_basica_pdf.append(temas)
-
-    bibliografia_complementaria_inf = consultas.get_bibliografia_complementaria(id_asignatura)
-    bibliografia_complementaria_pdf = []
-    temas_bibliografia_complementaria_pdf = []
-    bibliografia_complementaria_leyenda = False
-
-    for fila in bibliografia_complementaria_inf:
-        if fila and fila[0] == 5:
-            bibliografia_complementaria_leyenda = True
-        _, _, _, _, _, _, _, _, temas = fila
-        format_string = get_bibliografia_str(fila)
-        bibliografia_complementaria_pdf.append(format_string)
-        temas_bibliografia_complementaria_pdf.append(temas)
-
-    estrategias_didacticas_inf = consultas.get_estrategias_didacticas(id_asignatura)
-    formas_evaluacion_diagnostica_inf = consultas.get_formas_evaluacion(id_asignatura, 'Diagnóstica')
-    formas_evaluacion_formativa_inf = consultas.get_formas_evaluacion(id_asignatura, 'Formativa')
-    formas_evaluacion_sumativa_inf = consultas.get_formas_evaluacion(id_asignatura, 'Sumativa')
-
-    nombre_archivo_pdf = normalize_name(asignatura_pdf)
-
-    is_documento_oficial_inf = consultas.get_is_documento_ofical_by_perfil(id_perfil)
-    is_documento_oficial_pdf = is_documento_oficial_inf[0][0] if is_documento_oficial_inf and is_documento_oficial_inf[0][0] is not None else ""
-
-    if valor_practico_pdf == '':
-        valor_practico_pdf = 'Ninguno'
-    if formacion_integral_pdf == '':
-        formacion_integral_pdf = 'Ninguna'
-    if actividades_practicas_horas_pdf == '':
-        actividades_practicas_horas_pdf = 0
-    if suma_horas_temario_pdf == '':
-        suma_horas_temario_pdf = 0
-
-    if is_documento_oficial_pdf == 1 :
-        global watermark_on
-        watermark_on= False
-
-    # Quitar esta linea para quitar el watermark
-    watermark_on = False
-
-    subtemas_por_id = {}  # dict auxiliar para juntar las listas
-    for r in subtemas_inf:
-        id_bloque = r[0]
-        sub_id = r[1]
-        descripcion = r[2]
-        # armar el "objeto" subtema como arreglo/tupla
-        subtema = (sub_id, descripcion)
-        if id_bloque in subtemas_por_id:
-            subtemas_por_id[id_bloque].append(subtema)
-        else:
-            subtemas_por_id[id_bloque] = [subtema]
-
-    temas_con_subtemas = []
-    for t in temario_inf:
-        id_bloque = t[0]
-        nombre = t[1]
-        objetivo = t[3]
-        lista_subtemas = subtemas_por_id.get(id_bloque, [])
-        temas_con_subtemas.append((id_bloque, nombre, objetivo, lista_subtemas))
-
-    '''
-    Se obtiene la informacion par agenerar el PDF
-    '''
-
     buffer = BytesIO()
     p = canvas.Canvas(buffer, pagesize=A4)
     width, height = A4
 
-    #  Ruta a los logos (ajusta según la ubicación real)
-    logo_unam_izq = os.path.join(settings.BASE_DIR, 'estaticos', 'imagenes', 'escudounam_negro.jpg')
-    logo_fi_der = os.path.join(settings.BASE_DIR, 'estaticos', 'imagenes', 'escudofi_negro.jpg')
+    for index, id_asignatura in enumerate(lista_id_asignaturas):
 
-    # Tamaño deseado para los logos
-    logo_width = 60
-    logo_height = 60
-    top_y = height - 70
+        if index > 0:
+            p.showPage()
+        # LICENCIATURA
+        asignatura_inf = consultas.get_informacion_asignatura(id_licenciatura, id_asignatura)
+        licenciatura_pdf = asignatura_inf[0][0] if asignatura_inf and asignatura_inf[0][0] is not None else ""
+        asignatura_pdf = asignatura_inf[0][1] if asignatura_inf and asignatura_inf[0][1] is not None else ""
+        clave_pdf = asignatura_inf[0][2] if asignatura_inf and asignatura_inf[0][2] is not None else ""
+        semestre_pdf = str(asignatura_inf[0][3] if asignatura_inf and asignatura_inf[0][3] is not None else "")
+        creditos_pdf =  str(asignatura_inf[0][4] if asignatura_inf and asignatura_inf[0][4] is not None else "")
+        area_conocimiento_pdf = asignatura_inf[0][5] if asignatura_inf and asignatura_inf[0][5] is not None else ""
+        modalidad_pdf =  asignatura_inf[0][6] if asignatura_inf and asignatura_inf[0][6] is not None else ""
+        tipo_pdf = asignatura_inf[0][7] if asignatura_inf and asignatura_inf[0][7] is not None else ""
+        caracter_pdf = asignatura_inf[0][8] if asignatura_inf and asignatura_inf[0][8] is not None else ""
+        valor_practico_pdf = asignatura_inf[0][9] if asignatura_inf and asignatura_inf[0][9] else ""
+        horas_teoricas_semanales_pdf = asignatura_inf[0][10] if asignatura_inf and asignatura_inf[0][10] is not None else 0
+        horas_practicas_semanales_pdf = asignatura_inf[0][11] if asignatura_inf and asignatura_inf[0][11] is not None else 0
+        horas_teoricas_semestrales_pdf = asignatura_inf[0][12] if asignatura_inf and asignatura_inf[0][12] is not None else 0
+        horas_practicas_semestrales_pdf = asignatura_inf[0][13] if asignatura_inf and asignatura_inf[0][13] is not None else 0
+        objetivo_pdf =  asignatura_inf[0][14] if asignatura_inf and asignatura_inf[0][14] is not None else ""
+        formacion_integral_pdf =  asignatura_inf[0][15] if asignatura_inf and asignatura_inf[0][15] is not None else ""
+        perfil_profesiografico_pdf = asignatura_inf[0][16] if asignatura_inf and asignatura_inf[0][16] is not None else ""
+        color_hex = asignatura_inf[0][17] if asignatura_inf and asignatura_inf[0][17] is not None else "#F3F4F6"
+        text_actividades_practicas_pdf = 'Actividades prácticas'
+        if modalidad_pdf == 'Curso teórico-práctico' and 'L' in valor_practico_pdf:
+            text_actividades_practicas_pdf = 'Laboratorio'
 
+        color_pdf = colors.HexColor(color_hex)
 
-    # Insertar los logos
-    if os.path.exists(logo_unam_izq):
-        p.drawImage(ImageReader(logo_unam_izq), 50, top_y, width=logo_width, height=logo_height, preserveAspectRatio=True)
-    else:
-        print("Logo izquierdo no encontrado")
+        seriaciones_inf = consultas.get_seriaciones(id_licenciatura,id_asignatura)
+        seriacion_antecedente_pdf = seriaciones_inf[0][0] if seriaciones_inf and seriaciones_inf[0][0] is not None else ""
+        seriacion_consecuente_pdf = seriaciones_inf[0][1] if seriaciones_inf and seriaciones_inf[0][1] is not None else ""
 
-    if os.path.exists(logo_fi_der):
-        p.drawImage(ImageReader(logo_fi_der), width - 50 - logo_width, top_y, width=logo_width, height=logo_height, preserveAspectRatio=True)
-    else:
-        print(" Logo derecho no encontrado")
+        temario_inf = consultas.get_temario(id_asignatura)
 
-    # Texto centrado entre los logos
-    text_unam = f"UNIVERSIDAD NACIONAL AUTÓNOMA DE MÉXICO"
-    text_fi = f"FACULTAD DE INGENIERÍA"
-    p.setFont("Helvetica-Bold", 10)
-    text_width = p.stringWidth(text_unam, "Helvetica-Bold", 10)
-    p.drawString((width - text_width) / 2, top_y + (logo_height / 2), text_unam)
-    text_width = p.stringWidth(text_fi, "Helvetica-Bold", 10)
-    p.drawString((width - text_width) / 2, top_y + (logo_height / 2) - 12, text_fi)
+        resumen_temario_inf = consultas.get_resumen_temario(id_asignatura)
+        suma_horas_temario_pdf = resumen_temario_inf[0][0] if resumen_temario_inf and resumen_temario_inf[0][0] is not None else ""
+        actividades_practicas_horas_pdf =resumen_temario_inf[0][1] if resumen_temario_inf and resumen_temario_inf[0][1] is not None else ""
 
-    y_line = top_y + (logo_height / 2) - 40
-    dibujar_linea_con_texto(p, y_line, "PROGRAMA DE ESTUDIOS", width)
+        subtemas_inf = consultas.get_subtemas(id_asignatura)
 
-    x_inicio = 30
-    y_actual = height - 130
-    ancho_total = width - 2 * x_inicio
+        bibliografia_basica_inf = consultas.get_bibliografia_basica(id_asignatura)
+        bibliografia_basica_pdf = []
+        temas_bibliografia_basica_pdf = []
+        bibliografia_basica_leyenda = False
 
-    y_actual = draw_header_table(
-        p,
-        x=x_inicio,
-        y=y_actual,
-        width=ancho_total,
-        color=color_pdf,
-        clave="",
-        nombre=asignatura_pdf
-    )
+        for fila in bibliografia_basica_inf:
+            if fila and fila[0] == 5:
+                bibliografia_basica_leyenda = True
+            _, _, _, _, _, _, _, _, temas = fila
+            format_string = get_bibliografia_str(fila)
+            bibliografia_basica_pdf.append(format_string)
+            temas_bibliografia_basica_pdf.append(temas)
 
-    y_actual = y_actual - 40
+        bibliografia_complementaria_inf = consultas.get_bibliografia_complementaria(id_asignatura)
+        bibliografia_complementaria_pdf = []
+        temas_bibliografia_complementaria_pdf = []
+        bibliografia_complementaria_leyenda = False
 
-    ancho_total = width - 2 * x_inicio
-    fase_pdf= ""
+        for fila in bibliografia_complementaria_inf:
+            if fila and fila[0] == 5:
+                bibliografia_complementaria_leyenda = True
+            _, _, _, _, _, _, _, _, temas = fila
+            format_string = get_bibliografia_str(fila)
+            bibliografia_complementaria_pdf.append(format_string)
+            temas_bibliografia_complementaria_pdf.append(temas)
 
-    semestres_num = [int(x.strip()) for x in semestre_pdf.split(",")]
+        estrategias_didacticas_inf = consultas.get_estrategias_didacticas(id_asignatura)
+        formas_evaluacion_diagnostica_inf = consultas.get_formas_evaluacion(id_asignatura, 'Diagnóstica')
+        formas_evaluacion_formativa_inf = consultas.get_formas_evaluacion(id_asignatura, 'Formativa')
+        formas_evaluacion_sumativa_inf = consultas.get_formas_evaluacion(id_asignatura, 'Sumativa')
 
-    if any(n < 6 for n in semestres_num):
-        fase_pdf = "F1"
-    else:
-        fase_pdf = "F2"
+        nombre_archivo_pdf = normalize_name(
+            licenciatura_pdf if len(lista_id_asignaturas) > 1 else asignatura_pdf
+        )
 
+        is_documento_oficial_inf = consultas.get_is_documento_ofical_by_perfil(id_perfil)
+        is_documento_oficial_pdf = is_documento_oficial_inf[0][0] if is_documento_oficial_inf and is_documento_oficial_inf[0][0] is not None else ""
 
-    y_actual = draw_info_table(
-        p,
-        x=x_inicio,
-        y=y_actual,
-        width=ancho_total,
-        color=color_pdf,
-        semestre=semestre_pdf,
-        creditos=creditos_pdf,
-        fase=fase_pdf,
-        licenciatura=licenciatura_pdf
-    )
+        if valor_practico_pdf == '':
+            valor_practico_pdf = 'Ninguno'
+        if formacion_integral_pdf == '':
+            formacion_integral_pdf = 'Ninguna'
+        if actividades_practicas_horas_pdf == '':
+            actividades_practicas_horas_pdf = 0
+        if suma_horas_temario_pdf == '':
+            suma_horas_temario_pdf = 0
 
-    ancho_total = width - 2 * x_inicio
+        if is_documento_oficial_pdf == 1 :
+            global watermark_on
+            watermark_on= False
 
-    y_actual = tala_columnas(
-        p, x_inicio, y_actual, ancho_total,
-        color = color_pdf,
-        area_conocimiento = area_conocimiento_pdf,
-        modalidad=modalidad_pdf,
-        tipo=tipo_pdf,
-        caracter=caracter_pdf,
-        valor=valor_practico_pdf,
-        horas_t_semanales= horas_teoricas_semanales_pdf, horas_p_semanales=horas_practicas_semanales_pdf,
-        horas_t_semestrales=horas_teoricas_semestrales_pdf, horas_p_semestrales=horas_practicas_semestrales_pdf,
-        texto_derecha=""
-    )
+        # Quitar esta linea para quitar el watermark
+        watermark_on = False
 
-    y_actual = y_actual - 20
+        subtemas_por_id = {}  # dict auxiliar para juntar las listas
+        for r in subtemas_inf:
+            id_bloque = r[0]
+            sub_id = r[1]
+            descripcion = r[2]
+            # armar el "objeto" subtema como arreglo/tupla
+            subtema = (sub_id, descripcion)
+            if id_bloque in subtemas_por_id:
+                subtemas_por_id[id_bloque].append(subtema)
+            else:
+                subtemas_por_id[id_bloque] = [subtema]
 
-    y_actual = dibujar_seriacion_2x2(
-        p, x=30, y=y_actual, w_total=width - 60,
-        texto_antecedente=seriacion_antecedente_pdf,
-        texto_consecuente=seriacion_consecuente_pdf,
-        color=color_pdf,
-        col_gap=16,
-        radio=5,
-        header_fs=10,
-        header_gap=6,
-        box_pad_x=10, box_pad_y=8,
-        text_fs=10, text_leading=14
-    )
+        temas_con_subtemas = []
+        for t in temario_inf:
+            id_bloque = t[0]
+            nombre = t[1]
+            objetivo = t[3]
+            lista_subtemas = subtemas_por_id.get(id_bloque, [])
+            temas_con_subtemas.append((id_bloque, nombre, objetivo, lista_subtemas))
 
-    y_actual = y_actual - 5
+        '''
+        Se obtiene la informacion par agenerar el PDF
+        '''
 
-    y_actual = dibujar_objetivo_general(
-        p, x=30, y=y_actual, w_total=width - 60,
-        texto_objetivo=(objetivo_pdf),
-        color=color_pdf,
-        radio=5, header_gap=8, box_pad_x=10, box_pad_y=10
-    )
+        #  Ruta a los logos (ajusta según la ubicación real)
+        logo_unam_izq = os.path.join(settings.BASE_DIR, 'estaticos', 'imagenes', 'escudounam_negro.jpg')
+        logo_fi_der = os.path.join(settings.BASE_DIR, 'estaticos', 'imagenes', 'escudofi_negro.jpg')
 
-    # Encabezado de la sección
-    y_actual = y_actual - 5
-    y_actual = dibujar_titulo_temario(
-        p, x=30, y=y_actual, w_total=width - 60,
-        # align="left",         # opcional: "center" o "right"
-        underline=None  # subrayado a lo ancho; usa "text" o None si no lo quieres
-    )
-
-    filas_temas = temario_inf
-
-    y_actual = dibujar_tabla_temas(
-        p, x=30, y=y_actual, w_total=width - 60,
-        filas=filas_temas,
-        draw_outer_border=True,  # contorno exterior del cuerpo
-        draw_col_dividers=True,  #  solo líneas verticales internas
-        outer_border_color=color_pdf,
-        col_divider_color=color_pdf,
-        gap_header_body=6
-    )
-
-    y_actual = dibujar_tabla_resumen_horas(
-        p, x=30, y=y_actual, w_total=width - 60,
-        valores=(suma_horas_temario_pdf, actividades_practicas_horas_pdf, (suma_horas_temario_pdf + actividades_practicas_horas_pdf)),
-        labels=("Horas en el Semestre", text_actividades_practicas_pdf, "TOTAL"),
-        fs=9, leading=12, pad_x=8, pad_y=4, row_min_h=18,  #  compacto
-        border_color=color_pdf, fill_ultimo=GRIS_SUAVE, radio=0
-    )
-
-    if y_actual < 420: # si hubo salto de pagina y aun no rebasa la mitad de la pagina 420 aprox hace salto de linea para la siguiente seccion
-        y_actual = siguiente_pagina(p, width, height, top_margin=40)
-        y_actual = height - 40
-    else:
-        y_actual = y_actual - 15
+        # Tamaño deseado para los logos
+        logo_width = 60
+        logo_height = 60
+        top_y = height - 70
 
 
-    # 3) Dibujar en bucle
-    for t in temas_con_subtemas:
-        y_actual = dibujar_bloque_temario(
-            p, x=30, y=y_actual, w_total=width - 60,
+        # Insertar los logos
+        if os.path.exists(logo_unam_izq):
+            p.drawImage(ImageReader(logo_unam_izq), 50, top_y, width=logo_width, height=logo_height, preserveAspectRatio=True)
+        else:
+            print("Logo izquierdo no encontrado")
+
+        if os.path.exists(logo_fi_der):
+            p.drawImage(ImageReader(logo_fi_der), width - 50 - logo_width, top_y, width=logo_width, height=logo_height, preserveAspectRatio=True)
+        else:
+            print(" Logo derecho no encontrado")
+
+        # Texto centrado entre los logos
+        text_unam = f"UNIVERSIDAD NACIONAL AUTÓNOMA DE MÉXICO"
+        text_fi = f"FACULTAD DE INGENIERÍA"
+        p.setFont("Helvetica-Bold", 10)
+        text_width = p.stringWidth(text_unam, "Helvetica-Bold", 10)
+        p.drawString((width - text_width) / 2, top_y + (logo_height / 2), text_unam)
+        text_width = p.stringWidth(text_fi, "Helvetica-Bold", 10)
+        p.drawString((width - text_width) / 2, top_y + (logo_height / 2) - 12, text_fi)
+
+        y_line = top_y + (logo_height / 2) - 40
+        dibujar_linea_con_texto(p, y_line, "PROGRAMA DE ESTUDIOS", width)
+
+        x_inicio = 30
+        y_actual = height - 130
+        ancho_total = width - 2 * x_inicio
+
+        y_actual = draw_header_table(
+            p,
+            x=x_inicio,
+            y=y_actual,
+            width=ancho_total,
+            color=color_pdf,
+            clave="",
+            nombre=asignatura_pdf
+        )
+
+        y_actual = y_actual - 40
+
+        ancho_total = width - 2 * x_inicio
+        fase_pdf= ""
+
+        semestres_num = [int(x.strip()) for x in semestre_pdf.split(",")]
+
+        if any(n < 6 for n in semestres_num):
+            fase_pdf = "F1"
+        else:
+            fase_pdf = "F2"
+
+
+        y_actual = draw_info_table(
+            p,
+            x=x_inicio,
+            y=y_actual,
+            width=ancho_total,
+            color=color_pdf,
+            semestre=semestre_pdf,
+            creditos=creditos_pdf,
+            fase=fase_pdf,
+            licenciatura=licenciatura_pdf
+        )
+
+        ancho_total = width - 2 * x_inicio
+
+        y_actual = tala_columnas(
+            p, x_inicio, y_actual, ancho_total,
             color = color_pdf,
-            tema_titulo=str(t[0])+" "+t[1],
-            objetivo_texto=t[2],
-            contenidos=t[3],
-            auto_paginacion=True,
-            page_width=width, page_height=height,
+            area_conocimiento = area_conocimiento_pdf,
+            modalidad=modalidad_pdf,
+            tipo=tipo_pdf,
+            caracter=caracter_pdf,
+            valor=valor_practico_pdf,
+            horas_t_semanales= horas_teoricas_semanales_pdf, horas_p_semanales=horas_practicas_semanales_pdf,
+            horas_t_semestrales=horas_teoricas_semestrales_pdf, horas_p_semestrales=horas_practicas_semestrales_pdf,
+            texto_derecha=""
+        )
+
+        y_actual = y_actual - 20
+
+        y_actual = dibujar_seriacion_2x2(
+            p, x=30, y=y_actual, w_total=width - 60,
+            texto_antecedente=seriacion_antecedente_pdf,
+            texto_consecuente=seriacion_consecuente_pdf,
+            color=color_pdf,
+            col_gap=16,
+            radio=5,
+            header_fs=10,
+            header_gap=6,
+            box_pad_x=10, box_pad_y=8,
+            text_fs=10, text_leading=14
+        )
+
+        y_actual = y_actual - 5
+
+        y_actual = dibujar_objetivo_general(
+            p, x=30, y=y_actual, w_total=width - 60,
+            texto_objetivo=(objetivo_pdf),
+            color=color_pdf,
+            radio=5, header_gap=8, box_pad_x=10, box_pad_y=10
+        )
+
+        # Encabezado de la sección
+        y_actual = y_actual - 5
+        y_actual = dibujar_titulo_temario(
+            p, x=30, y=y_actual, w_total=width - 60,
+            # align="left",         # opcional: "center" o "right"
+            underline=None  # subrayado a lo ancho; usa "text" o None si no lo quieres
+        )
+
+        filas_temas = temario_inf
+
+        y_actual = dibujar_tabla_temas(
+            p, x=30, y=y_actual, w_total=width - 60,
+            filas=filas_temas,
+            draw_outer_border=True,  # contorno exterior del cuerpo
+            draw_col_dividers=True,  #  solo líneas verticales internas
+            outer_border_color=color_pdf,
+            col_divider_color=color_pdf,
+            gap_header_body=6
+        )
+
+        y_actual = dibujar_tabla_resumen_horas(
+            p, x=30, y=y_actual, w_total=width - 60,
+            valores=(suma_horas_temario_pdf, actividades_practicas_horas_pdf, (suma_horas_temario_pdf + actividades_practicas_horas_pdf)),
+            labels=("Horas en el Semestre", text_actividades_practicas_pdf, "TOTAL"),
+            fs=9, leading=12, pad_x=8, pad_y=4, row_min_h=18,  #  compacto
+            border_color=color_pdf, fill_ultimo=GRIS_SUAVE, radio=0
+        )
+
+        if y_actual < 420: # si hubo salto de pagina y aun no rebasa la mitad de la pagina 420 aprox hace salto de linea para la siguiente seccion
+            y_actual = siguiente_pagina(p, width, height, top_margin=40)
+            y_actual = height - 40
+        else:
+            y_actual = y_actual - 15
+
+
+        # 3) Dibujar en bucle
+        for t in temas_con_subtemas:
+            y_actual = dibujar_bloque_temario(
+                p, x=30, y=y_actual, w_total=width - 60,
+                color = color_pdf,
+                tema_titulo=str(t[0])+" "+t[1],
+                objetivo_texto=t[2],
+                contenidos=t[3],
+                auto_paginacion=True,
+                page_width=width, page_height=height,
+                bottom_margin=40, top_margin=40,
+                draw_header_fn=None  # o tu función de encabezado si la tienes
+            )
+            # espacio entre bloques
+            y_actual -= 12
+
+        y_actual = dibujar_bibliografia_temas(
+            p, x=30, y=y_actual, w_total=width - 60,
+            titulo_izq='Bibliografía básica',
+            color=color_pdf,
+            outline_color = color_pdf,
+            bibliografias=bibliografia_basica_pdf, temas=temas_bibliografia_basica_pdf,
+            col_gap=14,
+            draw_column_outline=True, outline_radius=6, outline_over_header=False,
+            #  auto-paginación
+            auto_paginacion=True, page_width=width, page_height=height,
+            top_margin=40, bottom_margin=40,
+            draw_header_fn=None,  # o None si no quieres redibujar nada
+            norma_o_ley_label =  bibliografia_basica_leyenda
+        )
+
+        y_actual = y_actual - 10
+
+        y_actual = dibujar_bibliografia_temas(
+            p, x=30, y=y_actual, w_total=width - 60,
+            titulo_izq='Bibliografía complementaria',
+            color=color_pdf,
+            outline_color=color_pdf,
+            bibliografias=bibliografia_complementaria_pdf, temas=temas_bibliografia_complementaria_pdf,
+            col_gap=14,
+            draw_column_outline=True, outline_radius=6, outline_over_header=False,
+            #  auto-paginación
+            auto_paginacion=True, page_width=width, page_height=height,
+            top_margin=40, bottom_margin=40,
+            draw_header_fn=None,  # o None si no quieres redibujar nada
+            norma_o_ley_label = bibliografia_complementaria_leyenda
+        )
+
+        y_actual = y_actual - 10
+
+        y_actual = dibujar_estrategias_evaluacion(
+            p, x=30, y=y_actual, w_total=width - 60,
+            items=estrategias_didacticas_inf,
+            # compactación (si quieres aún más compacto, baja fs/leading o chk_box_size)
+            fs=9, leading=11, cell_pad_y=3, chk_box_size=11,
+            # paginación por filas
+            auto_paginar_filas=True, page_width=width, page_height=height,
+            top_margin=40, bottom_margin=40,
+            color=color_pdf,
+            chk_border_color=color_pdf,
+            # opcional: redibuja tu encabezado general en cada nueva página
+            # draw_page_header_fn=mi_encabezado_general
+        )
+
+        y_actual = y_actual - 10
+
+        y_actual = dibujar_formas_evaluacion(
+            p, x=30, y=y_actual, w_total=width - 60,
+            checks_c1=formas_evaluacion_diagnostica_inf, checks_c3=formas_evaluacion_formativa_inf, checks_c5=formas_evaluacion_sumativa_inf,
+            auto_paginacion=True, page_width=width, page_height=height,
             bottom_margin=40, top_margin=40,
-            draw_header_fn=None  # o tu función de encabezado si la tienes
-        )
-        # espacio entre bloques
-        y_actual -= 12
-
-    y_actual = dibujar_bibliografia_temas(
-        p, x=30, y=y_actual, w_total=width - 60,
-        titulo_izq='Bibliografía básica',
-        color=color_pdf,
-        outline_color = color_pdf,
-        bibliografias=bibliografia_basica_pdf, temas=temas_bibliografia_basica_pdf,
-        col_gap=14,
-        draw_column_outline=True, outline_radius=6, outline_over_header=False,
-        #  auto-paginación
-        auto_paginacion=True, page_width=width, page_height=height,
-        top_margin=40, bottom_margin=40,
-        draw_header_fn=None,  # o None si no quieres redibujar nada
-        norma_o_ley_label =  bibliografia_basica_leyenda
-    )
-
-    y_actual = y_actual - 10
-
-    y_actual = dibujar_bibliografia_temas(
-        p, x=30, y=y_actual, w_total=width - 60,
-        titulo_izq='Bibliografía complementaria',
-        color=color_pdf,
-        outline_color=color_pdf,
-        bibliografias=bibliografia_complementaria_pdf, temas=temas_bibliografia_complementaria_pdf,
-        col_gap=14,
-        draw_column_outline=True, outline_radius=6, outline_over_header=False,
-        #  auto-paginación
-        auto_paginacion=True, page_width=width, page_height=height,
-        top_margin=40, bottom_margin=40,
-        draw_header_fn=None,  # o None si no quieres redibujar nada
-        norma_o_ley_label = bibliografia_complementaria_leyenda
-    )
-
-    y_actual = y_actual - 10
-
-    y_actual = dibujar_estrategias_evaluacion(
-        p, x=30, y=y_actual, w_total=width - 60,
-        items=estrategias_didacticas_inf,
-        # compactación (si quieres aún más compacto, baja fs/leading o chk_box_size)
-        fs=9, leading=11, cell_pad_y=3, chk_box_size=11,
-        # paginación por filas
-        auto_paginar_filas=True, page_width=width, page_height=height,
-        top_margin=40, bottom_margin=40,
-        color=color_pdf,
-        chk_border_color=color_pdf,
-        # opcional: redibuja tu encabezado general en cada nueva página
-        # draw_page_header_fn=mi_encabezado_general
-    )
-
-    y_actual = y_actual - 10
-
-    y_actual = dibujar_formas_evaluacion(
-        p, x=30, y=y_actual, w_total=width - 60,
-        checks_c1=formas_evaluacion_diagnostica_inf, checks_c3=formas_evaluacion_formativa_inf, checks_c5=formas_evaluacion_sumativa_inf,
-        auto_paginacion=True, page_width=width, page_height=height,
-        bottom_margin=40, top_margin=40,
-        chk_border_color=color_pdf,
-        # compactación opcional:
-        fs=9, leading=12, cell_pad_y=4, chk_box_size=12,
-        color=color_pdf,
-    )
-
-    y_actual = y_actual - 10
-
-
-    if formacion_integral_pdf != '':
-        y_actual = dibujar_parrafo_with_title(
-            p, x=30, y=y_actual, w_total=width - 60,
-            texto=formacion_integral_pdf,
-            # paginación
-            titulo="Formación integral",
-            auto_paginacion=True, page_width=width, page_height=height,
-            top_margin=40, bottom_margin=40,
-            draw_page_header_fn=None,  # pasa None si no quieres header general
-            color = color_pdf,
-        )
-
-    y_actual = y_actual - 10
-
-    if perfil_profesiografico_pdf != '':
-        y_actual = dibujar_parrafo_with_title(
-            p, x=30, y=y_actual, w_total=width - 60,
-            texto=perfil_profesiografico_pdf,
-            # paginación
-            titulo="Perfil profesiográfico",
-            auto_paginacion=True, page_width=width, page_height=height,
-            top_margin=40, bottom_margin=40,
-            draw_page_header_fn=None,  # pasa None si no quieres header general
+            chk_border_color=color_pdf,
+            # compactación opcional:
+            fs=9, leading=12, cell_pad_y=4, chk_box_size=12,
             color=color_pdf,
         )
 
+        y_actual = y_actual - 10
 
-    dibujar_marca_agua(p, width, height, habilitada = watermark_on)
-    p.showPage()
+
+        if formacion_integral_pdf != '':
+            y_actual = dibujar_parrafo_with_title(
+                p, x=30, y=y_actual, w_total=width - 60,
+                texto=formacion_integral_pdf,
+                # paginación
+                titulo="Formación integral",
+                auto_paginacion=True, page_width=width, page_height=height,
+                top_margin=40, bottom_margin=40,
+                draw_page_header_fn=None,  # pasa None si no quieres header general
+                color = color_pdf,
+            )
+
+        y_actual = y_actual - 10
+
+        if perfil_profesiografico_pdf != '':
+            y_actual = dibujar_parrafo_with_title(
+                p, x=30, y=y_actual, w_total=width - 60,
+                texto=perfil_profesiografico_pdf,
+                # paginación
+                titulo="Perfil profesiográfico",
+                auto_paginacion=True, page_width=width, page_height=height,
+                top_margin=40, bottom_margin=40,
+                draw_page_header_fn=None,  # pasa None si no quieres header general
+                color=color_pdf,
+            )
+
+
+        dibujar_marca_agua(p, width, height, habilitada = watermark_on)
     p.save()
+    buffer.seek(0)
 
     return buffer, nombre_archivo_pdf
 
 def generarPdf(request):
     obj = json.loads(request.POST.get("obj", ""))
 
+    consultas = ConsultasPDF()
+
     id_perfil = int(obj['idPerfil'])
     id_licenciatura = int(obj['idLic'])
-    id_asignatura = int(obj['idSolicitud'])
+    id_asignatura_raw = obj.get('idSolicitud')
 
+
+    if id_asignatura_raw is not None and id_asignatura_raw != "":
+        lista_id_asignaturas = [int(id_asignatura_raw)]
+    else:
+        lista_id_asignaturas_obligatorias = [
+            fila[0] for fila in
+            consultas.get_ids_asignaturas_obligatorias_ordered_by_semestre_name(id_licenciatura)
+        ]
+
+        lista_id_asignaturas_optativas = [
+            fila[0] for fila in
+            consultas.get_ids_asignaturas_optativas_ordered_by_semestre_name(id_licenciatura)
+        ]
+
+        lista_id_asignaturas = lista_id_asignaturas_obligatorias + lista_id_asignaturas_optativas
+
+    print(lista_id_asignaturas)
     buffer, nombre_archivo_pdf = generar_pdf_bytes(
         id_perfil,
         id_licenciatura,
-        id_asignatura
+        lista_id_asignaturas
     )
-
-    buffer.seek(0)
 
     return HttpResponse(
         buffer.getvalue(),
