@@ -2,9 +2,10 @@ with RELACION_lICENCIATURA_ASIGNATURA as (
     SELECT distinct
         rel.ID_LICENCIATURA,
         rel.ID_SOLICITUD,
-        rel.SEMESTRE
+        min(rel.SEMESTRE)
     from SIPEFI.TD_REL_LIC_ASIGNATURA rel
     where rel.ID_LICENCIATURA = :id_licenciatura
+    group by rel.ID_LICENCIATURA, rel.ID_SOLICITUD
 )
 SELECT a.ID_ASIGNATURA
 from SIPEFI.TD_ASIGNATURA a,
