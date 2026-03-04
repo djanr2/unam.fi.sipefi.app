@@ -292,7 +292,8 @@ const etii = function(){
 	   
 	   
 	    $("#btnDescargarAllPdf").off("click");
-		$("#btnDescargarAllPdf").on("click", async function () {
+
+		$("#btnDescargarAllPdf").on("click", function () {
 
 			const $btn = $(this);
 			const $spinner = $btn.find(".spinner-border");
@@ -303,28 +304,21 @@ const etii = function(){
 
 			if (!idLic) {
 				return fComun.mostrarModalAdvertencia(
-					"Selecciona una licenciatura en el filtro para descargar masivamente el PDF del Tomo II."
+					"Selecciona al menos una licenciatura para descargar masivamente el PDF del Tomo II."
 				);
 			}
 
 			$btn.prop("disabled", true);
-
-
 			$spinner.removeClass("d-none");
 			$text.html('<i class="fa-solid fa-file-pdf me-1"></i> Generando PDF...');
 
-			try {
-				// Espera a que termine tu función
-				await etii.descargaAllPdf(idPerfil, idLic);
-			}
-			catch (error) {
-				console.error(error);
-			}
-			finally {
+			descargaAllPdf(idPerfil, idLic);
+
+			setTimeout(function () {
 				$btn.prop("disabled", false);
 				$spinner.addClass("d-none");
 				$text.html('<i class="fa-solid fa-file-pdf me-1"></i> Descargar PDF (Tomo II)');
-			}
+			}, 12000);
 		});
 	   
 	};
