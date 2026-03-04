@@ -988,7 +988,7 @@ def dibujar_seriacion_2x2(
     texto_antecedente="",
     texto_consecuente="",
     hdr_izq="Seriación obligatoria antecedente",
-    hdr_der="Seriación obligatoria consecuente",
+    hdr_der="Seriación obligatoria subsecuente",
     color = colors.HexColor("#D1D5DB"),
     col_gap=14,
     radio=6,

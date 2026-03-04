@@ -232,7 +232,7 @@ const fcs = function(){
 	  // Validación: no debe haber elementos comunes entre antecedente y consecuente
 	  const interseccion = serAnt.some(val => serCon.includes(val));
 	  if (interseccion) {
-       fComun.mostrarTooltipCampo("#ser_consecuente", "No puede haber materias repetidas en seriación antecedente y consecuente");
+       fComun.mostrarTooltipCampo("#ser_consecuente", "No puede haber materias repetidas en seriación antecedente y subsecuente");
        return;
       }
 
