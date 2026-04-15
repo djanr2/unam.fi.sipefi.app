@@ -130,6 +130,11 @@ def generar_pdf_bytes(id_perfil, id_licenciatura, lista_id_asignaturas):
             temas_bibliografia_complementaria_pdf.append(temas)
 
         estrategias_didacticas_inf = consultas.get_estrategias_didacticas(id_asignatura)
+        # Apply italics to specific terms in estrategias didacticas
+        estrategias_didacticas_inf = [
+            (row[0], row[1].replace('flipped classroom', '<i>flipped classroom</i>').replace('Design Thinking', '<i>Design Thinking</i>'))
+            for row in estrategias_didacticas_inf
+        ]
         formas_evaluacion_diagnostica_inf = consultas.get_formas_evaluacion(id_asignatura, 'Diagnóstica')
         formas_evaluacion_formativa_inf = consultas.get_formas_evaluacion(id_asignatura, 'Formativa')
         formas_evaluacion_sumativa_inf = consultas.get_formas_evaluacion(id_asignatura, 'Sumativa')
