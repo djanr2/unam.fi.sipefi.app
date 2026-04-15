@@ -47,6 +47,10 @@ const fcs = function(){
 	      labels: ['Nombre del sitio web', 'URL', 'Fecha de Consulta: Día y mes', ''],
 	      requeridos: [true, true, false, false]
 	    },
+	    'DEPENDERA DE LA TEMÁTICA A TRATAR': {
+	      labels: ['', '', '', ''],
+	      requeridos: [false, false, false, false]
+	    },
 	    'DEFAULT': {
 	      labels: ['Campo extra 1', 'Campo extra 2', 'Campo extra 3', 'Campo extra 4'],
 	      requeridos: [false, false, false, false]
@@ -289,9 +293,31 @@ const fcs = function(){
 	 */
 	const actualizarCamposExtra = () => {
 	  const tipo = $('#tipo_bibliografia option:selected').text().trim().toUpperCase();
+	  const idTipo = $('#tipo_bibliografia').val();
 	  const config = camposPorTipo[tipo] || camposPorTipo['DEFAULT'];
 	  const labels = config.labels;
 	  const requeridos = config.requeridos;
+
+	  // Ocultar/deshabilitar campos principales si es tipo 11
+	  if (idTipo === '11') {
+		$('#autor_biblio').prop('disabled', true).closest('.col-md-5').hide();
+		$('#anio_biblio').prop('disabled', true).closest('.col-md-2').hide();
+		$('#titulo_biblio').prop('disabled', true).closest('.col-md-8').hide();
+		$('#lbl_autor').closest('.col-md-5').hide();
+		$('#lbl_anio').closest('.col-md-2').hide();
+		$('#lbl_titulo').closest('.col-md-8').hide();
+		$('#temas_biblio').prop('disabled', true).closest('.col-md-4').hide();
+		$('#lbl_temas').closest('.col-md-4').hide();
+	  } else {
+		$('#autor_biblio').prop('disabled', false).closest('.col-md-5').show();
+		$('#anio_biblio').prop('disabled', false).closest('.col-md-2').show();
+		$('#titulo_biblio').prop('disabled', false).closest('.col-md-8').show();
+		$('#lbl_autor').closest('.col-md-5').show();
+		$('#lbl_anio').closest('.col-md-2').show();
+		$('#lbl_titulo').closest('.col-md-8').show();
+		$('#temas_biblio').prop('disabled', false).closest('.col-md-4').show();
+		$('#lbl_temas').closest('.col-md-4').show();
+	  }
 
 	  // Función auxiliar para generar label con o sin asterisco rojo
 	  const generaLabel = (texto, requerido) => {
@@ -343,22 +369,25 @@ const fcs = function(){
 		  fComun.mostrarTooltipCampo('#tipo_bibliografia', 'Selecciona un tipo de bibliografía');
 		  return;
 		}
-		if (!autor) {
-		  fComun.mostrarTooltipCampo('#autor_biblio', 'Ingresa el/los autores');
-		  return;
-		}
-		if (!anio || isNaN(anio)) {
-		  fComun.mostrarTooltipCampo('#anio_biblio', 'Ingresa un año válido');
-		  return;
-		}
-		if (!titulo) {
-		  fComun.mostrarTooltipCampo('#titulo_biblio', 'Ingresa el título');
-		  return;
-		}
-		
-		if (!temas) {
-		  fComun.mostrarTooltipCampo('#temas_biblio', 'Indica en qué temas se recomienda esta bibliografía');
-		  return;
+
+		// Only validate required fields if not tipo 11
+		if (idTipo !== '11') {
+		  if (!autor) {
+			fComun.mostrarTooltipCampo('#autor_biblio', 'Ingresa el/los autores');
+			return;
+		  }
+		  if (!anio || isNaN(anio)) {
+			fComun.mostrarTooltipCampo('#anio_biblio', 'Ingresa un año válido');
+			return;
+		  }
+		  if (!titulo) {
+			fComun.mostrarTooltipCampo('#titulo_biblio', 'Ingresa el título');
+			return;
+		  }
+		  if (!temas) {
+			fComun.mostrarTooltipCampo('#temas_biblio', 'Indica en qué temas se recomienda esta bibliografía');
+			return;
+		  }
 		}
 
 		// Validar campos extras si están marcados como requeridos

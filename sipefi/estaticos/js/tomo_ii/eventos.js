@@ -574,18 +574,18 @@ const etii = function(){
 		  }
 	};
 
-	const editarBibliografia = (idBibliografia) => {
+const editarBibliografia = (idBibliografia) => {
 		if(!isActionEditingBibliografia) {
 
 			var bibliografiaTable = $('#tablaBibliografia').DataTable();
 
 			var varHandler = bibliografiaTable.cell(idBibliografia - 1, 1).data();
 			var autorForEdit = varHandler ? varHandler : "";
-			var autorForEdit_input = `<input type="text" class="form-control" value="${autorForEdit}" id = "id-biblio-autor-${idBibliografia}">`;
+			var autorForEdit_input = `<span class="text-start">${autorForEdit}</span>`;
 
 			varHandler = bibliografiaTable.cell(idBibliografia - 1, 2).data();
-			var yearForEdit = varHandler ? varHandler : "0";
-			var yearForEdit_input = `<input type="number" class="form-control" value="${yearForEdit}" id = "id-biblio-year-${idBibliografia}">`;
+			var yearForEdit = (varHandler === '0' || varHandler === 0) ? "" : (varHandler ? varHandler : "");
+			var yearForEdit_input = `<span class="text-start">${yearForEdit}</span>`;
 
 
 			varHandler = bibliografiaTable.cell(idBibliografia - 1, 3).data();
@@ -597,36 +597,36 @@ const etii = function(){
 
 			varHandler = bibliografiaTable.cell(idBibliografia - 1, 4).data();
 			var tituloForEdit = varHandler ? varHandler : "";
-			var tituloForEdit_input = `<input type="text" class="form-control" value="${tituloForEdit}" id = "id-biblio-titulo-${idBibliografia}">`;
+			var tituloForEdit_input = `<span class="text-start">${tituloForEdit}</span>`;
 
 
 			varHandler = bibliografiaTable.cell(idBibliografia - 1, 5).data();
 			var extra1ForEdit = varHandler ? varHandler : "";
-			var extra1ForEdit_input = `<input type="text" class="form-control" value="${extra1ForEdit}" id = "id-biblio-extra1-${idBibliografia}">`;
+			var extra1ForEdit_input = `<span class="text-start">${extra1ForEdit}</span>`;
 
 
 			varHandler = bibliografiaTable.cell(idBibliografia - 1, 6).data();
 			var extra2ForEdit = varHandler ? varHandler : "";
-			var extra2ForEdit_input = `<input type="text" class="form-control" value="${extra2ForEdit}" id = "id-biblio-extra2-${idBibliografia}">`;
+			var extra2ForEdit_input = `<span class="text-start">${extra2ForEdit}</span>`;
 
 
 			varHandler = bibliografiaTable.cell(idBibliografia - 1, 7).data();
 			var extra3ForEdit = varHandler ? varHandler : "";
-			var extra3ForEdit_input = `<input type="text" class="form-control" value="${extra3ForEdit}" id = "id-biblio-extra3-${idBibliografia}">`;
+			var extra3ForEdit_input = `<span class="text-start">${extra3ForEdit}</span>`;
 
 
 			varHandler = bibliografiaTable.cell(idBibliografia - 1, 8).data();
 			var extra4ForEdit = varHandler ? varHandler : "";
-			var extra4ForEdit_input = `<input type="text" class="form-control" value="${extra4ForEdit}" id = "id-biblio-extra4-${idBibliografia}">`;
+			var extra4ForEdit_input = `<span class="text-start">${extra4ForEdit}</span>`;
 
 
 			varHandler = bibliografiaTable.cell(idBibliografia - 1, 9).data();
 			var temasForEdit = varHandler ? varHandler : "";
-			var temasForEdit_input = `<input type="text" class="form-control" value="${temasForEdit}" id = "id-biblio-temas-${idBibliografia}">`;
+			var temasForEdit_input = `<span class="text-start">${temasForEdit}</span>`;
 
 			varHandler = bibliografiaTable.cell(idBibliografia - 1, 0).data();
 			var tipoNoEdit = varHandler ? varHandler : "";
-			var tipoNoEdit_input = `<input type="text" class="form-control" value="${tipoNoEdit}" id = "id-biblio-temas-${idBibliografia}" disabled>`;
+			var tipoNoEdit_input = `<input type="text" class="border-0 bg-transparent" value="${tipoNoEdit}" disabled>`;
 
 			var buttons = `<div>
 						<button class="btn btn-sm btn-danger btn-eliminar-biblio"><i class="fas fa-trash-alt"></i></button>
