@@ -2482,6 +2482,15 @@ def get_bibliografia_str(fila):
     if id_ == 5:
         extra4 = extra4 + "*"
 
+    if id_ == 11:
+        autor = "Dependera de la temática a tratar"
+        anio_ =""
+        titulo=""
+        extra1=""
+        extra2=""
+        extra3=""
+        extra4=""
+
     partes = [
         autor,
         anio_,

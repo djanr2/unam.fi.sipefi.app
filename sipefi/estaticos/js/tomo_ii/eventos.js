@@ -622,7 +622,7 @@ const editarBibliografia = (idBibliografia) => {
 
 			varHandler = bibliografiaTable.cell(idBibliografia - 1, 9).data();
 			var temasForEdit = varHandler ? varHandler : "";
-			var temasForEdit_input = `<span class="text-start">${temasForEdit}</span>`;
+			var temasForEdit_input = `<input type="text" class="form-control" value="${temasForEdit}" id="id-biblio-temas-${idBibliografia}">`;
 
 			varHandler = bibliografiaTable.cell(idBibliografia - 1, 0).data();
 			var tipoNoEdit = varHandler ? varHandler : "";
@@ -655,7 +655,7 @@ const editarBibliografia = (idBibliografia) => {
 			const autorForEdit = varHandler ? varHandler : "";
 
 			varHandler = $(bibliografiaTable.cell(idBibliografia-1, 2).node()).find('input').val();
-			const yearForEdit = varHandler ? varHandler : "0";
+			const yearForEdit = (!varHandler || varHandler === '0') ? "" : varHandler;
 
 			varHandler = $(bibliografiaTable.cell(idBibliografia-1, 4).node()).find('input').val();
 			const tituloForEdit = varHandler ? varHandler : "";
