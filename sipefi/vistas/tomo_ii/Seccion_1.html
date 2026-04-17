@@ -33,38 +33,30 @@
         </div>
 
         <div class="row">
-          <div class="col-md-4 mb-3">
-            <label><strong>&Aacute;rea de conocimiento</strong></label>
-            <select id="area_con" class="form-select"></select>
-          </div>
-          <div class="col-md-3 mb-3">
-            <label><strong>Modalidad</strong></label>
-            <select id="modalidad" class="form-select"></select>
-          </div>
-          <div class="col-md-3 mb-3">
-            <label><strong>Tipo</strong></label>
-            <select id="tipo_modalidad" class="form-select" disabled></select>
-          </div>
-          <div class="col-md-2 mb-3">
+		  <div class="col-md-4 mb-3">
+		    <label><strong>Modalidad</strong></label>
+		    <select id="modalidad" class="form-select"></select>
+		  </div>
+		  <div class="col-md-4 mb-3">
+		    <label><strong>Tipo</strong></label>
+		    <select id="tipo_modalidad" class="form-select" disabled></select>
+		  </div>
+		  <div class="col-md-4 mb-3">
 		    <label><strong>Valor pr&aacute;ctico</strong></label>
 		    <select id="valor_practico" class="form-select select2-valor-practico" multiple disabled></select>
 		  </div>
-        </div>
+		</div>
 
         <div class="row">
-          <div class="col-md-4 mb-3">
-            <label><strong>Car&aacute;cter</strong></label>
-            <select id="caracter" class="form-select"></select>
-          </div>
-          <div class="col-md-4 mb-3">
-            <label><strong>Horas semana (te&oacute;rica)</strong></label>
-            <input type="number" id="h_sem_teo" class="form-control">
-          </div>
-          <div class="col-md-4 mb-3">
-            <label><strong>Horas semana (pr&aacute;ctica)</strong></label>
-            <input type="number" id="h_sem_pra" class="form-control">
-          </div>
-        </div>
+		  <div class="col-md-6 mb-3">
+		    <label><strong>Horas semana (te&oacute;rica)</strong></label>
+		    <input type="number" id="h_sem_teo" class="form-control">
+		  </div>
+		  <div class="col-md-6 mb-3">
+		    <label><strong>Horas semana (pr&aacute;ctica)</strong></label>
+		    <input type="number" id="h_sem_pra" class="form-control">
+		  </div>
+		</div>
 
         <div class="row">
           <div class="col-md-4 mb-3">
@@ -90,26 +82,42 @@
       <!-- TAB: RELACIÓN CON LICENCIATURAS -->
       <div class="tab-pane fade" id="relacion" role="tabpanel" aria-labelledby="relacion-tab">
         <div class="row">
-           <div class="col-md-4 mb-3" hidden>
-            <input id="rel_solicitud" value="0" type="hidden">
-          </div>
-          <div class="col-md-4 mb-3">
-            <label><strong>Licenciatura</strong></label>
-            <select id="rel_licenciatura" class="form-select"></select>
-          </div>
-          <div class="col-md-2 mb-3">
-            <label><strong>Semestre Asignatura</strong></label>
-            <select id="rel_semestre" class="form-select" multiple></select>
-          </div>
-          <div class="col-md-3 mb-3">
-            <label><strong>Seriaci&oacute;n antecedente</strong></label>
-            <select id="ser_anterior" class="form-select" multiple></select>
-          </div>
-          <div class="col-md-3 mb-3">
-            <label><strong>Seriaci&oacute;n subsecuente</strong></label>
-            <select id="ser_consecuente" class="form-select" multiple></select>
-          </div>
-        </div>
+		  <div class="col-md-4 mb-3" hidden>
+		    <input id="rel_solicitud" value="0" type="hidden">
+		  </div>
+		
+		  <div class="col-md-4 mb-3">
+		    <label><strong>Licenciatura</strong></label>
+		    <select id="rel_licenciatura" class="form-select"></select>
+		  </div>
+		
+		  <div class="col-md-4 mb-3">
+		    <label><strong>&Aacute;rea de conocimiento</strong></label>
+		    <select id="rel_area_con" class="form-select"></select>
+		  </div>
+		
+		  <div class="col-md-4 mb-3">
+		    <label><strong>Car&aacute;cter</strong></label>
+		    <select id="rel_caracter" class="form-select"></select>
+		  </div>
+		</div>
+		
+		<div class="row">
+		  <div class="col-md-3 mb-3">
+		    <label><strong>Semestre Asignatura</strong></label>
+		    <select id="rel_semestre" class="form-select" multiple></select>
+		  </div>
+		
+		  <div class="col-md-4 mb-3">
+		    <label><strong>Seriaci&oacute;n antecedente</strong></label>
+		    <select id="ser_anterior" class="form-select" multiple></select>
+		  </div>
+		
+		  <div class="col-md-5 mb-3">
+		    <label><strong>Seriaci&oacute;n subsecuente</strong></label>
+		    <select id="ser_consecuente" class="form-select" multiple></select>
+		  </div>
+		</div>
 
         <div class="d-flex justify-content-end mb-3">
           <button class="btn btn-primary" id="btnAgregarRelLicAsig">
@@ -119,13 +127,15 @@
 
         <table id="tablaRelacionesLic" class="table table-sm table-bordered table-hover table-striped text-center align-middle">
           <thead class="table-light">
-            <tr>
-              <th class="text-center">Licenciatura</th>
-              <th class="text-center">Semestre asignatura</th>
-              <th class="text-center">Ser. antecedente</th>
-              <th class="text-center">Ser. subsecuente</th>
-              <th class="text-center">Acciones</th>
-            </tr>
+          	<tr>
+			    <th class="text-center">Licenciatura</th>
+			    <th class="text-center">&Aacute;rea de conocimiento</th>
+			    <th class="text-center">Car&aacute;cter</th>
+			    <th class="text-center">Semestre asignatura</th>
+			    <th class="text-center">Ser. antecedente</th>
+			    <th class="text-center">Ser. subsecuente</th>
+			    <th class="text-center">Acciones</th>
+			</tr>
           </thead>
           <tbody id="tablaRelaciones">
             <!-- Filas dinámicas -->

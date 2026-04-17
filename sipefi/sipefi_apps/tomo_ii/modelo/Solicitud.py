@@ -105,15 +105,15 @@ class Solicitud:
             # Insertar encabezado
             sql = """
                 INSERT INTO SIPEFI.TD_SOLICITUD_TOMO_II (
-                    id_solicitud, id_estatus_solicitud, historica, asignatura, clave_asignatura, creditos, id_area_conocimiento,
-                    id_modalidad, id_tipo_modalidad, id_caracter_asig, horas_teo_semana,
+                    id_solicitud, id_estatus_solicitud, historica, asignatura, clave_asignatura, creditos,
+                    id_modalidad, id_tipo_modalidad, horas_teo_semana,
                     horas_pract_semana, horas_teo_semestre, horas_pract_semestre,
                     objetivo_general, actividades_practicas, formacion_integral,
                     perfil_profesiografico, id_perfil, fecha_creacion, fecha_modificacion,
                     id_usuario_creacion, id_usuario_mod
                 ) VALUES (
                     :id_solicitud, :id_estatus_solicitud, 0, :asignatura, :clave_asignatura, :creditos, 
-                    :id_area_conocimiento, :id_modalidad, :id_tipo_modalidad, :id_caracter_asig, :horas_teo_semana,
+                    :id_modalidad, :id_tipo_modalidad, :horas_teo_semana,
                     :horas_pract_semana, :horas_teo_semestre, :horas_pract_semestre,
                     :objetivo_general, :actividades_practicas, :formacion_integral,
                     :perfil_profesiografico, :id_perfil, :fecha_creacion, SYSDATE,
@@ -126,10 +126,8 @@ class Solicitud:
                 "asignatura": asignatura,
                 "clave_asignatura": datos.get("claveAsignatura"),
                 "creditos": limpiar_num(datos.get("creditos")),
-                "id_area_conocimiento": limpiar_num(datos.get("areaConocimiento")),
                 "id_modalidad": limpiar_num(datos.get("modalidad")),
                 "id_tipo_modalidad": limpiar_num(datos.get("tipoModalidad")),
-                "id_caracter_asig": limpiar_num(datos.get("caracterAsignatura")),
                 "horas_teo_semana": limpiar_num(datos.get("hSemTeoria")),
                 "horas_pract_semana": limpiar_num(datos.get("hSemPractica")),
                 "horas_teo_semestre": limpiar_num(datos.get("hSemestreTeoria")),
@@ -252,14 +250,14 @@ class Solicitud:
         self.db.insertar("""
             INSERT INTO SIPEFI.TD_SOLICITUD_TOMO_II (
                 id_solicitud, id_estatus_solicitud, historica, asignatura, clave_asignatura, creditos,
-                id_area_conocimiento, id_modalidad, id_tipo_modalidad, id_caracter_asig,
+                id_modalidad, id_tipo_modalidad,
                 horas_teo_semana, horas_pract_semana, horas_teo_semestre, horas_pract_semestre,
                 objetivo_general, actividades_practicas, formacion_integral, perfil_profesiografico, id_perfil,
                 fecha_creacion, fecha_modificacion, id_usuario_creacion, id_usuario_mod
             )
             SELECT
                 id_solicitud, :est_destino, 0, asignatura, clave_asignatura, creditos,
-                id_area_conocimiento, id_modalidad, id_tipo_modalidad, id_caracter_asig,
+                id_modalidad, id_tipo_modalidad,
                 horas_teo_semana, horas_pract_semana, horas_teo_semestre, horas_pract_semestre,
                 objetivo_general, actividades_practicas, formacion_integral, perfil_profesiografico, id_perfil,
                 fecha_creacion, SYSDATE, id_usuario_creacion, :id_usuario_mod
@@ -279,11 +277,36 @@ class Solicitud:
         """, {"id_solicitud": id_soli, "est_origen": est_origen, "est_destino": est_destino, "busuario": usuario_mod})
     
         self.db.insertar("""
-            INSERT INTO SIPEFI.TD_REL_LIC_ASIGNATURA (id_solicitud, id_estatus_solicitud, id_licenciatura, seriacion_ant, seriacion_cons, semestre, busuario)
-            SELECT id_solicitud, :est_destino, id_licenciatura, seriacion_ant, seriacion_cons, semestre, :busuario
+            INSERT INTO SIPEFI.TD_REL_LIC_ASIGNATURA (
+                id_solicitud,
+                id_estatus_solicitud,
+                id_licenciatura,
+                seriacion_ant,
+                seriacion_cons,
+                semestre,
+                id_area_conocimiento,
+                id_caracter_asig,
+                busuario
+            )
+            SELECT
+                id_solicitud,
+                :est_destino,
+                id_licenciatura,
+                seriacion_ant,
+                seriacion_cons,
+                semestre,
+                id_area_conocimiento,
+                id_caracter_asig,
+                :busuario
             FROM SIPEFI.TD_REL_LIC_ASIGNATURA
-            WHERE id_solicitud = :id_solicitud AND id_estatus_solicitud = :est_origen
-        """, {"id_solicitud": id_soli, "est_origen": est_origen, "est_destino": est_destino, "busuario": usuario_mod})
+            WHERE id_solicitud = :id_solicitud
+              AND id_estatus_solicitud = :est_origen
+        """, {
+            "id_solicitud": id_soli,
+            "est_origen": est_origen,
+            "est_destino": est_destino,
+            "busuario": usuario_mod
+        })
     
         self.db.insertar("""
             INSERT INTO SIPEFI.TD_TEMARIO_ASIGNATURA (id_solicitud, id_estatus_solicitud, num_tema, tema, objetivo, horas_tema, busuario)
@@ -380,19 +403,20 @@ class Solicitud:
         
     def _insertar_rel_licenciaturas(self, licenciaturas):
         for lic in licenciaturas:
-            id_lic = lic["idLicenciatura"]
+            id_lic = lic.get("idLicenciatura")
+            id_area_conocimiento = lic.get("idAreaConocimiento")
+            id_caracter_asig = lic.get("idCaracterAsignatura")
+    
             semestres = lic.get("semestres", [])
             seriaciones_ant = lic.get("idSeriacionAnterior", [])
             seriaciones_cons = lic.get("idSeriacionConsecuente", [])
-            
-            # Si no hay seriaciones, usamos [0] como valor por defecto - Asignatura - Ninguna
+    
             if not seriaciones_ant:
                 seriaciones_ant = [0]
             if not seriaciones_cons:
                 seriaciones_cons = [0]
-            # Recorremos cada semestre y cada combinación de seriaciones
+    
             for semestre in semestres:
-                # Por si vienen como string del JSON, aseguramos int
                 try:
                     semestre_val = int(semestre)
                 except (TypeError, ValueError):
@@ -400,25 +424,40 @@ class Solicitud:
     
                 if semestre_val is None:
                     continue
-                
-                # Si hay antecedentes y consecuentes, se inserta cada combinación
+    
                 for ant in seriaciones_ant:
                     for cons in seriaciones_cons:
                         self.db.insertar("""
                             INSERT INTO SIPEFI.TD_REL_LIC_ASIGNATURA (
-                                id_solicitud, id_estatus_solicitud, id_licenciatura,
-                                seriacion_ant, seriacion_cons, semestre, busuario
+                                id_solicitud,
+                                id_estatus_solicitud,
+                                id_licenciatura,
+                                seriacion_ant,
+                                seriacion_cons,
+                                semestre,
+                                id_area_conocimiento,
+                                id_caracter_asig,
+                                busuario
                             ) VALUES (
-                                :id_solicitud, :id_estatus_solicitud, :id_lic,
-                                :seriacion_ant, :seriacion_cons, :semestre, :busuario
+                                :id_solicitud,
+                                :id_estatus_solicitud,
+                                :id_lic,
+                                :seriacion_ant,
+                                :seriacion_cons,
+                                :semestre,
+                                :id_area_conocimiento,
+                                :id_caracter_asig,
+                                :busuario
                             )
                         """, {
                             "id_solicitud": self.id_solicitud,
                             "id_estatus_solicitud": self.id_estatus,
-                            "id_lic": id_lic,
-                            "seriacion_ant": ant,
-                            "seriacion_cons": cons,
+                            "id_lic": int(id_lic) if id_lic is not None else None,
+                            "seriacion_ant": int(ant) if ant is not None else 0,
+                            "seriacion_cons": int(cons) if cons is not None else 0,
                             "semestre": semestre_val,
+                            "id_area_conocimiento": int(id_area_conocimiento) if id_area_conocimiento is not None else None,
+                            "id_caracter_asig": int(id_caracter_asig) if id_caracter_asig is not None else None,
                             "busuario": self.usuario
                         })
                 
@@ -592,10 +631,10 @@ class Solicitud:
         
             datos_generales = self.db.consulta("""
                 SELECT 
-                    a.asignatura, a.clave_asignatura, a.creditos, a.id_area_conocimiento, a.id_modalidad,
-                    a.id_tipo_modalidad, a.id_caracter_asig, a.horas_teo_semana, a.horas_pract_semana,
-                    a.horas_teo_semestre, a.horas_pract_semestre, a.objetivo_general, a.actividades_practicas,
-                    a.formacion_integral, a.perfil_profesiografico, a.id_perfil,
+                    a.asignatura, a.clave_asignatura, a.creditos, a.id_modalidad,
+                    a.id_tipo_modalidad, a.horas_teo_semana, a.horas_pract_semana,
+                    a.horas_teo_semestre, a.horas_pract_semestre, a.objetivo_general,
+                    a.actividades_practicas, a.formacion_integral, a.perfil_profesiografico, a.id_perfil,
                     u.usuario_sistema
                 FROM SIPEFI.TD_SOLICITUD_TOMO_II a
                 LEFT JOIN PARAMETRO.TP_USUARIO u ON a.ID_USUARIO_MOD = u.ID_USUARIO
@@ -610,22 +649,34 @@ class Solicitud:
             valor_practico_list = [row[0] for row in valor_practico]
             
             lics_raw = self.db.consulta("""
-                SELECT id_licenciatura, seriacion_ant, seriacion_cons, semestre, id_solicitud
+                SELECT
+                    id_licenciatura,
+                    seriacion_ant,
+                    seriacion_cons,
+                    semestre,
+                    id_solicitud,
+                    id_area_conocimiento,
+                    id_caracter_asig
                 FROM SIPEFI.TD_REL_LIC_ASIGNATURA
-                WHERE id_solicitud = :id_solicitud AND id_estatus_solicitud = :id_estatus_solicitud
+                WHERE id_solicitud = :id_solicitud
+                  AND id_estatus_solicitud = :id_estatus_solicitud
             """, params)
             
             licenciaturas = {}
-            for lic_id, s_ant, s_con, semestre, id_solicitud in lics_raw:
-                key = (lic_id, id_solicitud)
+            for lic_id, s_ant, s_con, semestre, id_solicitud, id_area_conocimiento, id_caracter_asig in lics_raw:
+                key = (lic_id, id_solicitud, id_area_conocimiento, id_caracter_asig)
+            
                 if key not in licenciaturas:
                     licenciaturas[key] = {
                         "idLic": lic_id,
+                        "idAreaConocimiento": id_area_conocimiento,
+                        "idCaracterAsignatura": id_caracter_asig,
                         "seriacionAnt": set(),
                         "seriacionCons": set(),
                         "semestres": set(),
                         "id_solicitud": id_solicitud
                     }
+            
                 if s_ant and s_ant != 0:
                     licenciaturas[key]["seriacionAnt"].add(s_ant)
                 if s_con and s_con != 0:
@@ -633,13 +684,14 @@ class Solicitud:
                 if semestre and semestre != 0:
                     licenciaturas[key]["semestres"].add(semestre)
             
-            # Convertir a lista y transformar sets en listas
             licenciaturas = [{
                 "idLic": val["idLic"],
+                "idAreaConocimiento": val["idAreaConocimiento"],
+                "idCaracterAsignatura": val["idCaracterAsignatura"],
                 "seriacionAnt": list(val["seriacionAnt"]),
                 "seriacionCons": list(val["seriacionCons"]),
                 "semestre": sorted(list(val["semestres"])),
-                "idSolicitud":val["id_solicitud"],
+                "idSolicitud": val["id_solicitud"],
             } for val in licenciaturas.values()]
         
             temario = self.db.consulta("""
@@ -719,66 +771,64 @@ class Solicitud:
             # === Armar objeto ===
         
             resp = {
-                "datosGenerales": {
-                    "asignatura": datos_generales[0],
-                    "claveAsignatura": datos_generales[1],
-                    "creditos": datos_generales[2],
-                    "areaConocimiento": datos_generales[3],
-                    "modalidad": datos_generales[4],
-                    "tipoModalidad": datos_generales[5],
-                    "caracterAsignatura": datos_generales[6],
-                    "hSemTeoria": datos_generales[7],
-                    "hSemPractica": datos_generales[8],
-                    "hSemestreTeoria": datos_generales[9],
-                    "hSemestrePractica": datos_generales[10],
-                    "objAsig": datos_generales[11].read() if hasattr(datos_generales[11], "read") else datos_generales[11]
+            "datosGenerales": {
+                "asignatura": datos_generales[0],
+                "claveAsignatura": datos_generales[1],
+                "creditos": datos_generales[2],
+                "modalidad": datos_generales[3],
+                "tipoModalidad": datos_generales[4],
+                "hSemTeoria": datos_generales[5],
+                "hSemPractica": datos_generales[6],
+                "hSemestreTeoria": datos_generales[7],
+                "hSemestrePractica": datos_generales[8],
+                "objAsig": datos_generales[9].read() if hasattr(datos_generales[9], "read") else datos_generales[9]
+            },
+            "valorPractico": valor_practico_list,
+            "actPracticas": datos_generales[10],
+            "relacionLicenciaturas": licenciaturas,
+            "temario": [{
+                "numeroTema": tem[0],
+                "nombre": tem[1],
+                "horas": tem[2],
+                "objetivo": tem[3]
+            } for tem in temario],
+            "contenido": [{
+                "temaRelacionado": cont[0],
+                "numeroCont": cont[1],
+                "contenido": cont[2]
+            } for cont in contenido],
+            "bibliografia": [{
+                "id": bib[0],
+                "clasifBiblio": bib[1],
+                "idTipo": bib[2],
+                "autor": bib[3],
+                "anio": bib[4],
+                "titulo": bib[5],
+                "extra1": bib[6],
+                "extra2": bib[7],
+                "extra3": bib[8],
+                "extra4": bib[9],
+                "temas": bib[10]
+            } for bib in bibliografia],
+            "estrategiasEvaluacion": {
+                "formasEvaluacion": {
+                    "diagnostica": eval_diagnostica,
+                    "formativa": eval_formativa,
+                    "sumativa": eval_sumativa
                 },
-                "valorPractico": valor_practico_list,
-                "actPracticas": datos_generales[12],
-                "relacionLicenciaturas": licenciaturas,
-                "temario": [{
-                    "numeroTema": tem[0],
-                    "nombre": tem[1],
-                    "horas": tem[2],
-                    "objetivo": tem[3]
-                } for tem in temario],
-                "contenido": [{
-                    "temaRelacionado": cont[0],
-                    "numeroCont": cont[1],
-                    "contenido": cont[2]
-                } for cont in contenido],
-                "bibliografia": [{
-                    "id": bib[0],
-                    "clasifBiblio": bib[1],
-                    "idTipo": bib[2],
-                    "autor": bib[3],
-                    "anio": bib[4],
-                    "titulo": bib[5],
-                    "extra1": bib[6],
-                    "extra2": bib[7],
-                    "extra3": bib[8],
-                    "extra4": bib[9],
-                    "temas": bib[10]
-                } for bib in bibliografia],
-                "estrategiasEvaluacion": {
-                    "formasEvaluacion": {
-                        "diagnostica": eval_diagnostica,
-                        "formativa": eval_formativa,
-                        "sumativa": eval_sumativa
-                    },
-                    "estrategiasDidacticas": [e[0] for e in estrategias_did],
-                    "formacionIntegral": datos_generales[13],
-                    "perfilProfesiografico": datos_generales[14]
-                },
-                "idEstSoli": id_estatus_solicitud,
-                "numSolicitud": id_solicitud,
-                "nomEstSoli": self.obtener_nombre_estatus(id_estatus_solicitud),
-                "usuarioSoli": datos_generales[16],
-                "rol": datos_generales[15],
-                "comentarios": comentarios,
-                "accion": accion,
-                "estatus": 200
-            }
+                "estrategiasDidacticas": [e[0] for e in estrategias_did],
+                "formacionIntegral": datos_generales[11],
+                "perfilProfesiografico": datos_generales[12]
+            },
+            "idEstSoli": id_estatus_solicitud,
+            "numSolicitud": id_solicitud,
+            "nomEstSoli": self.obtener_nombre_estatus(id_estatus_solicitud),
+            "usuarioSoli": datos_generales[14],
+            "rol": datos_generales[13],
+            "comentarios": comentarios,
+            "accion": accion,
+            "estatus": 200
+        }
         except ValueError:
             resp = { "estatus": 204 }
         return resp

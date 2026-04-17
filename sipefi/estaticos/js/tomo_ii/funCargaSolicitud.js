@@ -102,7 +102,6 @@ const fcs = function(){
 			fl.cargaTablasSolicitud();
 			let obj = fComun.getVarLocalJ("catalogos");
 			// Cargar combos del tab "Datos generales"
-			llenaCombo("area_con", obj.catAreaCon || [], false);
 			llenaCombo("modalidad", obj.catModalidad || [], false);
 			llenaCombo("tipo_modalidad", obj.catTipoMod || [], false);
 			llenaCombo("valor_practico", obj.catValPract || [], false);
@@ -110,10 +109,17 @@ const fcs = function(){
 			    placeholder: "Elige una opción",
 			    width: '100%'
 			});
-			llenaCombo("caracter", obj.catCarAsig || [], false);
 
 			// Cargar combos del tab "Relación con Licenciaturas"
 			llenaCombo("rel_licenciatura", obj.catLic || [], false);
+			llenaCombo("rel_area_con", obj.catAreaCon || [], false);
+			llenaCombo("rel_caracter", obj.catCarAsig || [], false);
+			
+			// Dejamos por default la opción 0
+			$('#rel_licenciatura').val('0').trigger('change');
+			$('#rel_area_con').val('0').trigger('change');
+			$('#rel_caracter').val('0').trigger('change');
+			
 			//Semestre multiple
 			llenaCombo("rel_semestre", [...Array(10).keys()].map(i => [i + 1, `Semestre ${i + 1}`]), false); // del 1 al 10
 			$('#rel_semestre').select2({
@@ -193,95 +199,106 @@ const fcs = function(){
 	 */
 	const agregarRelacionLicAsig = () => {
 	  let tablaRelacionesDT = $('#tablaRelacionesLic').DataTable();
-	  // Obtener valores seleccionados de los campos
+
 	  const idLic = $("#rel_licenciatura").val();
+	  const txtLic = $("#rel_licenciatura option:selected").text().trim();
+
+	  const idAreaCon = $("#rel_area_con").val();
+	  const txtAreaCon = $("#rel_area_con option:selected").text().trim();
+
+	  const idCaracter = $("#rel_caracter").val();
+	  const txtCaracter = $("#rel_caracter option:selected").text().trim();
+
 	  const idSolicitud = $("#numSolicitud").html();
 	  const idPerfil = $("#rol").html();
-      let isPdfHidden;
-	  if (idSolicitud === "xxxx"){
-		   isPdfHidden = "hidden";
-	  }else{
-		   isPdfHidden =   "";
-	  }
-	  const isVisible = parseInt(fComun.getVarLocalS("accionSoli"));
-	  let visible = '';
-	  if (isVisible===1){
-		  visible = 'hidden';
-	  }
 
-	  const txtLic = $("#rel_licenciatura option:selected").text().trim();
-	  
-	  // Obtener arrays de selección múltiple (filtrando si hay un "0")
-	  let semestres = $("#rel_semestre").val() || [];   
+	  let isPdfHidden = (idSolicitud === "xxxx") ? "hidden" : "";
+	  const isVisible = parseInt(fComun.getVarLocalS("accionSoli"));
+	  let visible = (isVisible === 1) ? "hidden" : "";
+
+	  let semestres = $("#rel_semestre").val() || [];
 	  let serAnt = $("#ser_anterior").val() || [];
 	  let serCon = $("#ser_consecuente").val() || [];
+
 	  semestres = semestres.filter(val => val !== "0");
 	  serAnt = serAnt.filter(val => val !== "0");
 	  serCon = serCon.filter(val => val !== "0");
-	  
+
 	  const txtAnt = serAnt.map(val => $(`#ser_anterior option[value="${val}"]`).text().trim());
 	  const txtCon = serCon.map(val => $(`#ser_consecuente option[value="${val}"]`).text().trim());
 
-	  // Validación: licenciatura debe estar seleccionada
 	  if (!idLic || idLic === "0") {
 	    fComun.mostrarTooltipCampo("#rel_licenciatura", "Selecciona una licenciatura válida");
 	    return;
 	  }
 
-	  // Validación: semestre obligatorio (al menos uno)
-	  if (!semestres.length) {
-	  	fComun.mostrarTooltipCampo("#rel_semestre", "Selecciona al menos un semestre");
-	  	return;
+	  if (!idAreaCon || idAreaCon === "0") {
+	    fComun.mostrarTooltipCampo("#rel_area_con", "Selecciona un área de conocimiento válida");
+	    return;
 	  }
-	  // Validación: no debe haber elementos comunes entre antecedente y consecuente
+
+	  if (!idCaracter || idCaracter === "0") {
+	    fComun.mostrarTooltipCampo("#rel_caracter", "Selecciona un carácter válido");
+	    return;
+	  }
+
+	  if (!semestres.length) {
+	    fComun.mostrarTooltipCampo("#rel_semestre", "Selecciona al menos un semestre");
+	    return;
+	  }
+
 	  const interseccion = serAnt.some(val => serCon.includes(val));
 	  if (interseccion) {
-       fComun.mostrarTooltipCampo("#ser_consecuente", "No puede haber materias repetidas en seriación antecedente y subsecuente");
-       return;
-      }
+	    fComun.mostrarTooltipCampo("#ser_consecuente", "No puede haber materias repetidas en seriación antecedente y subsecuente");
+	    return;
+	  }
 
-	  // Validación: evitar duplicados en el DataTable (por nombre de licenciatura)
 	  const existe = tablaRelacionesDT
 	    .rows()
 	    .data()
 	    .toArray()
-	    .some(row => row[0].trim() === txtLic);
+	    .some(row => {
+	      const lic = (row[0] || "").trim();
+	      const area = (row[1] || "").trim();
+	      const caracter = (row[2] || "").trim();
+	      return lic === txtLic && area === txtAreaCon && caracter === txtCaracter;
+	    });
 
 	  if (existe) {
-	    fComun.mostrarTooltipCampo("#rel_licenciatura", "Ya existe la relación de la licenciatura.");
+	    fComun.mostrarTooltipCampo("#rel_licenciatura", "Ya existe esa relación con la misma área y carácter.");
 	    return;
 	  }
 
-	  // Construir textos para mostrar en la tabla
 	  const mostrarAnt = txtAnt.join(" | ");
 	  const mostrarCon = txtCon.join(" | ");
-	  const mostrasSem = semestres.join(" | ");
-	  
-	  // Botón de eliminar y campo oculto con valores concatenados
+	  const mostrarSem = semestres.join(" | ");
+
 	  const botonEliminar = `
-		<div>
-			<button class="btn btn-sm btn-danger btnEliminarRelacion" ${visible}>
-			  <i class="fas fa-trash-alt"></i>
-			</button>
-			<button class="btn btn-sm btn-danger" onclick="etii.descargaPdf(${idPerfil}, ${idLic}, ${idSolicitud})" ${isPdfHidden}>
-			  <i class="fas fa-file-pdf"></i>
-			</button>
-		</div>
-	    <input type="hidden" class="datos-relacion" 
-	           value="${idLic}@##@${semestres.join(",")}@##@${serAnt.join(",")}@##@${serCon.join(",")}">
+	    <div>
+	      <button class="btn btn-sm btn-danger btnEliminarRelacion" ${visible}>
+	        <i class="fas fa-trash-alt"></i>
+	      </button>
+	      <button class="btn btn-sm btn-danger" onclick="etii.descargaPdf(${idPerfil}, ${idLic}, ${idSolicitud})" ${isPdfHidden}>
+	        <i class="fas fa-file-pdf"></i>
+	      </button>
+	    </div>
+	    <input type="hidden" class="datos-relacion"
+	      value="${idLic}@##@${txtLic}@##@${idAreaCon}@##@${txtAreaCon}@##@${idCaracter}@##@${txtCaracter}@##@${semestres.join(",")}@##@${serAnt.join(",")}@##@${serCon.join(",")}">
 	  `;
 
-	  // Agregar nueva fila al DataTable
 	  tablaRelacionesDT.row.add([
 	    txtLic,
-	    mostrasSem,
+	    txtAreaCon,
+	    txtCaracter,
+	    mostrarSem,
 	    mostrarAnt,
 	    mostrarCon,
 	    botonEliminar
 	  ]).draw();
 
-	  // Limpiar campos después de agregar
-	  $("#rel_licenciatura").val("0");
+	  $("#rel_licenciatura").val("0").trigger("change");
+	  $("#rel_area_con").val("0").trigger("change");
+	  $("#rel_caracter").val("0").trigger("change");
 	  $("#rel_semestre").val(null).trigger("change");
 	  $("#ser_anterior").val(null).trigger("change");
 	  $("#ser_consecuente").val(null).trigger("change");
@@ -490,59 +507,46 @@ const fcs = function(){
 	 * Función que recorre la tabla de relación con licenciaturas para extraer
 	 * los datos seleccionados por el usuario.
 	 * 
-	 * Cada fila contiene: licenciatura, semestre, seriación antecedente y consecuente.
+	 * Cada fila contiene: licenciatura, area conocimiento, caracter, semestre, seriación antecedente y consecuente.
 	 *
 	 * @function obtenerRelLicAsig
 	 * @returns {Array<Object>} Arreglo con objetos que representan la relación con licenciaturas.
 	 */
 	const obtenerRelLicAsig = () => {
-		const catalogoLic = fComun.getVarLocalJ("catalogos")?.catLic || [];
-		const catalogoAsig = fComun.getVarLocalJ("catalogos")?.catAsig || [];
-		const tabla = $('#tablaRelacionesLic').DataTable();
-		const data = [];
-	
-		tabla.rows({ page: 'all' }).data().each(function (row, index) {
+	  const tabla = $('#tablaRelacionesLic').DataTable();
+	  const data = [];
 
-	    // Asumiendo que es tipo array = [licenciatura, semestre, serAnt, serCon]
-	
-	    const licNombre = (row[0] || "").trim();
-	    const semestresTxt = (row[1] || "").trim();
-	    const serAntTexto = (row[2] || "").trim();
-	    const serConTexto = (row[3] || "").trim();
-	
-	    // Separar por '|' y limpiar espacios
-	    const serAntArr = serAntTexto.split("|").map(t => t.trim()).filter(t => t);
-	    const serConArr = serConTexto.split("|").map(t => t.trim()).filter(t => t);
-		const semestresArr = semestresTxt
-		      ? semestresTxt.split("|").map(t => t.trim()).filter(t => t)
-		      : [];
-		const semestresNum = semestresArr.map(v => Number(v));
-	    
-		// Buscar IDs en catálogo de asignaturas
-	    const idAnt = serAntArr.map(nombre =>
-	      (catalogoAsig.find(([id, nom]) => nom.trim() === nombre)?.[0]) || null
-	    );
-	
-	    const idCon = serConArr.map(nombre =>
-	      (catalogoAsig.find(([id, nom]) => nom.trim() === nombre)?.[0]) || null
-	    );
-	
-	    // Buscar ID de licenciatura
-	    const licObj = catalogoLic.find(([id, nombre]) => nombre.trim() === licNombre);
-	    const idLic  = licObj ? licObj[0] : null;
-	
-	    // Construir objeto final
+	  tabla.rows({ page: 'all' }).every(function () {
+	    const nodo = $(this.node());
+	    const hidden = nodo.find('.datos-relacion').val();
+
+	    if (!hidden) return;
+
+	    const partes = hidden.split('@##@');
+
+	    const idLic = partes[0] || null;
+	    const txtLic = partes[1] || "";
+	    const idAreaCon = partes[2] || null;
+	    const txtAreaCon = partes[3] || "";
+	    const idCaracter = partes[4] || null;
+	    const txtCaracter = partes[5] || "";
+	    const semestres = partes[6] ? partes[6].split(',').map(v => Number(v)).filter(v => !isNaN(v)) : [];
+	    const idSerAnt = partes[7] ? partes[7].split(',').map(v => Number(v)).filter(v => !isNaN(v)) : [];
+	    const idSerCon = partes[8] ? partes[8].split(',').map(v => Number(v)).filter(v => !isNaN(v)) : [];
+
 	    data.push({
-	      idLicenciatura: idLic,
-	      licenciatura: licNombre,
-	      semestres: semestresNum,
-	      idSeriacionAnterior: idAnt,
-	      seriacionAnterior: serAntArr,
-	      idSeriacionConsecuente: idCon,
-	      seriacionConsecuente: serConArr
+	      idLicenciatura: Number(idLic),
+	      licenciatura: txtLic,
+	      idAreaConocimiento: Number(idAreaCon),
+	      areaConocimiento: txtAreaCon,
+	      idCaracterAsignatura: Number(idCaracter),
+	      caracterAsignatura: txtCaracter,
+	      semestres: semestres,
+	      idSeriacionAnterior: idSerAnt,
+	      idSeriacionConsecuente: idSerCon
 	    });
 	  });
-	
+
 	  return data;
 	};
 	
@@ -683,21 +687,19 @@ const fcs = function(){
 	 */
 	const construirSolicitud = () => {
 	  return {
-	    datosGenerales: {
-	      areaConocimiento: $('#area_con').val(),
-	      modalidad: $('#modalidad').val(),
-	      tipoModalidad: $('#tipo_modalidad').val(),
+		datosGenerales: {
+		  modalidad: $('#modalidad').val(),
+		  tipoModalidad: $('#tipo_modalidad').val(),
 		  valorPractico: $('#valor_practico').val(),
-	      caracterAsignatura: $('#caracter').val(),
-	      nombreAsignatura: $('#asignatura').val(),
+		  nombreAsignatura: $('#asignatura').val(),
 		  claveAsignatura: $('#clave_asignatura').val(),
-	      creditos: $('#creditos').val(),
-	      hSemTeoria: $('#h_sem_teo').val(),
-	      hSemPractica: $('#h_sem_pra').val(),
-	      hSemestreTeoria: $('#h_semestre_teo').val(),
-	      hSemestrePractica: $('#h_semestre_pra').val(),
-	      objAsig: $("#objetivo").val()
-	    },
+		  creditos: $('#creditos').val(),
+		  hSemTeoria: $('#h_sem_teo').val(),
+		  hSemPractica: $('#h_sem_pra').val(),
+		  hSemestreTeoria: $('#h_semestre_teo').val(),
+		  hSemestrePractica: $('#h_semestre_pra').val(),
+		  objAsig: $("#objetivo").val()
+		},
 	    relacionLicenciaturas: obtenerRelLicAsig(),
 	    temario: obtenerTemarioYContenido().temas,
 		actPracticas: $('#horasPracticasTemario').val(),
@@ -825,10 +827,8 @@ const fcs = function(){
 			$('#asignatura').val(dg.asignatura);
 			$('#clave_asignatura').val(dg.claveAsignatura);
 			$('#creditos').val(dg.creditos);
-			$('#area_con').val(dg.areaConocimiento);
 			$('#modalidad').val(dg.modalidad);
 			$('#tipo_modalidad').val(dg.tipoModalidad);
-			$('#caracter').val(dg.caracterAsignatura);
 			$("#valor_practico").val(solicitud.valorPractico).trigger("change");
 			$('#h_sem_teo').val(dg.hSemTeoria);
 			$('#h_sem_pra').val(dg.hSemPractica);
@@ -848,20 +848,17 @@ const fcs = function(){
 			  const serAnt = rel.seriacionAnt || [];
 			  const serCon = rel.seriacionCons || [];
 			  const idSolicitud = rel.idSolicitud || [];
+			  const idAreaConocimiento = rel.idAreaConocimiento || "";
+			  const idCaracterAsignatura = rel.idCaracterAsignatura || "";
 
-			  // Establecer licenciatura
 			  $('#rel_licenciatura').val(idLic).trigger('change');
 			  $('#rel_solicitud').val(idSolicitud).trigger('change');
-
-			  // Cargar select multiple de semestre
+			  $('#rel_area_con').val(idAreaConocimiento).trigger('change');
+			  $('#rel_caracter').val(idCaracterAsignatura).trigger('change');
 			  $('#rel_semestre').val(semestre).trigger('change');
-			  			  
-			  // Cargar select multiple de seriación antecedente y consecuente
 			  $('#ser_anterior').val(serAnt).trigger('change');
 			  $('#ser_consecuente').val(serCon).trigger('change');
 
-
-			  // Simular clic en botón agregar relación
 			  $('#btnAgregarRelLicAsig').click();
 			});
 			
@@ -1045,10 +1042,8 @@ const fcs = function(){
 		// === Validamos campos input y select validados ===
 		// Selects requeridos 
 		[
-		  ['area_con', 'el área de conocimiento'],
 		  ['modalidad', 'la modalidad'],
 		  ['tipo_modalidad', ' el tipo de modalidad'],
-		  ['caracter', 'el carácter de la asignatura'],
 		  ['estrategias_didacticas', 'al menos una estrategia didáctica'],
 		  ['eval_diagnostica', 'la evaluación diagnóstica'],
 		  ['eval_formativa', 'la evaluación formativa'],
