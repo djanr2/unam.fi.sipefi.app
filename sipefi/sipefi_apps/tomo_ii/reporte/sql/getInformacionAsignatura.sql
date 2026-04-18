@@ -5,13 +5,13 @@ with VALOR_PRACTICO as (
          SIPEFI.TD_REL_VAL_PRACTICO rvp
     where cvp.ID_VALOR_PRACTICO = rvp.ID_VALOR_PRACTICO
       and rvp.ID_SOLICITUD = :id_asignatura
-), SEMESTRE AS (
+ ), SEMESTRE AS (
          select  LISTAGG(distinct s.SEMESTRE, ', ') WITHIN GROUP (ORDER BY s.SEMESTRE) as SEMESTRE
         FROM SIPEFI.TD_ASIGNATURA a,
              SIPEFI.TD_REL_LIC_ASIGNATURA s
         WHERE s.ID_LICENCIATURA = :id_licenciatura
           and s.ID_SOLICITUD = :id_asignatura
-), COLOR AS (
+ ), COLOR AS (
     SELECT '#FFD400'   AS color, 1 AS id FROM dual
     UNION ALL
     SELECT '#5DBE63', 2 FROM dual
@@ -37,13 +37,16 @@ FROM CATALOGO.TC_LICENCIATURA l,
      CATALOGO.TC_CARACTER_ASIGNATURA c,
      SIPEFI.TD_ASIGNATURA a,
      SIPEFI.TD_SOLICITUD_TOMO_II s,
+     SIPEFI.TD_REL_LIC_ASIGNATURA rla,
      VALOR_PRACTICO, SEMESTRE, COLOR cl
 WHERE l.ID_LICENCIATURA = :id_licenciatura
   and a.ID_ASIGNATURA = :id_asignatura
   and s.ID_SOLICITUD = a.ID_ASIGNATURA
   and s.HISTORICA = 0
-  and ar.ID_AREA_CONOCIMIENTO = s.ID_AREA_CONOCIMIENTO
+  and rla.ID_LICENCIATURA = :id_licenciatura
+  and rla.ID_SOLICITUD = :id_asignatura
+  and ar.ID_AREA_CONOCIMIENTO = rla.id_area_conocimiento
   and m.ID_MODALIDAD =  s.ID_MODALIDAD
   and tm.ID_TIPO_MODALIDAD = s.ID_TIPO_MODALIDAD
-  and c.ID_CARACTER_ASIG = s.ID_CARACTER_ASIG
-  and cl.id = s.ID_AREA_CONOCIMIENTO
+  and c.ID_CARACTER_ASIG = rla.id_caracter_asig
+  and cl.id = rla.id_area_conocimiento

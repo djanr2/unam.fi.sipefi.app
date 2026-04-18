@@ -470,7 +470,6 @@ def generarPdf(request):
 
         lista_id_asignaturas = lista_id_asignaturas_obligatorias + lista_id_asignaturas_optativas
 
-    print(lista_id_asignaturas)
     buffer, nombre_archivo_pdf = generar_pdf_bytes(
         id_perfil,
         id_licenciatura,

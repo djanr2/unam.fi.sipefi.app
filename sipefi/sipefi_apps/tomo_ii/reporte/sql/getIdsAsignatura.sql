@@ -13,6 +13,6 @@ from SIPEFI.TD_ASIGNATURA a,
      RELACION_lICENCIATURA_ASIGNATURA l
 where a.ID_ASIGNATURA = s.ID_SOLICITUD
   and l.ID_SOLICITUD = a.ID_ASIGNATURA
-  and s.ID_CARACTER_ASIG = :caracter
+  and l.id_caracter_asig = :caracter
   and s.HISTORICA != 1
 ORDER BY L.SEMESTRE, a.ASIGNATURA
