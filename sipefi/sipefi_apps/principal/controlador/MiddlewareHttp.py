@@ -2,6 +2,7 @@ from django.http import HttpRequest, HttpResponse
 
 from sipefi_apps.tomo_ii.modelo.ConsultasBD import ConsultasBD as conBD
 
+
 class MiddlewareHttpReqResp:
     
     """
@@ -12,21 +13,18 @@ class MiddlewareHttpReqResp:
         self.token = ""
 
     def __call__(self, request):
-        # Ejecutar la funcion antes de procesar la solicitud
         resp = ""
         if not self.es_url_excluida(request.path):
             resp = self.ejecutar_antes_peticion(request)
+
         if resp == "NOK":
             response = HttpResponse()
             response["AccesoSistema"] = "NOK"
             return response
         else:
-            # Procesar la solicitud
             response = self.get_response(request)
             response["AccesoSistema"] = "OK"
             return response
-        # Ejecutar la funcion despues de procesar la solicitud
-        #self.ejecutar_despues_peticion(request, response)
 
     def ejecutar_antes_peticion(self, request: HttpRequest):
         self.token = request.META.get('HTTP_TOKENSISTEMA', '')
@@ -37,11 +35,13 @@ class MiddlewareHttpReqResp:
         pass
     
     def es_url_excluida(self, url: str) -> bool:
-        # URLs que se desean excluir
         urls_excluidas = [
             "/SIPEFI/login/",
             "/SIPEFI/Tomo_II",
             "/SIPEFI/cerrarSesion/",
+            "/SIPEFI/logout/",
+            "/SIPEFI/seleccion-perfil/",
+            "/SIPEFI/seleccionarPerfil/",
             "/SIPEFI/recargaPagina/"
         ]
         return url in urls_excluidas

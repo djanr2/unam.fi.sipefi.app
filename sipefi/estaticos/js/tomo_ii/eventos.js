@@ -768,35 +768,6 @@ const editarBibliografia = (idBibliografia) => {
 	
 	/**
 	 * 
-	 * Funcion que inicializa el evento necesario para el modal de eleccion de rol.
-	 * @param {Object} objB Nodo del objeto del boton donde se asigno el evento.
-	 * @param {Object} objM Nodo del modal que se esta trabajando.
-	 * @return {void} 
-	 * @method eventoRol
-	 * @static
-	 */
-	const eventoRol = (objB, objM) => {
-		/**
-		 * Solo si tiene mas de un perfil, elegir uno solo
-		 * @event module:etii~ObjB
-		 * @type {object}
-		 * @listens click
-		 */
-		$(objB).unbind("click");
-		$(objB).on('click', function () {
-			let valor = parseInt($("#selectRol").val());
-			let texto = $("#selectRol option:selected").text();
-			if(valor != 0){
-				soltii.iniciaComponentes(valor, texto);
-				soltii.pintaRolUsuario(texto);
-				if (document.activeElement) document.activeElement.blur(); // evitar warning accesibilidad
-				$(objM).modal('hide');
-			}
-		});
-	};
-	
-	/**
-	 * 
 	 * Funcion que ayuda a crear eventos especiales, es decir, con funcionalidades adicionales al dar click sobre un boton de algun modal.
 	 * @param {Object} elemento Nodo del elemento al que se le desea asignar el evento.
 	 * @param {Object} modal Nodo del modal donde se estara trabajando.
@@ -934,7 +905,6 @@ const editarBibliografia = (idBibliografia) => {
 	return{
 		cargaEventosPrincipales: cargaEventosPrincipales,
 		accionSolicitud:	accionSolicitud,
-		eventoRol:	eventoRol,
 		eventoEspecial:	eventoEspecial,
 		eventoAlerta:	eventoAlerta,
 		eventoAprobSoli:	eventoAprobSoli,

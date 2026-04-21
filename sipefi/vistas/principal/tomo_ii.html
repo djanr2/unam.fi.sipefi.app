@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="es">
 	<head>
-		<!-- Se importa todo lo necesario de Python-Django -->
 		{% load static %}
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
@@ -31,6 +30,7 @@
 		             src="{% static 'imagenes/unam_475_2026.jpeg' %}">
 		    </div>
 		</nav>
+
 		<div id="datosAcceso" class='rounded-bottom'>
 			<div id="nomFac">
 				<strong>
@@ -38,6 +38,7 @@
 						Plan de desarrollo 2023-2027
 				</strong>
 			</div>
+
 			<div id="botonesBarraAccion">
 				<button target="regresarBusqSoli" type="button" class="menuBotones esconder btn btn-secondary">Regresar</button>
 				<button target="regresarLlenaSoli" type="button" class="menuBotones esconder btn btn-secondary">Regresar</button>
@@ -47,23 +48,39 @@
 				<button target="rechazarSolicitud" type="button" class="menuBotones esconder btn btn-danger">Rechazar</button>
 				<button target="aprobarSolicitud" type="button" class="menuBotones esconder btn btn-danger">Aprobar</button>
 			</div>
+
 			<div id="infoDer">
-                <a href= {{sipefi_login}} ><button type="button" class="btn btn-secondary SIPEFI_LOGIN">Salir</button></a>
-				<span><i class="fa-solid fa-user"></i>
-					  <span id="usuario">{{usuario}}</span>
-					  <span id="usuarioSol" class="esconderDatos"></span>
-					  <span id="rol" class="esconderDatos">{{rol}}</span>
-					  <span id="token" class="esconderDatos">{{token}}</span>
-					  <span id="universo" class="esconderDatos">{{universo}}</span>
-				</span> 
-				<span><span class="fa-regular fa-calendar"></span> {% now "j/m/Y" %}</span> 
+                {% if tiene_multiples_roles %}
+                    <a href="/SIPEFI/seleccion-perfil/" class="btn btn-outline-light btn-sm btn-cambiar-perfil">
+                        Cambiar perfil
+                    </a>
+                {% endif %}
+
+                <a href="/SIPEFI/logout/" class="btn btn-secondary SIPEFI_LOGIN">Salir</a>
+
+				<span>
+                    <i class="fa-solid fa-user"></i>
+					<span id="usuario">{{usuario}} | </span>
+                    <span class="perfil-actual-badge">{{ rol_nombre }}</span>
+
+					<span id="usuarioSol" class="esconderDatos"></span>
+					<span id="rol" class="esconderDatos">{{rol}}</span>
+                    <span id="rolNombre" class="esconderDatos">{{rol_nombre}}</span>
+					<span id="token" class="esconderDatos">{{token}}</span>
+					<span id="universo" class="esconderDatos">{{universo}}</span>
+				</span>
+
+				<span><span class="fa-regular fa-calendar"></span> {% now "j/m/Y" %}</span>
 				<span><span class="fa-regular fa-clock"></span> <span id="hora"></span></span>
 			</div>
 		</div>
+
 		<div id='cuerpoPrincipal'>
 	        {% block content %}{% endblock %}
 		</div>
+
 		{{ idsValidador|json_script:"ids-validador-data" }}
+
 		<script>
 			$(document).ready(function(){
 				const actualizarHora = () => {
@@ -74,19 +91,13 @@
 				    document.getElementById('hora').textContent = `${horas}:${minutos}:${segundos}`;
 				};
 
-				// Actualizar al cargar
 				actualizarHora();
-
-				// Actualizar cada segundo
 				setInterval(actualizarHora, 1000);
-				
-				//iniciamos funcion inicial
+
 				const idsValidador = JSON.parse(document.getElementById('ids-validador-data').textContent);
 				soltii.inicio(idsValidador);
-				
-				// leer y eliminar el nodo del DOM
+
 				const nodo = document.getElementById('ids-validador-data');
-				const paquete = JSON.parse(nodo.textContent);
 				nodo.remove();
 			});
 		</script>

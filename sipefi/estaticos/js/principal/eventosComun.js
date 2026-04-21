@@ -14,14 +14,12 @@ const comunE = function(){
 	 * @static
 	 */
 	let cargaEventoSesion = function(){
-		
-		//Enviar una solicitud al servidor cuando se cierre la ventana o se cambie de página
-		window.addEventListener('beforeunload', function (event) {
-		    let param = {
-				token: $("#token").html()
-	    	}
-		    fComun.post("/SIPEFI/cerrarSesion/",param, function(resp){});
-		});
+		/*
+		 * Ya no cerramos sesión en beforeunload porque eso provocaba
+		 * comportamientos no deseados al refrescar o navegar internamente.
+		 * El cierre de sesión ahora es explícito desde /SIPEFI/logout/
+		 */
+		return;
 	};
 	
 	/**

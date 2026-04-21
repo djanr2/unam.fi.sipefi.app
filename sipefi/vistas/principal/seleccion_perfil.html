@@ -1,0 +1,242 @@
+{% extends 'principal/base_login.html' %}
+{% load static %}
+
+{% block content %}
+
+{% if modo_simple_dupla %}
+<div class="selector-dupla-shell">
+    <div class="selector-dupla-card">
+        <div class="selector-dupla-header">
+            <div class="selector-dupla-brand">
+                <img id="logoLogin" src="{% static 'imagenes/01.png' %}" alt="FI UNAM">
+                <div>
+                    <h1 class="selector-dupla-title">Selecciona cómo deseas ingresar</h1>
+                    <p class="selector-dupla-subtitle">
+                        Tienes disponibles dos perfiles para esta sesión.
+                    </p>
+                </div>
+            </div>
+
+            <a href="/SIPEFI/logout/" class="btn btn-outline-secondary btn-sm">
+                Cancelar y cerrar sesión
+            </a>
+        </div>
+
+        <div class="selector-dupla-user">
+            <div class="selector-dupla-user-label">Usuario autenticado</div>
+            <div class="selector-dupla-user-name">{{ nombre|default:usuario }}</div>
+            <div class="selector-dupla-user-login">{{ usuario }}</div>
+        </div>
+
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-danger mt-3">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+
+        <div class="selector-dupla-options">
+            {% for rol in roles_ui %}
+                <form method="post" action="/SIPEFI/seleccionarPerfil/" class="selector-dupla-option">
+                    {% csrf_token %}
+                    <input type="hidden" name="id_perfil" value="{{ rol.id }}">
+
+                    <div class="selector-dupla-icon">
+                        <i class="{{ rol.icono }}"></i>
+                    </div>
+
+                    <div class="selector-dupla-role">{{ rol.rol }}</div>
+                    <div class="selector-dupla-badge-wrap">
+                        <span class="{{ rol.badge_class }}">{{ rol.tipo }}</span>
+                    </div>
+
+                    <div class="selector-dupla-text">
+                        {{ rol.descripcion }}
+                    </div>
+
+                    <button type="submit" class="btn btn-danger w-100 mt-3">
+                        Ingresar
+                    </button>
+                </form>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+{% else %}
+
+<div class="selector-simple-shell">
+    <div class="selector-simple-card">
+
+        <div class="selector-simple-header">
+            <div class="selector-simple-brand">
+                <img id="logoLogin" src="{% static 'imagenes/01.png' %}" alt="FI UNAM">
+                <div>
+                    <h1 class="selector-simple-title">Selecciona tu perfil</h1>
+                    <p class="selector-simple-subtitle">
+                        Elige con qué perfil deseas ingresar al sistema.
+                    </p>
+                </div>
+            </div>
+
+            <a href="/SIPEFI/logout/" class="btn btn-outline-secondary btn-sm">
+                Cancelar y cerrar sesión
+            </a>
+        </div>
+
+        <div class="selector-simple-summary">
+            <div class="selector-simple-user">
+                <div class="selector-simple-user-label">Usuario autenticado</div>
+                <div class="selector-simple-user-name">{{ nombre|default:usuario }}</div>
+                <div class="selector-simple-user-login">{{ usuario }}</div>
+            </div>
+
+            <div class="selector-simple-stats">
+                <span class="selector-chip-resumen">Total: {{ stats.total }}</span>
+                <span class="selector-chip-resumen">Administración: {{ stats.administracion }}</span>
+                <span class="selector-chip-resumen">Operación: {{ stats.operacion }}</span>
+                <span class="selector-chip-resumen">Validación: {{ stats.validacion }}</span>
+                <span class="selector-chip-resumen">Coordinación: {{ stats.coordinacion }}</span>
+            </div>
+        </div>
+
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-danger mt-3">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+
+        <div class="role-filter-bar" id="roleFilterBar">
+            {% for filtro in filtros %}
+                <button
+                    type="button"
+                    class="role-filter-chip {% if filtro.key == 'all' %}is-active{% endif %}"
+                    data-filter="{{ filtro.key }}"
+                >
+                    <span>{{ filtro.label }}</span>
+                    <span class="role-filter-count">{{ filtro.total }}</span>
+                </button>
+            {% endfor %}
+        </div>
+
+        <div class="selector-simple-tools">
+            <div class="input-group">
+                <span class="input-group-text">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                </span>
+                <input
+                    type="text"
+                    id="buscadorRoles"
+                    class="form-control"
+                    placeholder="Buscar perfil, división o carrera..."
+                    autocomplete="off">
+            </div>
+
+            <button type="button" id="btnLimpiarBusqueda" class="btn btn-outline-secondary">
+                Limpiar
+            </button>
+        </div>
+
+        <div class="selector-simple-meta">
+            <span id="rolesVisibles">{{ stats.total }}</span> perfiles visibles
+        </div>
+
+        <div class="roles-simple-list" id="rolesList">
+            {% for rol in roles_ui %}
+                <form
+                    method="post"
+                    action="/SIPEFI/seleccionarPerfil/"
+                    class="role-simple-item"
+                    data-role-search="{{ rol.search_text }}"
+                    data-role-category="{{ rol.categoria_key }}"
+                >
+                    {% csrf_token %}
+                    <input type="hidden" name="id_perfil" value="{{ rol.id }}">
+
+                    <div class="role-simple-main">
+                        <div class="role-simple-icon">
+                            <i class="{{ rol.icono }}"></i>
+                        </div>
+
+                        <div class="role-simple-content">
+                            <div class="role-simple-title-row">
+                                <h3 class="role-simple-title">{{ rol.rol }}</h3>
+                                <span class="{{ rol.badge_class }}">{{ rol.tipo }}</span>
+                            </div>
+
+                            <div class="role-simple-meta-row">
+                                <span><i class="fa-regular fa-folder-open"></i> {{ rol.categoria_nombre }}</span>
+                                <span><i class="fa-regular fa-building"></i> {{ rol.division }}</span>
+                                <span><i class="fa-regular fa-file-lines"></i> {{ rol.resumen }}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-danger btn-sm role-simple-btn">
+                        Ingresar
+                    </button>
+                </form>
+            {% endfor %}
+        </div>
+
+        <div id="sinResultadosRoles" class="sin-resultados d-none">
+            <i class="fa-solid fa-circle-info me-2"></i>
+            No se encontraron perfiles con ese criterio.
+        </div>
+
+    </div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const buscador = document.getElementById("buscadorRoles");
+    const btnLimpiar = document.getElementById("btnLimpiarBusqueda");
+    const rolesVisibles = document.getElementById("rolesVisibles");
+    const sinResultados = document.getElementById("sinResultadosRoles");
+    const filterButtons = Array.from(document.querySelectorAll(".role-filter-chip"));
+    const roleItems = Array.from(document.querySelectorAll(".role-simple-item"));
+
+    let filtroActivo = "all";
+
+    function filtrarRoles() {
+        const criterio = (buscador.value || "").trim().toLowerCase();
+        let totalVisibles = 0;
+
+        roleItems.forEach(item => {
+            const coincideBusqueda = !criterio || item.dataset.roleSearch.includes(criterio);
+            const coincideFiltro = filtroActivo === "all" || item.dataset.roleCategory === filtroActivo;
+            const visible = coincideBusqueda && coincideFiltro;
+
+            item.classList.toggle("d-none", !visible);
+            if (visible) totalVisibles++;
+        });
+
+        rolesVisibles.textContent = totalVisibles;
+        sinResultados.classList.toggle("d-none", totalVisibles !== 0);
+    }
+
+    filterButtons.forEach(btn => {
+        btn.addEventListener("click", function () {
+            filterButtons.forEach(b => b.classList.remove("is-active"));
+            btn.classList.add("is-active");
+            filtroActivo = btn.dataset.filter;
+            filtrarRoles();
+        });
+    });
+
+    buscador.addEventListener("input", filtrarRoles);
+
+    btnLimpiar.addEventListener("click", function () {
+        buscador.value = "";
+        filtroActivo = "all";
+        filterButtons.forEach(b => b.classList.remove("is-active"));
+        const btnAll = document.querySelector('.role-filter-chip[data-filter="all"]');
+        if (btnAll) btnAll.classList.add("is-active");
+        filtrarRoles();
+        buscador.focus();
+    });
+});
+</script>
+
+{% endif %}
+
+{% endblock %}

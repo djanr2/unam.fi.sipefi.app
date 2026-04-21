@@ -15,39 +15,19 @@ const soltii = function(){
 	 * @static
 	 */
 	const inicio = (idsValidador) => {
-		fComun.guardaVarLocal("idsValidador",idsValidador);
-		fComun.guardaVarLocal("objSoli",{accion: 0});
-		let roles = JSON.parse(String($("#rol").html()).replace(new RegExp("'",'g'),"\""));
-		let tamRol = roles.resp.length;
+		fComun.guardaVarLocal("idsValidador", idsValidador);
+		fComun.guardaVarLocal("objSoli", {accion: 0});
+
+		const rolId = parseInt($("#rol").html(), 10) || 0;
+		const rolNombre = String($("#rolNombre").html() || "").trim();
+
 		fComun.initDefault();
 		fComun.iniciaModalComentarios();
 		fl.cargaTablasP1();
 		cargaMenuIniBotones();
-		if(tamRol>1){ //tiene opcion de mas de un perfil
-			eligeRol(roles);
-		}else{ //perfil unico
-			iniciaComponentes(roles.resp[0].id, roles.resp[0].rol);
-			pintaRolUsuario(roles.resp[0].rol);
-		}
-	};
-	
-	const pintaRolUsuario = (rol) => {
-		let icono = "";
 
-		if(rol === "Administrador"){
-			icono = '<i class="fas fa-crown"></i>';
-		}else if(rol.includes("Operador")){
-			icono = '<i class="fas fa-edit"></i>';
-		}else if(rol.includes("Validador")){
-			icono = '<i class="fas fa-clipboard-check"></i>';
-		}else if(rol.includes("Coordinador")){
-			icono = '<i class="fas fa-user-tie"></i>';
-		}
-		
-		$("#usuario").after(
-		` <span class="ms-2 text-white d-inline-flex align-items-center">${icono}<span>${rol}</span></span>`
-		);
-	}
+		iniciaComponentes(rolId, rolNombre);
+	};
 
 	/**
 	 * Funcion que inicializa los componentes en el sistema de acuerdo al perfil y usuario logueado.
@@ -79,22 +59,6 @@ const soltii = function(){
 		etii.cargaEventosPrincipales();
 		fComun.validadorForm(".inputNumber");
 		fComun.validadorForm(".inputPorcentaje");
-	};
-	
-	/**
-	 * Funcion que inicializa modal para elegir el rol a usar, cuando el usuario tiene muchos rol definidos.
-	 * @param {Object} obj Contiene la lista de roles que tiene definidos el usuario logueado.
-	 * @return {void} 
-	 * @method eligeRol
-	 * @static
-	 */
-	const eligeRol = (obj) => {
-		let opcSelect = [{id: "0", text: "Elige tu perfil"}]; 
-		let objOpc = obj.resp;
-		for(i in objOpc){opcSelect.push({id: objOpc[i].id, text: objOpc[i].rol})} 
-		$('#modalSelectRol').modal('show');
-		etii.eventoRol(".cierraRol",'#modalSelectRol');
-		fl.select2("#selectRol",opcSelect,1);
 	};
 	
 	/**
@@ -384,7 +348,6 @@ const soltii = function(){
 		realizaAccionSolicitud:	realizaAccionSolicitud,
 		iniciaComponentes:	iniciaComponentes,
 		pintaSolicitud:	pintaSolicitud,
-		pintaRolUsuario: pintaRolUsuario,
 		pintaTablaAsigXLic:	pintaTablaAsigXLic
 	}
 }();

@@ -17,13 +17,19 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 from sipefi_apps.principal.controlador import views
-from sipefi_apps.principal.controlador.views import LoginSipefi
+from sipefi_apps.principal.controlador.views import LoginSipefi, SeleccionPerfilView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+
     path('SIPEFI/', include('sipefi_apps.tomo_ii.controlador.urls')),
     path("SIPEFI/login/", LoginSipefi.as_view(), name="login"),
-    path('SIPEFI/cerrarSesion/', views.cerrarSesionUsuarioSistema, name='logOut'),
-    path('SIPEFI/reporte/', include('sipefi_apps.tomo_ii.reporte.urls'), name='generaPDF'),
 
+    path("SIPEFI/seleccion-perfil/", SeleccionPerfilView.as_view(), name="seleccion_perfil"),
+    path("SIPEFI/seleccionarPerfil/", views.seleccionarPerfilActivo, name="seleccionar_perfil_activo"),
+
+    path("SIPEFI/logout/", views.logoutSipefi, name="logout_sipefi"),
+    path('SIPEFI/cerrarSesion/', views.cerrarSesionUsuarioSistema, name='logOut'),
+
+    path('SIPEFI/reporte/', include('sipefi_apps.tomo_ii.reporte.urls'), name='generaPDF'),
 ]
