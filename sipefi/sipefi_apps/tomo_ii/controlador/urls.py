@@ -19,7 +19,7 @@ from sipefi_apps.tomo_ii.controlador.views import (
 
 urlpatterns = [
     path("Tomo_II", Vista_Principal_TomoII.as_view(), name="indexTomoII"),
-    path("llenaTablasSoli", requestTablasSoli, name='tablasSoli'),
+    path("llenaTablasSoli/", requestTablasSoli, name='tablasSoli'),
     path("recargaPagina/", requestRecargaPagina, name='recargaIdx'),
     path('accionSolicitud/', requestAccionSolicitud, name='accionSoli'),
     path('cargaSolicitud/', requestCargaSolicitud, name='cargaSoli'),
