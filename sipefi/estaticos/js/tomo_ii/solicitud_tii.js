@@ -124,7 +124,7 @@ const soltii = function(){
     			user: $("#usuario").html(),
     			rol: $("#rol").html()
     	}
-    	fComun.post("/SIPEFI/llenaTablasSoli",param, function(resp){
+    	fComun.post("/SIPEFI/llenaTablasSoli/",param, function(resp){
 			try{
 				let obj = resp;
 				fComun.guardaVarLocal("catalogos",obj.catalogos)
