@@ -318,7 +318,7 @@ const etii = function(){
 				$btn.prop("disabled", false);
 				$spinner.addClass("d-none");
 				$text.html('<i class="fa-solid fa-file-pdf me-1"></i> Descargar PDF (Tomo II)');
-			}, 12000);
+			}, 18000);
 		});
 	   
 	};
