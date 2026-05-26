@@ -579,13 +579,21 @@ const editarBibliografia = (idBibliografia) => {
 
 			var bibliografiaTable = $('#tablaBibliografia').DataTable();
 
+			var tipoHandler = bibliografiaTable.cell(idBibliografia - 1, 0).data();
+			var tipoTexto = (tipoHandler || '').toString().trim().toUpperCase();
+			var esTipoDependera = tipoTexto === 'DEPENDERA DE LA TEMÁTICA A TRATAR';
+
 			var varHandler = bibliografiaTable.cell(idBibliografia - 1, 1).data();
 			var autorForEdit = varHandler ? varHandler : "";
-			var autorForEdit_input = `<span class="text-start">${autorForEdit}</span>`;
+			var autorForEdit_input = esTipoDependera
+				? `<span class="text-start">${autorForEdit}</span>`
+				: `<input type="text" class="form-control" value="${autorForEdit}" id = "id-biblio-autor-${idBibliografia}">`;
 
 			varHandler = bibliografiaTable.cell(idBibliografia - 1, 2).data();
 			var yearForEdit = (varHandler === '0' || varHandler === 0) ? "" : (varHandler ? varHandler : "");
-			var yearForEdit_input = `<span class="text-start">${yearForEdit}</span>`;
+			var yearForEdit_input = esTipoDependera
+				? `<span class="text-start">${yearForEdit}</span>`
+				: `<input type="text" class="form-control" value="${yearForEdit}" id = "id-biblio-year-${idBibliografia}">`;
 
 
 			varHandler = bibliografiaTable.cell(idBibliografia - 1, 3).data();
@@ -597,27 +605,37 @@ const editarBibliografia = (idBibliografia) => {
 
 			varHandler = bibliografiaTable.cell(idBibliografia - 1, 4).data();
 			var tituloForEdit = varHandler ? varHandler : "";
-			var tituloForEdit_input = `<span class="text-start">${tituloForEdit}</span>`;
+			var tituloForEdit_input = esTipoDependera
+				? `<span class="text-start">${tituloForEdit}</span>`
+				: `<input type="text" class="form-control" value="${tituloForEdit}" id = "id-biblio-titulo-${idBibliografia}">`;
 
 
 			varHandler = bibliografiaTable.cell(idBibliografia - 1, 5).data();
 			var extra1ForEdit = varHandler ? varHandler : "";
-			var extra1ForEdit_input = `<span class="text-start">${extra1ForEdit}</span>`;
+			var extra1ForEdit_input = esTipoDependera
+				? `<span class="text-start">${extra1ForEdit}</span>`
+				: `<input type="text" class="form-control" value="${extra1ForEdit}" id = "id-biblio-extra1-${idBibliografia}">`;
 
 
 			varHandler = bibliografiaTable.cell(idBibliografia - 1, 6).data();
 			var extra2ForEdit = varHandler ? varHandler : "";
-			var extra2ForEdit_input = `<span class="text-start">${extra2ForEdit}</span>`;
+			var extra2ForEdit_input = esTipoDependera
+				? `<span class="text-start">${extra2ForEdit}</span>`
+				: `<input type="text" class="form-control" value="${extra2ForEdit}" id = "id-biblio-extra2-${idBibliografia}">`;
 
 
 			varHandler = bibliografiaTable.cell(idBibliografia - 1, 7).data();
 			var extra3ForEdit = varHandler ? varHandler : "";
-			var extra3ForEdit_input = `<span class="text-start">${extra3ForEdit}</span>`;
+			var extra3ForEdit_input = esTipoDependera
+				? `<span class="text-start">${extra3ForEdit}</span>`
+				: `<input type="text" class="form-control" value="${extra3ForEdit}" id = "id-biblio-extra3-${idBibliografia}">`;
 
 
 			varHandler = bibliografiaTable.cell(idBibliografia - 1, 8).data();
 			var extra4ForEdit = varHandler ? varHandler : "";
-			var extra4ForEdit_input = `<span class="text-start">${extra4ForEdit}</span>`;
+			var extra4ForEdit_input = esTipoDependera
+				? `<span class="text-start">${extra4ForEdit}</span>`
+				: `<input type="text" class="form-control" value="${extra4ForEdit}" id = "id-biblio-extra4-${idBibliografia}">`;
 
 
 			varHandler = bibliografiaTable.cell(idBibliografia - 1, 9).data();
@@ -648,28 +666,45 @@ const editarBibliografia = (idBibliografia) => {
 		if (isActionEditingBibliografia) {
 			const bibliografiaTable = $('#tablaBibliografia').DataTable();
 
+			var tipoValor = $(bibliografiaTable.cell(idBibliografia-1, 0).node()).find('input').val();
+			var esTipoDependera = (tipoValor || '').toString().trim().toUpperCase() === 'DEPENDERA DE LA TEMÁTICA A TRATAR';
+
 			var varHandler = $(bibliografiaTable.cell(idBibliografia-1, 0).node()).find('input').val();
 			const tipoNoEdit = varHandler ? varHandler : "";
 
-			 varHandler = $(bibliografiaTable.cell(idBibliografia-1, 1).node()).find('input').val();
+			 varHandler = esTipoDependera
+				? $(bibliografiaTable.cell(idBibliografia-1, 1).node()).text().trim()
+				: $(bibliografiaTable.cell(idBibliografia-1, 1).node()).find('input').val();
 			const autorForEdit = varHandler ? varHandler : "";
 
-			varHandler = $(bibliografiaTable.cell(idBibliografia-1, 2).node()).find('input').val();
+			varHandler = esTipoDependera
+				? $(bibliografiaTable.cell(idBibliografia-1, 2).node()).text().trim()
+				: $(bibliografiaTable.cell(idBibliografia-1, 2).node()).find('input').val();
 			const yearForEdit = (!varHandler || varHandler === '0') ? "" : varHandler;
 
-			varHandler = $(bibliografiaTable.cell(idBibliografia-1, 4).node()).find('input').val();
+			varHandler = esTipoDependera
+				? $(bibliografiaTable.cell(idBibliografia-1, 4).node()).text().trim()
+				: $(bibliografiaTable.cell(idBibliografia-1, 4).node()).find('input').val();
 			const tituloForEdit = varHandler ? varHandler : "";
 
-			varHandler = $(bibliografiaTable.cell(idBibliografia-1, 5).node()).find('input').val();
+			varHandler = esTipoDependera
+				? $(bibliografiaTable.cell(idBibliografia-1, 5).node()).text().trim()
+				: $(bibliografiaTable.cell(idBibliografia-1, 5).node()).find('input').val();
 			const extra1ForEdit = varHandler ? varHandler : "";
 
-			varHandler= $(bibliografiaTable.cell(idBibliografia-1, 6).node()).find('input').val();
+			varHandler = esTipoDependera
+				? $(bibliografiaTable.cell(idBibliografia-1, 6).node()).text().trim()
+				: $(bibliografiaTable.cell(idBibliografia-1, 6).node()).find('input').val();
 			const extra2ForEdit =  varHandler ? varHandler : "";
 
-			varHandler = $(bibliografiaTable.cell(idBibliografia-1, 7).node()).find('input').val();
+			varHandler = esTipoDependera
+				? $(bibliografiaTable.cell(idBibliografia-1, 7).node()).text().trim()
+				: $(bibliografiaTable.cell(idBibliografia-1, 7).node()).find('input').val();
 			const extra3ForEdit = varHandler ? varHandler : "";
 
-			varHandler = $(bibliografiaTable.cell(idBibliografia-1, 8).node()).find('input').val();
+			varHandler = esTipoDependera
+				? $(bibliografiaTable.cell(idBibliografia-1, 8).node()).text().trim()
+				: $(bibliografiaTable.cell(idBibliografia-1, 8).node()).find('input').val();
 			const extra4ForEdit = varHandler ? varHandler : "";
 
 			varHandler = $(bibliografiaTable.cell(idBibliografia-1, 9).node()).find('input').val();
