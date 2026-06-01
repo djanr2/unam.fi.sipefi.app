@@ -515,10 +515,24 @@ const fcs = function(){
 	const obtenerRelLicAsig = () => {
 	  const tabla = $('#tablaRelacionesLic').DataTable();
 	  const data = [];
+	  
+	  tabla.rows().every(function () {
+	    const row = this.data();
 
-	  tabla.rows({ page: 'all' }).every(function () {
-	    const nodo = $(this.node());
-	    const hidden = nodo.find('.datos-relacion').val();
+	    /*
+	     * Estructura actual de tablaRelacionesLic:
+	     * 0 Licenciatura
+	     * 1 Área de conocimiento
+	     * 2 Carácter
+	     * 3 Semestre
+	     * 4 Seriación anterior
+	     * 5 Seriación consecuente
+	     * 6 Acciones + input hidden .datos-relacion
+	     */
+	    const accionesHtml = row[6] || "";
+
+	    const $tmp = $('<div>').html(accionesHtml);
+	    const hidden = $tmp.find('.datos-relacion').val();
 
 	    if (!hidden) return;
 
@@ -530,9 +544,23 @@ const fcs = function(){
 	    const txtAreaCon = partes[3] || "";
 	    const idCaracter = partes[4] || null;
 	    const txtCaracter = partes[5] || "";
-	    const semestres = partes[6] ? partes[6].split(',').map(v => Number(v)).filter(v => !isNaN(v)) : [];
-	    const idSerAnt = partes[7] ? partes[7].split(',').map(v => Number(v)).filter(v => !isNaN(v)) : [];
-	    const idSerCon = partes[8] ? partes[8].split(',').map(v => Number(v)).filter(v => !isNaN(v)) : [];
+
+	    const semestres = partes[6]
+	      ? partes[6].split(',').map(v => Number(v)).filter(v => !isNaN(v))
+	      : [];
+
+	    const idSerAnt = partes[7]
+	      ? partes[7].split(',').map(v => Number(v)).filter(v => !isNaN(v))
+	      : [];
+
+	    const idSerCon = partes[8]
+	      ? partes[8].split(',').map(v => Number(v)).filter(v => !isNaN(v))
+	      : [];
+
+	    if (!idLic || Number(idLic) === 0) return;
+	    if (!idAreaCon || Number(idAreaCon) === 0) return;
+	    if (!idCaracter || Number(idCaracter) === 0) return;
+	    if (!semestres.length) return;
 
 	    data.push({
 	      idLicenciatura: Number(idLic),
@@ -841,7 +869,10 @@ const fcs = function(){
 			}
 
 			// === 2. RELACIÓN CON LICENCIATURAS (sección tabla) ===
-
+			if ($.fn.DataTable.isDataTable('#tablaRelacionesLic')) {
+			  $('#tablaRelacionesLic').DataTable().clear().draw();
+			}
+			
 			(solicitud.relacionLicenciaturas || []).forEach(rel => {
 			  const idLic = rel.idLic;
 			  const semestre = rel.semestre || [];
