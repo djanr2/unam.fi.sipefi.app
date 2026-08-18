@@ -25,6 +25,41 @@ const fComun = function(){
 	 */
 	// these HTTP methods do not require CSRF protection
 	const csrfSafeMethod = (method) => (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+
+
+	/**
+	 * Normaliza un selector, elemento DOM o colección jQuery a una lista de elementos.
+	 * @param {String|Element|Object} selector Selector o elemento modal.
+	 * @return {Array<Element>}
+	 */
+	const elementosModal = (selector) => {
+		if (!selector) return [];
+		if (typeof selector === 'string') return Array.from(document.querySelectorAll(selector));
+		if (selector instanceof Element) return [selector];
+		if (selector.jquery) return selector.toArray();
+		if (typeof selector.length === 'number') return Array.from(selector);
+		return [];
+	};
+
+	/** Inicializa uno o varios modales con la API nativa de Bootstrap 5. */
+	const inicializarModal = (selector, opciones = {}) => {
+		return elementosModal(selector).map((elemento) =>
+			bootstrap.Modal.getOrCreateInstance(elemento, opciones)
+		);
+	};
+
+	/** Muestra uno o varios modales con Bootstrap 5. */
+	const mostrarModal = (selector, opciones = {}) => {
+		inicializarModal(selector, opciones).forEach((modal) => modal.show());
+	};
+
+	/** Oculta uno o varios modales con Bootstrap 5. */
+	const ocultarModal = (selector) => {
+		elementosModal(selector).forEach((elemento) => {
+			const modal = bootstrap.Modal.getInstance(elemento);
+			if (modal) modal.hide();
+		});
+	};
 	
 	/**
 	 * Funcion que ayuda a inicializar los modales con ciertas caracteristicas.
@@ -33,9 +68,8 @@ const fComun = function(){
 	 * @static
 	 */
 	const iniciaModalComentarios = () => {
-		$('#modalComentarios').modal({
+		inicializarModal('#modalComentarios', {
 			backdrop: false,
-			show: false,
 			keyboard: false
 		});
 		$("#comentarios").Editor();  
@@ -66,8 +100,6 @@ const fComun = function(){
 	 */
 	const initDefault = (urls = urlsAjax) => {
 		
-		$.fn.modal.Constructor.prototype.enforceFocus = function() {};
-		
 		/***.::| Evento que inicializa datePicker |::.***/
 		$('.fecha').datepicker($.fn.datepicker.languages['es-ES']);
 		
@@ -84,12 +116,9 @@ const fComun = function(){
 		    monthsShort: ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic']
 		});
 		
-		$.fn.modal.Constructor.prototype.enforceFocus = function() {};
-		
-		$('.modalStatic').modal({
-	  		  keyboard: false,
-	  		  backdrop: 'static',
-	  		  show: false
+		inicializarModal('.modalStatic', {
+			keyboard: false,
+			backdrop: 'static'
 		});
 		
 		$.ajaxSetup({
@@ -97,7 +126,6 @@ const fComun = function(){
 		        if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
 		        	let csrftoken = Cookies.get('csrftoken');
 		            xhr.setRequestHeader("X-CSRFToken", csrftoken);
-		            xhr.setRequestHeader("tokenSistema", $("#token").html());
 		        }
 		        for(idx in urls){
 		        	if ( settings.url.includes(urls[idx]) ) {
@@ -146,7 +174,7 @@ const fComun = function(){
 			"dom": '<"tituloTablas esconder">frtlip',
 			"info":     false,
 			"language": {
-				"url": "SARC/estaticos/js/datatable/ParametrosDT_Esp.json"
+				"url": (typeof rutaIdiomaDT !== "undefined" ? rutaIdiomaDT : "/estaticos/js/datatables/ParametrosDT_Esp.json")
 			}
 		} );
 	};
@@ -158,7 +186,7 @@ const fComun = function(){
 	 * @static
 	 */
 	const mostrarEspera = () => {
-		$(".espera").modal('show');
+		mostrarModal('.espera', { keyboard: false, backdrop: 'static' });
 	};
 	
 	/**
@@ -168,9 +196,7 @@ const fComun = function(){
 	 * @static
 	 */
 	const ocultarEspera = () => {
-		 $('.espera').each(function(){
-             $(this).modal('hide');
-         });
+		ocultarModal('.espera');
 	};
 	
 	/**
@@ -193,8 +219,16 @@ const fComun = function(){
 	        success: function (data) {
 	        	handleData(data);
 	        },
-            error: function(){
-            	handleData("No se obtuvo nada");
+            error: function(xhr, statusText, errThrown){
+            	let resp = xhr.responseJSON;
+            	if (!resp) {
+            		try { resp = JSON.parse(xhr.responseText || ""); } catch (_) {}
+            	}
+            	handleData(resp || {
+            		estatus: xhr.status || 500,
+            		code: xhr.status || 500,
+            		error: errThrown || xhr.statusText || "No fue posible completar la solicitud."
+            	});
             }
 	      });
 	};
@@ -228,8 +262,9 @@ const fComun = function(){
 		      	}
 		      	// construimos un objeto compatible con tu handler
 		      	handleData(resp || {
-		        	code: xhr.status,                          // ej. 409
-		        	error: (resp && resp.error) || errThrown || xhr.statusText || "Error",
+		        	estatus: xhr.status || 500,
+		        	code: xhr.status || 500,
+		        	error: errThrown || xhr.statusText || "Error",
 		      	});
             }
 	      });
@@ -301,8 +336,20 @@ const fComun = function(){
                     a.click();
 	            } 
     	    },
-            error: function(){ 
-            	handleData("No se obtuvo nada");
+            error: function(xhr){
+            	const mostrarError = (mensaje) => {
+            		const texto = mensaje || "No fue posible generar el archivo solicitado.";
+            		mostrarModalAdvertencia(texto, "Error al generar PDF");
+            		handleData({ estatus: xhr.status || 500, error: texto });
+            	};
+
+            	if (xhr.response instanceof Blob) {
+            		xhr.response.text()
+            			.then((texto) => mostrarError(texto))
+            			.catch(() => mostrarError("No fue posible generar el archivo solicitado."));
+            	} else {
+            		mostrarError(xhr.responseText);
+            	}
             }
 		});
 	};
@@ -634,10 +681,7 @@ const fComun = function(){
 	 * @static
 	 */
 	const recargaPagina = () => {
-		let param = {
-				token: $("#token").html()
-		}
-		post("/SIPEFI/recargaPagina/",param, function(resp){
+		post("/SIPEFI/recargaPagina/", {}, function(resp){
 				location.reload(true);
 				solTomoII.cargaMenuIniBotones();
 		});
@@ -704,7 +748,7 @@ const fComun = function(){
 		$(idModal + " .close").addClass('regresarEspe');
 		$(idModal + " .modal-body button").addClass('regresarEspe');
 		comunE.eventoEspecial(".regresarEspe", idModal, especial, funcionAccion, numElem, arg1, arg2);
-		$(idModal).modal('show');
+		mostrarModal(idModal);
 		fComun.ocultarEspera();
 	};
 	
@@ -729,7 +773,7 @@ const fComun = function(){
 		$(idModal + " .modal-body .btn-warning").addClass('confirmAccion letraBlanca').html("<strong>Confirmar</strong>");
 		comunE.eventoEspecial(".regresarEspe",idModal,false,"",0,"","");
 		comunE.eventoEspecial(".confirmAccion", idModal, true, funcionAccion, numParam, param1, param2);
-		$(idModal).modal('show');
+		mostrarModal(idModal);
 		fComun.ocultarEspera();
 	};
 	
@@ -781,9 +825,7 @@ const fComun = function(){
 		ocultarEspera();
 	  	$("#tituloErrorGenerico").text(titulo);
 	  	$("#mensajeErrorGenerico").html(mensaje);
-		const el = document.getElementById("modalErrorGenerico");
-		const modal = bootstrap.Modal.getOrCreateInstance(el, { backdrop: 'static' });
-		if (!el.classList.contains('show')) modal.show();
+		mostrarModal('#modalErrorGenerico', { backdrop: 'static' });
 	}
 	
 	// Funcion para normalizar y quitar acentos
@@ -801,6 +843,9 @@ const fComun = function(){
 		quitaFormato: quitaFormato,
 		mostrarEspera: mostrarEspera,
 		ocultarEspera: ocultarEspera,
+		inicializarModal: inicializarModal,
+		mostrarModal: mostrarModal,
+		ocultarModal: ocultarModal,
 		guardaVarLocal: guardaVarLocal,
 		guardaVarLocalS: guardaVarLocalS,
 		getVarLocalJ: getVarLocalJ,

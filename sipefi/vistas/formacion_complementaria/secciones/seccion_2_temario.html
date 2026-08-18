@@ -1,0 +1,34 @@
+<div class="tab-pane fade" id="fcTemario">
+    <div class="fc-section-intro">
+        <div>
+            <h4>Temas</h4>
+            <p>Registra los temas y distribuye la totalidad de las horas prácticas del semestre.</p>
+        </div>
+        <div class="d-flex flex-column align-items-md-end gap-2">
+            <div id="fcBoxHorasRestantes"
+                 class="px-3 py-2 rounded-3 text-white fw-semibold bg-secondary"
+                 title="Define las horas prácticas semanales en Datos generales.">
+                Horas totales restantes:
+                <span id="fcHorasRestantes">0</span>
+                de
+                <span id="fcHorasTotales">0</span>
+            </div>
+            <span id="fcHorasTemarioResumen" class="badge text-bg-light">0 horas registradas</span>
+        </div>
+    </div>
+    <div class="card bg-light border-0 mb-3 fc-editor-tema">
+        <div class="card-body">
+            <div class="row g-3 align-items-end">
+                <div class="col-md-8"><label for="fcTemaNombre" class="form-label">Tema <span class="text-danger">*</span></label><input id="fcTemaNombre" class="form-control fc-editable" maxlength="250"></div>
+                <div class="col-md-3"><label for="fcTemaHoras" class="form-label">Horas prácticas <span class="text-danger">*</span></label><input id="fcTemaHoras" class="form-control fc-editable" type="number" min="1" step="1" inputmode="numeric"></div>
+                <div class="col-md-1"><button id="fcBtnAgregarTema" class="btn btn-primary w-100 fc-editable-btn" type="button" title="Agregar tema"><i class="fa-solid fa-plus"></i></button></div>
+            </div>
+        </div>
+    </div>
+    <div class="table-responsive">
+        <table id="fcTablaTemas" class="table table-hover align-middle w-100">
+            <thead><tr><th>Núm.</th><th>Tema</th><th>Horas prácticas</th><th>Acciones</th></tr></thead>
+            <tbody></tbody>
+        </table>
+    </div>
+</div>

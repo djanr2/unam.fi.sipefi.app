@@ -1,6 +1,11 @@
 # -*- coding: utf-8 -*-
-
 import secrets
+import logging
+
+logger = logging.getLogger(__name__)
+
+from django.conf import settings
+from django.contrib.auth.hashers import check_password, identify_hasher, make_password
 
 from sipefi_apps.principal.modelo.ConexionBD import ConexionBD as conBD
 
@@ -37,13 +42,8 @@ class ConsultasBD():
             
         def buscaSolicitudesUsuario(self, usuario, rol):
             """
-                Funcion que busca todas las solicitudes pendientes de concluir por el usuario logueado.
-                
-                :param usuario: Usuario logueado.
-                :param rol: Rol del usuario logueado.
-                :param universo: Id del proyecto que se esta trabajando.
-                
-                :return: Objeto que contiene la informacion de las solicitudes procesadas por el usuario logueado.  
+            Busca las solicitudes visibles para el usuario y perfil activo.
+
             """
             cursor = conBD().cursorBD()
             subQueryR = self.subConsultaRechazo()
@@ -51,66 +51,91 @@ class ConsultasBD():
             idsV = self.buscaRolXNombre("Validador")
             rol = int(rol)
             estatus = 2 if rol in idsV else 1
-            sqlExtra = ""
-            if rol in idsV: #Validadores
-                sqlExtra = """ 
-                            and a.id_solicitud not in 
-                            (select distinct id_solicitud 
-                                from TD_SOLICITUD_TOMO_II 
-                                where 
-                                (ID_USUARIO_CREACION = '""" + str(id_usuario) + """'
-                                or ID_USUARIO_MOD = '""" + str(id_usuario) + """') 
-                                and historica = 1
-                            )
+
+            sql_extra = ""
+            params = {"estatus": estatus}
+
+            if rol in idsV:  # Validadores
+                sql_extra = """
+                    AND a.id_solicitud NOT IN (
+                        SELECT DISTINCT id_solicitud
+                          FROM TD_SOLICITUD_TOMO_II
+                         WHERE (
+                                ID_USUARIO_CREACION = :id_usuario
+                                OR ID_USUARIO_MOD = :id_usuario
+                               )
+                           AND historica = 1
+                    )
                 """
-                if rol != 17:
-                    sqlExtra += """
-                                and ABS(a.id_perfil - """ + str(rol) + """) <= 1 
-                            """
-            elif rol != 16: #Operadores menos el operador administrador
-                sqlExtra = "and (a.ID_USUARIO_CREACION = '" + str(id_usuario) + "' or a.ID_USUARIO_MOD = '" + str(id_usuario) + "')"
-            sqlCons = """
-                        SELECT 
-                            'SIPEFI-'||a.id_solicitud, a.asignatura,
-                            case when c.estatus is not null then c.estatus else b.desc_estatus end, 
-                            ucrea.USUARIO_SISTEMA AS usuario_creacion,
-                            umod.USUARIO_SISTEMA AS usuario_modificacion,
-                            TO_CHAR(a.FECHA_MODIFICACION,'dd/mm/yyyy') fecha_mod,
-                            '', a.id_solicitud||'#@@#'||a.id_estatus_solicitud||'#@@#'||a.asignatura||'#@@#'||
-                            umod.USUARIO_SISTEMA||'#@@#'||a.historica||'#@@#'||a.id_perfil||'#@@#'||ucrea.id_perfil
-                        from TD_SOLICITUD_TOMO_II a 
-                        inner join catalogo.TC_ESTATUS_SOLICITUD b 
-                            on a.id_estatus_solicitud = b.id_estatus_solicitud
-                        left join (""" + subQueryR + """) c 
-                            on a.id_solicitud = c.id_solicitud
-                        LEFT JOIN PARAMETRO.TP_USUARIO ucrea 
-                            ON a.ID_USUARIO_CREACION = ucrea.ID_USUARIO
-                        LEFT JOIN PARAMETRO.TP_USUARIO umod 
-                            ON a.ID_USUARIO_MOD = umod.ID_USUARIO
-                        where 
-                            a.historica = 0 
-                            and a.id_estatus_solicitud in (""" + str(estatus) + """)
-                            """ + sqlExtra + """
-                        order by a.id_solicitud desc
+                params["id_usuario"] = id_usuario
+
+                if rol != 17:  # Validador administrador ve todas las divisiones
+                    sql_extra += """
+                        AND EXISTS (
+                            SELECT 1
+                              FROM CATALOGO.TC_MAPEO_PERFIL mp
+                             WHERE mp.id_perfil_origen = :rol
+                               AND mp.id_perfil_destino = a.id_perfil
+                               AND mp.activo = 0
+                        )
+                    """
+                    params["rol"] = rol
+            elif rol != 16:  # Operadores, excepto operador administrador
+                sql_extra = """
+                    AND (
+                        a.ID_USUARIO_CREACION = :id_usuario
+                        OR a.ID_USUARIO_MOD = :id_usuario
+                    )
+                """
+                params["id_usuario"] = id_usuario
+
+            sql_cons = f"""
+                SELECT
+                    'SIPEFI-'||a.id_solicitud,
+                    a.asignatura,
+                    CASE
+                        WHEN c.estatus IS NOT NULL THEN c.estatus
+                        ELSE b.desc_estatus
+                    END,
+                    ucrea.USUARIO_SISTEMA AS usuario_creacion,
+                    umod.USUARIO_SISTEMA AS usuario_modificacion,
+                    TO_CHAR(a.FECHA_MODIFICACION,'dd/mm/yyyy') fecha_mod,
+                    '',
+                    a.id_solicitud||'#@@#'||a.id_estatus_solicitud||'#@@#'||a.asignatura||'#@@#'||
+                    umod.USUARIO_SISTEMA||'#@@#'||a.historica||'#@@#'||a.id_perfil||'#@@#'||ucrea.id_perfil
+                  FROM TD_SOLICITUD_TOMO_II a
+                  INNER JOIN CATALOGO.TC_ESTATUS_SOLICITUD b
+                    ON a.id_estatus_solicitud = b.id_estatus_solicitud
+                  LEFT JOIN ({subQueryR}) c
+                    ON a.id_solicitud = c.id_solicitud
+                  LEFT JOIN PARAMETRO.TP_USUARIO ucrea
+                    ON a.ID_USUARIO_CREACION = ucrea.ID_USUARIO
+                  LEFT JOIN PARAMETRO.TP_USUARIO umod
+                    ON a.ID_USUARIO_MOD = umod.ID_USUARIO
+                 WHERE a.historica = 0
+                   AND a.id_estatus_solicitud = :estatus
+                   {sql_extra}
+                 ORDER BY a.id_solicitud DESC
             """
             try:
-                data = cursor.execute(sqlCons)
+                data = cursor.execute(sql_cons, params)
                 res = [app for app in data]
                 res2 = self.buscaSolicitudesAvanzadas(id_usuario, estatus)
                 res3 = self.buscaSolicitudesRecientes(id_usuario, estatus, subQueryR)
-                respTotal = {'TSU': res,
-                             'estatusTSU': 200 if len(res) >= 1 else 204 ,
-                             'TSA': res2,
-                             'estatusTSA': 200 if len(res2) >= 1 else 204,
-                             'TSR': res3,
-                             'estatusTSR': 200 if len(res3) >= 1 else 204,
-                             'catalogos': self.dameCatalogosIni(),
-                             "infoAsigLic": self.buscaAsignaturasXLicenciatura(),
-                             }
+                respTotal = {
+                    'TSU': res,
+                    'estatusTSU': 200 if len(res) >= 1 else 204,
+                    'TSA': res2,
+                    'estatusTSA': 200 if len(res2) >= 1 else 204,
+                    'TSR': res3,
+                    'estatusTSR': 200 if len(res3) >= 1 else 204,
+                    'catalogos': self.dameCatalogosIni(),
+                    "infoAsigLic": self.buscaAsignaturasXLicenciatura(),
+                }
             finally:
                 cursor.close()
             return respTotal
-        
+
         def buscaAsignaturasXLicenciatura(self):
             """
                 Funcion que busca todas las asignaturas por licenciatura.
@@ -152,133 +177,130 @@ class ConsultasBD():
             
         def buscaSolicitudesAvanzadas(self, id_usuario, estatus):
             """
-                Funcion que busca todas las solicitudes en las que ha participado el usuario logueado.
-                
-                :param id_usuario: ID del usuario logueado.
-                :param estatus: Estatus de solicitud que no debe ser considerado en la busqueda de solicitudes.
-                
-                :return: Regresa el objeto con la informacion de las solicitudes donde el usuario ha participado.
+            Busca solicitudes en las que ha participado el usuario logueado.
             """
             cursor = conBD().cursorBD()
             try:
-                extraCond = """ 
-                        a.ID_USUARIO_MOD = '""" + str(id_usuario) + """'
-                        and a.ID_USUARIO_MOD != a.ID_USUARIO_CREACION
-                        """
-                if estatus == 1: #Operativo
-                    extraCond = """
-                        (a.ID_USUARIO_MOD = '""" + str(id_usuario) + """' or
-                        a.ID_USUARIO_CREACION = '""" + str(id_usuario) + """'
+                extra_cond = """
+                    a.ID_USUARIO_MOD = :id_usuario
+                    AND a.ID_USUARIO_MOD != a.ID_USUARIO_CREACION
+                """
+                if int(estatus) == 1:  # Operativo
+                    extra_cond = """
+                        (
+                            a.ID_USUARIO_MOD = :id_usuario
+                            OR a.ID_USUARIO_CREACION = :id_usuario
                         )
                     """
-                data = cursor.execute("""
-                            select 
-                                'SIPEFI-'||g.id_solicitud, 
-                                g.asignatura, 
-                                g.desc_estatus, 
-                                g.usuario_creacion,
-                                g.usuario_modificacion, 
-                                TO_CHAR(g.fecha_mod,'dd/mm/yy'), 
-                                '<select class="accionSolicitud" id="numS'||g.id_solicitud||'"></select>',
-                                (
-                                    select 
-                                        LISTAGG(
-                                            g.id_solicitud||'-'||a.id_estatus_solicitud||'||'||b.desc_estatus, 
-                                            '#@@#'
-                                        ) WITHIN GROUP (ORDER BY a.id_estatus_solicitud) AS estatus 
-                                    from TD_SOLICITUD_TOMO_II a
-                                    inner join CATALOGO.TC_ESTATUS_SOLICITUD b
-                                        on a.id_estatus_solicitud = b.id_estatus_solicitud
-                                    where a.id_solicitud = g.id_solicitud 
-                                    group by a.id_solicitud
-                                ) estatus
-                            from (
-                                select distinct 
-                                    a.id_solicitud, 
-                                    a.asignatura, 
-                                    e.desc_estatus, 
-                                    e.id_estatus_solicitud,
-                                    ucrea.USUARIO_SISTEMA AS usuario_creacion,
-                                    umod.USUARIO_SISTEMA AS usuario_modificacion,
-                                    a.FECHA_MODIFICACION AS fecha_mod
-                                from TD_SOLICITUD_TOMO_II a
-                                inner join (
-                                    select c.id_solicitud, max(c.id_estatus_solicitud) id_estatus
-                                    from TD_SOLICITUD_TOMO_II c 
-                                    where c.historica = 0 
-                                    group by c.id_solicitud
-                                ) b
-                                    on b.id_solicitud = a.id_solicitud
-                                inner join CATALOGO.TC_ESTATUS_SOLICITUD e
-                                    on b.id_estatus = e.id_estatus_solicitud
-                                LEFT JOIN PARAMETRO.TP_USUARIO ucrea 
-                                    ON a.ID_USUARIO_CREACION = ucrea.ID_USUARIO
-                                LEFT JOIN PARAMETRO.TP_USUARIO umod 
-                                    ON a.ID_USUARIO_MOD = umod.ID_USUARIO
-                                where 
-                                a.historica = 0 and
-                                """ + extraCond + """
-                            ) g 
-                            where g.id_estatus_solicitud not in ('""" + str(estatus) + """', '0') 
-                            order by g.id_solicitud desc
-                """)
+
+                sql = f"""
+                    SELECT
+                        'SIPEFI-'||g.id_solicitud,
+                        g.asignatura,
+                        g.desc_estatus,
+                        g.usuario_creacion,
+                        g.usuario_modificacion,
+                        TO_CHAR(g.fecha_mod,'dd/mm/yy'),
+                        '<select class="accionSolicitud" id="numS'||g.id_solicitud||'"></select>',
+                        (
+                            SELECT LISTAGG(
+                                       g.id_solicitud||'-'||a.id_estatus_solicitud||'||'||b.desc_estatus,
+                                       '#@@#'
+                                   ) WITHIN GROUP (ORDER BY a.id_estatus_solicitud) AS estatus
+                              FROM TD_SOLICITUD_TOMO_II a
+                              INNER JOIN CATALOGO.TC_ESTATUS_SOLICITUD b
+                                ON a.id_estatus_solicitud = b.id_estatus_solicitud
+                             WHERE a.id_solicitud = g.id_solicitud
+                             GROUP BY a.id_solicitud
+                        ) estatus
+                      FROM (
+                            SELECT DISTINCT
+                                a.id_solicitud,
+                                a.asignatura,
+                                e.desc_estatus,
+                                e.id_estatus_solicitud,
+                                ucrea.USUARIO_SISTEMA AS usuario_creacion,
+                                umod.USUARIO_SISTEMA AS usuario_modificacion,
+                                a.FECHA_MODIFICACION AS fecha_mod
+                              FROM TD_SOLICITUD_TOMO_II a
+                              INNER JOIN (
+                                    SELECT c.id_solicitud,
+                                           MAX(c.id_estatus_solicitud) id_estatus
+                                      FROM TD_SOLICITUD_TOMO_II c
+                                     WHERE c.historica = 0
+                                     GROUP BY c.id_solicitud
+                              ) b
+                                ON b.id_solicitud = a.id_solicitud
+                              INNER JOIN CATALOGO.TC_ESTATUS_SOLICITUD e
+                                ON b.id_estatus = e.id_estatus_solicitud
+                              LEFT JOIN PARAMETRO.TP_USUARIO ucrea
+                                ON a.ID_USUARIO_CREACION = ucrea.ID_USUARIO
+                              LEFT JOIN PARAMETRO.TP_USUARIO umod
+                                ON a.ID_USUARIO_MOD = umod.ID_USUARIO
+                             WHERE a.historica = 0
+                               AND {extra_cond}
+                      ) g
+                     WHERE g.id_estatus_solicitud NOT IN (:estatus, 0)
+                     ORDER BY g.id_solicitud DESC
+                """
+                data = cursor.execute(sql, {
+                    "id_usuario": id_usuario,
+                    "estatus": int(estatus),
+                })
                 res = [app for app in data]
             finally:
                 cursor.close()
             return res
-        
+
         def buscaSolicitudesRecientes(self, id_usuario, estatus, subQueryR):
             """
-                Funcion que busca todas las solicitudes que han sido procesadas por usuarios diferentes al usuario logueado.
-                
-                :param usuario: Usuario logueado.
-                :param tablaSoli: Nombre de la tabla donde se buscaran las solicitudes en base de datos.
-                :param subQueryR: Subquery que debe ser agregada al query de consulta.
-                
-                :return: Regresa el objeto con la informacion de las solicitudes que han sido procesadas por usuarios diferentes al usuario logueado.
+            Busca solicitudes activas aprobadas (estatus 3) y procesadas por
+            usuarios diferentes al usuario logueado.
             """
             cursor = conBD().cursorBD()
             try:
-                data = cursor.execute("""
-                    SELECT 
-                        'SIPEFI-'||a.id_solicitud, 
+                sql = f"""
+                    SELECT
+                        'SIPEFI-'||a.id_solicitud,
                         a.asignatura,
-                        case 
-                            when c.estatus is not null then c.estatus 
-                            else b.desc_estatus 
-                        end,
+                        CASE
+                            WHEN c.estatus IS NOT NULL THEN c.estatus
+                            ELSE b.desc_estatus
+                        END,
                         ucrea.USUARIO_SISTEMA AS usuario_creacion,
                         umod.USUARIO_SISTEMA AS usuario_modificacion,
                         TO_CHAR(a.FECHA_MODIFICACION,'dd/mm/yyyy') fecha_mod,
-                        '', 
+                        '',
                         a.id_solicitud||'#@@#'||a.id_estatus_solicitud||'#@@#'||a.asignatura||'#@@#'||
                         umod.USUARIO_SISTEMA||'#@@#'||a.historica
-                    from TD_SOLICITUD_TOMO_II a 
-                    inner join catalogo.TC_ESTATUS_SOLICITUD b 
-                        on a.id_estatus_solicitud = b.id_estatus_solicitud
-                    left join ("""+subQueryR+""") c 
-                        on a.id_solicitud = c.id_solicitud
-                    LEFT JOIN PARAMETRO.TP_USUARIO ucrea 
+                      FROM TD_SOLICITUD_TOMO_II a
+                      INNER JOIN CATALOGO.TC_ESTATUS_SOLICITUD b
+                        ON a.id_estatus_solicitud = b.id_estatus_solicitud
+                      LEFT JOIN ({subQueryR}) c
+                        ON a.id_solicitud = c.id_solicitud
+                      LEFT JOIN PARAMETRO.TP_USUARIO ucrea
                         ON a.ID_USUARIO_CREACION = ucrea.ID_USUARIO
-                    LEFT JOIN PARAMETRO.TP_USUARIO umod 
+                      LEFT JOIN PARAMETRO.TP_USUARIO umod
                         ON a.ID_USUARIO_MOD = umod.ID_USUARIO
-                    where 
-                        a.historica = 0 
-                        and a.id_estatus_solicitud >= '""" + str(estatus) + """' 
-                        and a.id_solicitud not in 
-                                (select distinct id_solicitud 
-                                    from TD_SOLICITUD_TOMO_II 
-                                    where (ID_USUARIO_MOD = '""" + str(id_usuario) + """'
-                                    or ID_USUARIO_CREACION = '""" + str(id_usuario) + """'
-                                    )
-                                )
-                    order by a.id_solicitud desc
-                """)
+                     WHERE a.historica = 0
+                       AND a.id_estatus_solicitud = 3
+                       AND a.id_solicitud NOT IN (
+                            SELECT DISTINCT id_solicitud
+                              FROM TD_SOLICITUD_TOMO_II
+                             WHERE (
+                                    ID_USUARIO_MOD = :id_usuario
+                                   )
+                       )
+                     ORDER BY a.id_solicitud DESC
+                """
+                data = cursor.execute(sql, {
+                    "id_usuario": id_usuario,
+                })
                 res = [app for app in data]
             finally:
                 cursor.close()
             return res
-        
+
         def dameCatalogosIni(self):
             """
                 Funcion principal que obtiene los catalogos iniciales del sistema SIPEFI - TOMO II.
@@ -521,11 +543,11 @@ class ConsultasBD():
                 
                 :param token: Numero de token necesario para ingresar a la sesion de la aplicacion SIPEFI.
             """
-            sql = """
-                update PARAMETRO.TP_ACCESOS set estatus_acceso = 'E', fecha_acceso = sysdate 
-                where token = '"""+str(token)+"""'
-            """
-            self.insertaQuery(sql)
+            self.insertar("""
+                UPDATE PARAMETRO.TP_ACCESOS
+                   SET ESTATUS_ACCESO = 'E', FECHA_ACCESO = SYSDATE
+                 WHERE TOKEN = :token
+            """, {"token": token})
         
         def validaTokenAcceso(self, token):
             """
@@ -538,14 +560,17 @@ class ConsultasBD():
             cursor = conBD().cursorBD()
             try:
                 data = cursor.execute("""
-                    select a.token, b.usuario_sistema, b.id_perfil, a.id_usuario
-                    from parametro.TP_ACCESOS a
-                    inner join parametro.TP_USUARIO b
-                      on a.id_usuario = b.id_usuario
-                    where a.ESTATUS_ACCESO = 'E' and a.token = '""" + str(token) + """' and 
-                         ((sysdate - a.FECHA_ACCESO)*24*60*60) 
-                          <= (select valor from parametro.tp_parametro b where b.parametro = 'DURACION_TOKEN')
-                """)
+                    SELECT a.token, b.usuario_sistema, b.id_perfil, a.id_usuario
+                      FROM PARAMETRO.TP_ACCESOS a
+                      INNER JOIN PARAMETRO.TP_USUARIO b
+                        ON a.id_usuario = b.id_usuario
+                     WHERE a.ESTATUS_ACCESO = 'E'
+                       AND a.token = :token
+                       AND ((SYSDATE - a.FECHA_ACCESO) * 24 * 60 * 60)
+                           <= (SELECT valor
+                                 FROM PARAMETRO.TP_PARAMETRO
+                                WHERE parametro = 'DURACION_TOKEN')
+                """, {"token": token})
                 resp = [app for app in data]
                 url = self.getUrlBadAccess()
                 resp = {'acceso': resp,
@@ -568,17 +593,18 @@ class ConsultasBD():
             cursor = conBD().cursorBD()
             try:
                 data = cursor.execute("""
-                    select c.id_perfil, c.nombre_perfil
-                    from catalogo.TC_PERFIL a
-                    inner join catalogo.TC_MAPEO_PERFIL b 
-                      on a.id_perfil = b.id_perfil_origen 
-                    inner join catalogo.TC_PERFIL c
-                      on b.id_perfil_destino = c.id_perfil
-                    where a.id_perfil = '""" + str(id_perfil) + """' 
-                    and a.activo = '0' and c.activo = '0' 
-                    and b.activo = '0'
-                    order by 1
-                """)
+                    SELECT c.id_perfil, c.nombre_perfil
+                      FROM CATALOGO.TC_PERFIL a
+                      INNER JOIN CATALOGO.TC_MAPEO_PERFIL b
+                        ON a.id_perfil = b.id_perfil_origen
+                      INNER JOIN CATALOGO.TC_PERFIL c
+                        ON b.id_perfil_destino = c.id_perfil
+                     WHERE a.id_perfil = :id_perfil
+                       AND a.activo = 0
+                       AND c.activo = 0
+                       AND b.activo = 0
+                     ORDER BY 1
+                """, {"id_perfil": int(id_perfil)})
                 resp = [{"id": app[0], "rol": app[1]} for app in data]
                 resp = {"resp": resp,
                         "estatus": 200 if len(resp) >= 1 else 204
@@ -633,68 +659,112 @@ class ConsultasBD():
             cursor = conBD().cursorBD()
             try:
                 cursor.execute("""
-                   update parametro.TP_ACCESOS set estatus_acceso = 'A'
-                   where estatus_acceso = 'E' and token = '""" + str(token) + """'
-                """)
+                    UPDATE PARAMETRO.TP_ACCESOS
+                       SET ESTATUS_ACCESO = 'A'
+                     WHERE ESTATUS_ACCESO = 'E'
+                       AND TOKEN = :token
+                """, {"token": token})
             finally:
                 cursor.close()
                 
         def validar_credenciales(self, usuario_sistema, clave_acceso):
             """
-            Valida las credenciales de un usuario y genera un token si son correctas.
-        
-            Parámetros:
-            - usuario_sistema: nombre de usuario ingresado por el usuario
-            - clave_acceso: contraseña ingresada por el usuario
-    
-            Retorna:
-            - Un diccionario con el token y datos del usuario si son válidos.
-            - None si las credenciales son incorrectas.
+            Valida las credenciales del usuario y genera un token de acceso.
+
+            Compatibilidad de contraseñas:
+            - Si CLAVE_ACCESO ya contiene un hash reconocido por Django, se valida
+              con check_password().
+            - Si todavía contiene la contraseña histórica en texto plano, se valida
+              por igualdad.
+            - Si SIPEFI_MIGRAR_PASSWORD_HASH está habilitado, después de un acceso
+              correcto se migra automáticamente esa contraseña a un hash de Django.
+
+            De esta forma los usuarios existentes no tienen que cambiar su
+            contraseña y la migración puede habilitarse de manera progresiva.
             """
             cursor = conBD().cursorBD()
             try:
                 cursor.execute("""
-                    SELECT ID_USUARIO, USUARIO_SISTEMA, NOMBRE_COMPLETO, ID_PERFIL
-                    FROM PARAMETRO.TP_USUARIO
-                    WHERE USUARIO_SISTEMA = :usuario 
-                      AND CLAVE_ACCESO = :clave  
-                      AND ACTIVO = 0
+                    SELECT ID_USUARIO,
+                           USUARIO_SISTEMA,
+                           NOMBRE_COMPLETO,
+                           ID_PERFIL,
+                           CLAVE_ACCESO
+                      FROM PARAMETRO.TP_USUARIO
+                     WHERE USUARIO_SISTEMA = :usuario
+                       AND ACTIVO = 0
                 """, {
-                    'usuario': usuario_sistema,
-                    'clave': clave_acceso
+                    "usuario": usuario_sistema
                 })
                 row = cursor.fetchone()
-                if row:
-                    id_usuario = row[0]
-                    token = secrets.token_hex(32)  # Token seguro de 64 caracteres
-    
-                    # Insertar registro de acceso
-                    cursor.execute("""
-                        INSERT INTO PARAMETRO.TP_ACCESOS (
-                            ID_USUARIO, ESTATUS_ACCESO, MODULO, TOKEN
-                        ) VALUES (
-                            :id_usuario, 'E', 'Tomo II', :token
-                        )
-                    """, {
-                        'id_usuario': id_usuario,
-                        'token': token
-                    })
-    
-                    return {
-                        "token": token,
-                        "usuario": {
-                            "id": row[0],
-                            "usuario_sistema": row[1],
-                            "nombre": row[2],
-                            "id_perfil": row[3]
-                        }
-                    }
-    
-                else:
+
+                if not row:
                     return None
+
+                id_usuario = row[0]
+                clave_guardada = "" if row[4] is None else str(row[4])
+                clave_recibida = "" if clave_acceso is None else str(clave_acceso)
+
+                try:
+                    identify_hasher(clave_guardada)
+                    es_hash_django = True
+                except ValueError:
+                    es_hash_django = False
+
+                if es_hash_django:
+                    credenciales_validas = check_password(
+                        clave_recibida,
+                        clave_guardada
+                    )
+                else:
+                    credenciales_validas = secrets.compare_digest(
+                        clave_guardada.encode("utf-8"),
+                        clave_recibida.encode("utf-8")
+                    )
+
+                if not credenciales_validas:
+                    return None
+
+                # Migración transparente: el primer login correcto de una cuenta
+                # histórica reemplaza el texto plano por un hash seguro.
+                if not es_hash_django and settings.SIPEFI_MIGRAR_PASSWORD_HASH:
+                    cursor.execute("""
+                        UPDATE PARAMETRO.TP_USUARIO
+                           SET CLAVE_ACCESO = :clave_hash,
+                               BFECHA = SYSDATE
+                         WHERE ID_USUARIO = :id_usuario
+                           AND CLAVE_ACCESO = :clave_actual
+                    """, {
+                        "clave_hash": make_password(clave_recibida),
+                        "id_usuario": id_usuario,
+                        "clave_actual": clave_guardada
+                    })
+
+                token = secrets.token_hex(32)  # Token seguro de 64 caracteres
+
+                cursor.execute("""
+                    INSERT INTO PARAMETRO.TP_ACCESOS (
+                        ID_USUARIO, ESTATUS_ACCESO, MODULO, TOKEN
+                    ) VALUES (
+                        :id_usuario, 'E', 'Tomo II', :token
+                    )
+                """, {
+                    "id_usuario": id_usuario,
+                    "token": token
+                })
+
+                return {
+                    "token": token,
+                    "usuario": {
+                        "id": row[0],
+                        "usuario_sistema": row[1],
+                        "nombre": row[2],
+                        "id_perfil": row[3]
+                    }
+                }
             finally:
                 cursor.close()
-                
+
         def cierraSesionUsuario(self, token, id_usuario, opcion):
             """
                 Funcion que ayuda a cerrar definitivamente la sesion del usuario.
@@ -703,17 +773,21 @@ class ConsultasBD():
                 :param usuario: Parametro que contiene el nombre del usuario logueado al sistema.
                 :param opcion: Parametro que indica la opcion con la que se desea trabajar.
             """
-            condicion = ""
-            if int(opcion) == 1:
-                condicion = " token = '" + token + "'"
-            else:
-                condicion = " id_usuario = '" + str(id_usuario) + "' and token != '" + str(token) + "'"
             cursor = conBD().cursorBD()
             try:
-                cursor.execute("""
-                   update parametro.TP_ACCESOS set estatus_acceso = 'I'
-                   where """ + condicion + """
-                """)
+                if int(opcion) == 1:
+                    cursor.execute("""
+                        UPDATE PARAMETRO.TP_ACCESOS
+                           SET ESTATUS_ACCESO = 'I'
+                         WHERE TOKEN = :token
+                    """, {"token": token})
+                else:
+                    cursor.execute("""
+                        UPDATE PARAMETRO.TP_ACCESOS
+                           SET ESTATUS_ACCESO = 'I'
+                         WHERE ID_USUARIO = :id_usuario
+                           AND TOKEN <> :token
+                    """, {"id_usuario": int(id_usuario), "token": token})
             finally:
                 cursor.close()
             
@@ -740,8 +814,8 @@ class ConsultasBD():
                 else:
                     resp = row[0] if row else "NOK"
         
-            except Exception as e:
-                print(e)
+            except Exception:
+                logger.exception("Error al validar la sesión del usuario.")
                 resp = "NOK"
             finally:
                 cursor.close()
@@ -763,6 +837,21 @@ class ConsultasBD():
             }
             return nomEstatus.get(idEstatus,"NOK")
         
+        def getNombrePerfil(self, id_perfil):
+            """Obtiene el nombre del perfil activo por su identificador."""
+            cursor = conBD().cursorBD()
+            try:
+                cursor.execute("""
+                    SELECT nombre_perfil
+                      FROM CATALOGO.TC_PERFIL
+                     WHERE id_perfil = :id_perfil
+                       AND activo = 0
+                """, {"id_perfil": int(id_perfil)})
+                row = cursor.fetchone()
+                return row[0] if row else ""
+            finally:
+                cursor.close()
+
         def buscaRolXNombre(self, nombreRol):
             """
                 Funcion que busca roles por filtro de nombre de rol.
@@ -774,10 +863,12 @@ class ConsultasBD():
             cursor = conBD().cursorBD()
             try:
                 data = cursor.execute("""
-                            select id_perfil from catalogo.TC_PERFIL
-                            where nombre_perfil like '%"""+nombreRol+"""%'
-                            and activo = '0' order by 1
-                        """)
+                    SELECT id_perfil
+                      FROM CATALOGO.TC_PERFIL
+                     WHERE nombre_perfil LIKE :nombre_rol
+                       AND activo = 0
+                     ORDER BY 1
+                """, {"nombre_rol": f"%{nombreRol}%"})
                 resp = []
                 for app in data:
                     resp.append(app[0])
@@ -860,10 +951,8 @@ class ConsultasBD():
             cursor = conBD().cursorBD()
             try:
                 cursor.execute(sql, params or [])
-            except Exception as e:
-                print(f"[ERROR INSERTAR] SQL: {sql}")
-                print(f"[ERROR INSERTAR] Params: {params}")
-                print(f"[ERROR INSERTAR] Excepción: {str(e)}")
+            except Exception:
+                logger.exception("Error al ejecutar una operación DML en SIPEFI.")
                 raise
             finally:
                 cursor.close()

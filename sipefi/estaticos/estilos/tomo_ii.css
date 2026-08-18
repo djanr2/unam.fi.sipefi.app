@@ -268,3 +268,387 @@ input[readonly] {
 #tablaAsigXLic th {
     vertical-align: middle;
 }
+
+/* ========================================================================== */
+/* SIPEFI | Tema para tablas y DataTables                         */
+/* ========================================================================== */
+
+:root {
+  --sipefi-azul-900: #002f5f;
+  --sipefi-azul-800: #004080;
+  --sipefi-azul-700: #0056a6;
+  --sipefi-azul-100: #eaf2fb;
+  --sipefi-azul-050: #f5f8fc;
+  --sipefi-borde: #d9e2ec;
+  --sipefi-texto: #23364d;
+  --sipefi-texto-secundario: #637487;
+  --sipefi-fila-hover: #eef5fc;
+  --sipefi-sombra-tabla: 0 5px 18px rgba(25, 55, 85, 0.09);
+}
+
+/* Contenedor principal generado por DataTables */
+.dt-container {
+  margin: 0.75rem 0 1.75rem;
+  background: #fff;
+  border: 1px solid var(--sipefi-borde);
+  border-radius: 12px;
+  box-shadow: var(--sipefi-sombra-tabla);
+  color: var(--sipefi-texto);
+}
+
+/* Título dinámico de las tablas de solicitudes */
+.dt-container .tituloTablas {
+  display: flex;
+  align-items: center;
+  min-height: 48px;
+  padding: 0.75rem 1rem;
+  background: linear-gradient(100deg, var(--sipefi-azul-900), var(--sipefi-azul-700));
+  color: #fff;
+  border-radius: 11px 11px 0 0;
+  letter-spacing: 0.2px;
+  font-size: 0.98rem;
+}
+
+.dt-container .tituloTablas strong {
+  font-weight: 700;
+}
+
+/* Filas de controles superiores e inferiores */
+.dt-container > .dt-layout-row:not(.dt-layout-table),
+.dt-container > div:not(.tituloTablas):not(.dt-layout-table) {
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
+.dt-container .dt-layout-row:first-of-type:not(.dt-layout-table) {
+  padding-top: 0.85rem;
+  padding-bottom: 0.75rem;
+  background: var(--sipefi-azul-050);
+  border-bottom: 1px solid var(--sipefi-borde);
+}
+
+.dt-container .dt-layout-row:last-child:not(.dt-layout-table) {
+  padding-top: 0.8rem;
+  padding-bottom: 0.8rem;
+  background: #fbfcfe;
+  border-top: 1px solid var(--sipefi-borde);
+  border-radius: 0 0 11px 11px;
+}
+
+/* Zona de la tabla: desplazamiento horizontal seguro para tablas anchas */
+.dt-container .dt-layout-table,
+.dt-container .dt-scroll,
+.dt-container .dt-scroll-body {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Buscador y selector de registros */
+.dt-container .dt-search,
+.dt-container .dataTables_filter,
+.dt-container .dt-length,
+.dt-container .dataTables_length {
+  color: var(--sipefi-texto-secundario);
+  font-size: 0.86rem;
+  font-weight: 600;
+}
+
+.dt-container .dt-search label,
+.dt-container .dataTables_filter label,
+.dt-container .dt-length label,
+.dt-container .dataTables_length label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin: 0;
+}
+
+.dt-container .dt-search input,
+.dt-container .dataTables_filter input {
+  width: min(280px, 52vw);
+  min-height: 36px;
+  margin-left: 0.25rem !important;
+  padding: 0.38rem 0.7rem;
+  background: #fff;
+  border: 1px solid #bdc9d6;
+  border-radius: 8px;
+  color: var(--sipefi-texto);
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.dt-container .dt-search input:focus,
+.dt-container .dataTables_filter input:focus {
+  border-color: var(--sipefi-azul-700);
+  box-shadow: 0 0 0 0.2rem rgba(0, 86, 166, 0.14);
+}
+
+.dt-container .dt-length select,
+.dt-container .dataTables_length select {
+  min-width: 72px;
+  min-height: 36px;
+  margin: 0 0.25rem;
+  padding: 0.3rem 1.8rem 0.3rem 0.65rem;
+  background-color: #fff;
+  border: 1px solid #bdc9d6;
+  border-radius: 8px;
+  color: var(--sipefi-texto);
+}
+
+/* Tabla */
+table.dataTable,
+table.sipefi-data-table {
+  width: 100% !important;
+  margin: 0 !important;
+  border-collapse: separate !important;
+  border-spacing: 0;
+  font-size: 0.88rem;
+}
+
+table.dataTable thead th,
+table.dataTable thead td,
+#tablaAsigXLic thead th {
+  padding: 0.78rem 0.72rem !important;
+  background: var(--sipefi-azul-800) !important;
+  color: #fff !important;
+  border-top: 0 !important;
+  border-right: 1px solid rgba(255, 255, 255, 0.16) !important;
+  border-bottom: 2px solid var(--sipefi-azul-900) !important;
+  font-size: 0.82rem;
+  font-weight: 700;
+  line-height: 1.25;
+  text-transform: none;
+  vertical-align: middle;
+  white-space: normal;
+}
+
+table.dataTable thead th:last-child,
+#tablaAsigXLic thead th:last-child {
+  border-right: 0 !important;
+}
+
+table.dataTable tbody td,
+#tablaAsigXLic tbody td {
+  padding: 0.68rem 0.72rem !important;
+  border-top: 0 !important;
+  border-right: 1px solid #edf1f5 !important;
+  border-bottom: 1px solid #e4eaf0 !important;
+  color: var(--sipefi-texto);
+  line-height: 1.35;
+  vertical-align: middle;
+  background-clip: padding-box;
+}
+
+table.dataTable tbody td:last-child,
+#tablaAsigXLic tbody td:last-child {
+  border-right: 0 !important;
+}
+
+table.dataTable.table-striped > tbody > tr:nth-of-type(odd) > *,
+table.dataTable.stripe > tbody > tr.odd > *,
+#tablaAsigXLic.table-striped > tbody > tr:nth-of-type(odd) > * {
+  --bs-table-accent-bg: transparent;
+  background-color: #fbfcfe !important;
+}
+
+table.dataTable tbody tr:nth-child(even) td,
+#tablaAsigXLic tbody tr:nth-child(even) td {
+  background-color: #fff;
+}
+
+table.dataTable.table-hover tbody tr:hover > *,
+table.dataTable.hover tbody tr:hover > *,
+#tablaAsigXLic.table-hover tbody tr:hover > * {
+  --bs-table-accent-bg: transparent;
+  background-color: var(--sipefi-fila-hover) !important;
+  color: var(--sipefi-texto) !important;
+}
+
+/* La última fila no necesita borde inferior fuerte */
+table.dataTable tbody tr:last-child td,
+#tablaAsigXLic tbody tr:last-child td {
+  border-bottom-color: transparent !important;
+}
+
+/* Mensaje cuando no existen registros */
+table.dataTable tbody td.dt-empty,
+table.dataTable tbody td.dataTables_empty {
+  padding: 2rem 1rem !important;
+  color: var(--sipefi-texto-secundario);
+  font-style: normal;
+  text-align: center;
+  background: #fff !important;
+}
+
+/* Selectores de acción dentro de las tablas */
+table.dataTable select.accionSolicitud {
+  width: 100%;
+  min-width: 145px;
+  min-height: 34px;
+  padding: 0.3rem 2rem 0.3rem 0.55rem;
+  background-color: #fff;
+  border: 1px solid #b9c7d5;
+  border-radius: 7px;
+  color: var(--sipefi-texto);
+  font-size: 0.82rem;
+  cursor: pointer;
+}
+
+table.dataTable select.accionSolicitud:focus {
+  border-color: var(--sipefi-azul-700);
+  box-shadow: 0 0 0 0.18rem rgba(0, 86, 166, 0.14);
+  outline: none;
+}
+
+/* Botones pequeños de edición/eliminación: apariencia uniforme */
+table.dataTable .btn-sm,
+#tablaAsigXLic .btn-sm {
+  min-width: 34px;
+  min-height: 32px;
+  border-radius: 7px;
+  font-weight: 600;
+  box-shadow: none;
+}
+
+table.dataTable td:last-child,
+#tablaAsigXLic td:last-child {
+  white-space: nowrap;
+}
+
+/* Información y paginación */
+.dt-container .dt-info,
+.dt-container .dataTables_info {
+  color: var(--sipefi-texto-secundario);
+  font-size: 0.82rem;
+}
+
+.dt-container .pagination,
+.dt-container .dt-paging {
+  margin: 0;
+}
+
+.dt-container .page-link,
+.dt-container .dt-paging-button {
+  min-width: 34px;
+  min-height: 34px;
+  margin: 0 2px;
+  border: 1px solid #d1dbe5 !important;
+  border-radius: 7px !important;
+  background: #fff !important;
+  color: var(--sipefi-azul-800) !important;
+  font-size: 0.82rem;
+  font-weight: 600;
+  box-shadow: none !important;
+}
+
+.dt-container .page-item.active .page-link,
+.dt-container .dt-paging-button.current,
+.dt-container .dt-paging-button.current:hover {
+  border-color: var(--sipefi-azul-800) !important;
+  background: var(--sipefi-azul-800) !important;
+  color: #fff !important;
+}
+
+.dt-container .page-link:hover,
+.dt-container .dt-paging-button:hover {
+  border-color: #a9bfd4 !important;
+  background: var(--sipefi-azul-100) !important;
+  color: var(--sipefi-azul-900) !important;
+}
+
+.dt-container .page-item.disabled .page-link,
+.dt-container .dt-paging-button.disabled {
+  opacity: 0.48;
+  cursor: default;
+}
+
+/* Encabezados fijos generados por FixedHeader */
+table.fixedHeader-floating thead th,
+table.fixedHeader-locked thead th {
+  background: var(--sipefi-azul-800) !important;
+  color: #fff !important;
+}
+
+/* Tabla del coordinador, que no se inicializa como DataTable */
+#tablaAsigXLic {
+  margin: 0;
+  font-size: 0.88rem;
+}
+
+#tablaAsigXLic + * {
+  border-radius: 0 0 11px 11px;
+}
+
+/* Scrollbar discreto para tablas anchas */
+.dt-container .dt-layout-table::-webkit-scrollbar,
+.dt-container .dt-scroll-body::-webkit-scrollbar {
+  height: 9px;
+}
+
+.dt-container .dt-layout-table::-webkit-scrollbar-track,
+.dt-container .dt-scroll-body::-webkit-scrollbar-track {
+  background: #eef2f6;
+}
+
+.dt-container .dt-layout-table::-webkit-scrollbar-thumb,
+.dt-container .dt-scroll-body::-webkit-scrollbar-thumb {
+  background: #b4c3d2;
+  border-radius: 20px;
+}
+
+.dt-container .dt-layout-table::-webkit-scrollbar-thumb:hover,
+.dt-container .dt-scroll-body::-webkit-scrollbar-thumb:hover {
+  background: #879eb5;
+}
+
+/* Ajustes para pantallas pequeñas */
+@media (max-width: 767.98px) {
+  .dt-container {
+    border-radius: 9px;
+  }
+
+  .dt-container .tituloTablas {
+    border-radius: 8px 8px 0 0;
+    font-size: 0.9rem;
+  }
+
+  .dt-container .dt-layout-row:not(.dt-layout-table) {
+    gap: 0.7rem;
+  }
+
+  .dt-container .dt-search,
+  .dt-container .dataTables_filter,
+  .dt-container .dt-length,
+  .dt-container .dataTables_length {
+    width: 100%;
+    text-align: left !important;
+  }
+
+  .dt-container .dt-search label,
+  .dt-container .dataTables_filter label {
+    width: 100%;
+  }
+
+  .dt-container .dt-search input,
+  .dt-container .dataTables_filter input {
+    width: 100%;
+    max-width: none;
+  }
+
+  table.dataTable {
+    min-width: 760px;
+  }
+
+  #tablaTemas,
+  #tablaContenidos {
+    min-width: 680px;
+  }
+
+  #tablaRelacionesLic,
+  #tablaBibliografia,
+  #tablaSoliUsuario,
+  #tablaSoliAvanzadas,
+  #tablaSoliRecientes {
+    min-width: 980px;
+  }
+}

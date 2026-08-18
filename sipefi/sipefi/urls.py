@@ -22,6 +22,7 @@ from sipefi_apps.principal.controlador.views import LoginSipefi, SeleccionPerfil
 urlpatterns = [
     path('admin/', admin.site.urls),
 
+    path('SIPEFI/formacion-complementaria/', include('sipefi_apps.formacion_complementaria.controlador.urls')),
     path('SIPEFI/', include('sipefi_apps.tomo_ii.controlador.urls')),
     path("SIPEFI/login/", LoginSipefi.as_view(), name="login"),
 

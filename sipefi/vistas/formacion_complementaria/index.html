@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    {% load static %}
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Formación complementaria - SIPEFI</title>
+    <link rel="shortcut icon" href="{% static 'imagenes/escudofi_negro.jpg' %}">
+    <script>const rutaIdiomaDT = "{% static 'js/datatables/ParametrosDT_Esp.json' %}";</script>
+
+    <link rel="stylesheet" href="{% static 'js/jqueryui/jquery-ui.min.css' %}">
+    <link rel="stylesheet" href="{% static 'js/bootstrap/css/bootstrap.min.css' %}">
+    <link rel="stylesheet" href="{% static 'js/datatables/datatables.min.css' %}">
+    <link rel="stylesheet" href="{% static 'js/select2/select2.min.css' %}">
+    <link rel="stylesheet" href="{% static 'js/fontawesome/css/all.min.css' %}">
+    <link rel="stylesheet" href="{% static 'estilos/principal.css' %}?v={{ static_version }}">
+    <link rel="stylesheet" href="{% static 'estilos/formacion_complementaria.css' %}?v={{ static_version }}">
+</head>
+<body>
+    {% csrf_token %}
+    {% include "formacion_complementaria/encabezado.html" %}
+
+    <main id="cuerpoPrincipal" class="fc-main">
+        {% include "formacion_complementaria/listado.html" %}
+        {% include "formacion_complementaria/formulario.html" %}
+    </main>
+
+    {% include "formacion_complementaria/modales.html" %}
+
+    <script src="{% static 'js/jquery/jquery-3.7.1.min.js' %}"></script>
+    <script src="{% static 'js/jqueryui/jquery-ui.min.js' %}"></script>
+    <script src="{% static 'js/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+    <script src="{% static 'js/datatables/datatables.min.js' %}"></script>
+    <script src="{% static 'js/jsCookie/js.cookie.min.js' %}"></script>
+    <script src="{% static 'js/select2/select2.min.js' %}"></script>
+    <script src="{% static 'js/fontawesome/js/all.min.js' %}"></script>
+    <script src="{% static 'js/principal/funcionComun.js' %}?v={{ static_version }}"></script>
+    <script src="{% static 'js/principal/eventosComun.js' %}?v={{ static_version }}"></script>
+
+    <script src="{% static 'js/formacion_complementaria/fc_core.js' %}?v={{ static_version }}"></script>
+    <script src="{% static 'js/formacion_complementaria/fc_componentes.js' %}?v={{ static_version }}"></script>
+    <script src="{% static 'js/formacion_complementaria/fc_datos.js' %}?v={{ static_version }}"></script>
+    <script src="{% static 'js/formacion_complementaria/fc_validaciones.js' %}?v={{ static_version }}"></script>
+    <script src="{% static 'js/formacion_complementaria/fc_operaciones.js' %}?v={{ static_version }}"></script>
+    <script src="{% static 'js/formacion_complementaria/fc_eventos.js' %}?v={{ static_version }}"></script>
+</body>
+</html>

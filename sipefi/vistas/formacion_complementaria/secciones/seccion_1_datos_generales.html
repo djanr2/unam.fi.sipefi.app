@@ -1,0 +1,59 @@
+<div class="tab-pane fade show active" id="fcDatos">
+    <div class="row g-3">
+        <div class="col-12">
+            <label for="fcAsignaturaApoyo" class="form-label">Asignatura a la que apoya <span class="text-danger">*</span></label>
+            <select id="fcAsignaturaApoyo" class="form-select fc-editable"></select>
+            <div class="form-text">Se muestran únicamente asignaturas creadas por usuarios de tu misma división, que se encuentran concluidas y son obligatorias.</div>
+        </div>
+        <div class="col-md-4">
+            <label for="fcSubprograma" class="form-label">Subprograma <span class="text-danger">*</span></label>
+            <select id="fcSubprograma" class="form-select fc-editable"></select>
+        </div>
+        <div class="col-md-4">
+            <label for="fcAreaConocimiento" class="form-label">Área del conocimiento <span class="text-danger">*</span></label>
+            <select id="fcAreaConocimiento" class="form-select fc-editable"></select>
+        </div>
+        <div class="col-md-4">
+            <label for="fcModalidad" class="form-label">Modalidad <span class="text-danger">*</span></label>
+            <select id="fcModalidad" class="form-select fc-editable"></select>
+        </div>
+        <div class="col-12">
+            <label for="fcNombre" class="form-label">Nombre de la asignatura</label>
+            <textarea id="fcNombre" class="form-control" rows="2" readonly></textarea>
+        </div>
+        <div class="col-md-4">
+            <label for="fcClave" class="form-label">Clave</label>
+            <input id="fcClave" class="form-control" type="text" readonly>
+        </div>
+        <div class="col-md-4">
+            <label for="fcSemestre" class="form-label">Semestre <span class="text-danger">*</span></label>
+            <select id="fcSemestre" class="form-select fc-editable">
+                <option value="">Selecciona</option>
+                <option value="1">1</option><option value="2">2</option><option value="3">3</option>
+                <option value="4">4</option><option value="5">5</option><option value="6">6</option>
+                <option value="7">7</option><option value="8">8</option><option value="9">9</option>
+                <option value="10">10</option>
+            </select>
+        </div>
+        <div class="col-md-4">
+            <label for="fcTipo" class="form-label">Tipo</label>
+            <input id="fcTipo" class="form-control" type="text" value="Práctico" readonly>
+        </div>
+        <div class="col-md-4">
+            <label for="fcCaracter" class="form-label">Carácter</label>
+            <input id="fcCaracter" class="form-control" type="text" value="Optativo" readonly>
+        </div>
+        <div class="col-md-4">
+            <label for="fcHorasPraSemana" class="form-label">Horas semana práctica <span class="text-danger">*</span></label>
+            <input id="fcHorasPraSemana" class="form-control fc-editable" type="number" min="1" step="1" inputmode="numeric">
+        </div>
+        <div class="col-md-4">
+            <label for="fcHorasPraSemestre" class="form-label">Horas semestre práctica</label>
+            <input id="fcHorasPraSemestre" class="form-control" type="number" step="1" readonly>
+        </div>
+        <div class="col-12">
+            <label for="fcObjetivo" class="form-label">Objetivo general <span class="text-danger">*</span></label>
+            <textarea id="fcObjetivo" class="form-control fc-editable" rows="5" maxlength="4000" spellcheck="true" lang="es-MX"></textarea>
+        </div>
+    </div>
+</div>

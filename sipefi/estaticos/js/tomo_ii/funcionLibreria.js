@@ -293,25 +293,34 @@ const fl = function(){
 	 * @static
 	 */
 	const cargaTablasSolicitud = () => {
-		$('#tablaTemas').DataTable({
-			"dom": 'ftpir',
-			"pageLength": 6
-		  });
+		const crearOReiniciar = (selector, numeroColumnas) => {
+			if ($.fn.DataTable.isDataTable(selector)) {
+				const tablaExistente = $(selector).DataTable();
+				tablaExistente.clear().draw(false);
+				return tablaExistente;
+			}
 
-		  $('#tablaContenidos').DataTable({
-			"dom": 'ftpir',
-			"pageLength": 6
-		  });
-		  
-		  $('#tablaRelacionesLic').DataTable({
-  			"dom": 'ftpir',
-  			"pageLength": 6
-  		  });
-		  
-		  $('#tablaBibliografia').DataTable({
-			"dom": 'ftpir',
-			"pageLength": 6
-		  });
+			const columnas = Array.from({ length: numeroColumnas }, (_, indice) => ({
+				data: indice,
+				defaultContent: ''
+			}));
+
+			return $(selector).DataTable({
+				dom: 'ftpir',
+				pageLength: 6,
+				data: [],
+				columns: columnas,
+				columnDefs: [{
+					targets: '_all',
+					defaultContent: ''
+				}]
+			});
+		};
+
+		crearOReiniciar('#tablaTemas', 5);
+		crearOReiniciar('#tablaContenidos', 4);
+		crearOReiniciar('#tablaRelacionesLic', 7);
+		crearOReiniciar('#tablaBibliografia', 11);
 	};		
 	
 	/**

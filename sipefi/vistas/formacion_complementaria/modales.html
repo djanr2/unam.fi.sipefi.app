@@ -1,0 +1,21 @@
+<div class="modal fade" id="fcModalMensaje" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered"><div class="modal-content">
+        <div class="modal-header"><h5 class="modal-title" id="fcModalMensajeTitulo">SIPEFI</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+        <div class="modal-body" id="fcModalMensajeTexto"></div>
+        <div class="modal-footer"><button type="button" class="btn btn-primary" data-bs-dismiss="modal">Aceptar</button></div>
+    </div></div>
+</div>
+
+<div class="modal fade" id="fcModalConfirmar" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered"><div class="modal-content">
+        <div class="modal-header bg-warning-subtle"><h5 class="modal-title">Confirmar</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+        <div class="modal-body">Al completar la solicitud quedará bloqueada y solo podrá consultarse. ¿Deseas continuar?</div>
+        <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button><button id="fcBtnConfirmarCompletar" type="button" class="btn btn-success">Sí, completar</button></div>
+    </div></div>
+</div>
+
+<div class="modal espera" id="fcModalEspera" tabindex="-1" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered modal-sm"><div class="modal-content"><div class="modal-body text-center py-4">
+        <div class="spinner-border text-primary mb-3" role="status"></div><div>Procesando información...</div>
+    </div></div></div>
+</div>

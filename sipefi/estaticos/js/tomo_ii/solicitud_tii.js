@@ -232,6 +232,17 @@ const soltii = function(){
 	            case 3: badgeClass = "bg-success"; break;            // Concluida
 	        }
 
+	        const accionPdf = Number(idEst) === 0
+	            ? '<span class="text-muted small">No disponible</span>'
+	            : `<button type="button"
+	                       class="btn btn-outline-primary btn-sm btnDescargarPDF"
+	                       data-licenciatura-id="${idLic}"
+	                       data-solicitud-id="${numSoli}"
+	                       data-info-util="${infoUtil}"
+	                       onclick="etii.descargaPdf(${idPerfil}, ${idLic}, ${numSoli})">
+	                   <i class="fa-solid fa-file-pdf me-1"></i>PDF
+	               </button>`;
+
 	        html += `
 	            <tr data-id-licenciatura="${idLic}">
 	                <td class="text-center">${numSoli}</td>
@@ -241,15 +252,7 @@ const soltii = function(){
 	                <td>${nomLic}</td>
 	                <td>${nomAsig}</td>
 	                <td class="text-center">${fechaMod || ""}</td>
-	                <td class="text-center">
-	                    <button type="button"
-	                            class="btn btn-outline-primary btn-sm btnDescargarPDF"
-	                            data-licenciatura-id="${idLic}"
-	                            data-solicitud-id="${numSoli}"
-	                            data-info-util="${infoUtil}" onclick="etii.descargaPdf(${idPerfil}, ${idLic}, ${numSoli})">
-	                        <i class="fa-solid fa-file-pdf me-1"></i>PDF
-	                    </button>
-	                </td>
+	                <td class="text-center">${accionPdf}</td>
 	                <td class="d-none info-util">${infoUtil}</td>
 	            </tr>
 	        `;
@@ -333,8 +336,13 @@ const soltii = function(){
 								"sipefi@fi.unam.edu" +
 							"</a></strong>" +
 					"");
+					if(obj.referencia){
+						$("#modalCargaSoli .textoBody").append(
+							"<br><small>Referencia de soporte: <strong>" + obj.referencia + "</strong></small>"
+						);
+					}
 					$("#modalCargaSoli .modal-body button").attr('class','btn btn-danger');
-					$('#modalCargaSoli').modal('show');
+					fComun.mostrarModal('#modalCargaSoli');
 				}
 			}catch(e){console.log(e)}
 		});

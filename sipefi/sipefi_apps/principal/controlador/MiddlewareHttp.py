@@ -10,7 +10,6 @@ class MiddlewareHttpReqResp:
     """
     def __init__(self, get_response):
         self.get_response = get_response
-        self.token = ""
 
     def __call__(self, request):
         resp = ""
@@ -27,9 +26,12 @@ class MiddlewareHttpReqResp:
             return response
 
     def ejecutar_antes_peticion(self, request: HttpRequest):
-        self.token = request.META.get('HTTP_TOKENSISTEMA', '')
-        resp = conBD().validaSesionUsuario(self.token, 1)
-        return resp
+        # La sesion del servidor es la fuente de verdad. Se conserva el header
+        # como respaldo temporal para compatibilidad con llamadas antiguas.
+        token = request.session.get("sipefi_token", "")
+        if not token:
+            token = request.META.get("HTTP_TOKENSISTEMA", "")
+        return conBD().validaSesionUsuario(token, 1)
         
     def ejecutar_despues_peticion(self, request: HttpRequest, response: HttpResponse):
         pass
@@ -42,6 +44,7 @@ class MiddlewareHttpReqResp:
             "/SIPEFI/logout/",
             "/SIPEFI/seleccion-perfil/",
             "/SIPEFI/seleccionarPerfil/",
-            "/SIPEFI/recargaPagina/"
+            "/SIPEFI/recargaPagina/",
+            "/SIPEFI/formacion-complementaria/"
         ]
         return url in urls_excluidas

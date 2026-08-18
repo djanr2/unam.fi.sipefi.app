@@ -7,15 +7,37 @@
 from django.template.response import TemplateResponse
 from django.http import JsonResponse
 from django.views.decorators.cache import never_cache
-from django.views.decorators.csrf import csrf_exempt
 from django.db import transaction
+from django.conf import settings
 import json
+import logging
+import uuid
 
 from sipefi_apps.tomo_ii.modelo.ConsultasBD import ConsultasBD as CBD
 from sipefi_apps.tomo_ii.modelo.Solicitud import Solicitud
+from sipefi_apps.tomo_ii.modelo.excepciones import SolicitudError
+
+logger = logging.getLogger(__name__)
 
 from django.views.generic import TemplateView
 from django.shortcuts import redirect
+
+
+def _extraer_error_controlado(exc):
+    if isinstance(exc, SolicitudError):
+        return exc.status_code, exc.user_message
+
+    # Compatibilidad con excepciones funcionales históricas.
+    if exc.args and isinstance(exc.args[0], tuple) and len(exc.args[0]) == 2:
+        code, message = exc.args[0]
+        if isinstance(code, int) and 400 <= code < 500:
+            return code, str(message)
+
+    return None
+
+
+def _referencia_error():
+    return uuid.uuid4().hex[:12].upper()
 
 
 class Vista_Principal_TomoII(TemplateView):
@@ -39,6 +61,7 @@ class Vista_Principal_TomoII(TemplateView):
         context['rol_nombre'] = self.rol_nombre
         context['sipefi_login'] = self.urlSIPEFI
         context['token'] = self.token
+        context['static_version'] = settings.STATIC_VERSION
         context['universo'] = 1
         context['tiene_multiples_roles'] = self.tiene_multiples_roles
         return context
@@ -87,7 +110,18 @@ def requestTablasSoli(request):
     """
     usuario = request.session.get('sipefi_usuario', '')
     rol = request.session.get('sipefi_rol_activo_id', '')
-    return JsonResponse(CBD().buscaSolicitudesUsuario(usuario, rol))
+    try:
+        return JsonResponse(CBD().buscaSolicitudesUsuario(usuario, rol))
+    except Exception:
+        referencia = _referencia_error()
+        logger.exception("Error al consultar tablas de solicitudes. Referencia=%s", referencia)
+        return JsonResponse({
+            "estatusTSU": 500,
+            "estatusTSA": 500,
+            "estatusTSR": 500,
+            "error": "No fue posible consultar las solicitudes.",
+            "referencia": referencia,
+        }, status=500)
 
 
 def requestRecargaPagina(request):
@@ -101,20 +135,33 @@ def requestRecargaPagina(request):
 
 
 @never_cache
-@csrf_exempt
 def requestAccionSolicitud(request):
     """
     Vista que procesa la solicitud recibida del frontend en formato de formulario con JSON serializado.
     """
     if request.method != "POST":
-        return JsonResponse({"estatus": 405, "error": "Método no permitido"})
+        return JsonResponse({"estatus": 405, "error": "Método no permitido"}, status=405)
 
     try:
         obj_json = request.POST.get("obj")
         if not obj_json:
-            return JsonResponse({"estatus": 400, "error": "No se recibió el parámetro 'obj'"})
+            return JsonResponse({"estatus": 400, "error": "No se recibió el parámetro 'obj'"}, status=400)
 
         datos = json.loads(obj_json)
+
+        # La identidad y el perfil activo se obtienen de la sesion del servidor.
+        # No se confia en usuario/rol/token enviados desde JavaScript.
+        usuario_sesion = request.session.get("sipefi_usuario", "")
+        rol_sesion = request.session.get("sipefi_rol_activo_id")
+        token_sesion = request.session.get("sipefi_token", "")
+        if not usuario_sesion or not rol_sesion or not token_sesion:
+            return JsonResponse({"estatus": 401, "error": "Sesion no valida."}, status=401)
+
+        metadatos = datos.setdefault("metadatos", {})
+        metadatos["usuario"] = usuario_sesion
+        metadatos["usuarioSoli"] = usuario_sesion
+        metadatos["rol"] = rol_sesion
+        metadatos["token"] = token_sesion
 
         with transaction.atomic():
             procesador = Solicitud()
@@ -123,18 +170,25 @@ def requestAccionSolicitud(request):
         return JsonResponse({"estatus": 200, "respuesta": resultado})
 
     except json.JSONDecodeError:
-        return JsonResponse({"estatus": 400, "error": "El contenido del campo 'obj' no es JSON válido."})
+        return JsonResponse({"estatus": 400, "error": "El contenido del campo 'obj' no es JSON válido."}, status=400)
 
     except Exception as e:
-        status = 500
-        message = str(e)
+        controlado = _extraer_error_controlado(e)
+        if controlado:
+            status, message = controlado
+            return JsonResponse(
+                {"estatus": status, "code": status, "error": message},
+                status=status,
+            )
 
-        if e.args and isinstance(e.args[0], tuple) and len(e.args[0]) == 2:
-            code, msg = e.args[0]
-            if isinstance(code, int):
-                status, message = code, msg
-
-        return JsonResponse({"estatus": status, "error": message})
+        referencia = _referencia_error()
+        logger.exception("Error al procesar una solicitud. Referencia=%s", referencia)
+        return JsonResponse({
+            "estatus": 500,
+            "code": 500,
+            "error": "No fue posible procesar la solicitud.",
+            "referencia": referencia,
+        }, status=500)
     
 
 def requestCargaSolicitud(request):
@@ -144,35 +198,80 @@ def requestCargaSolicitud(request):
     accion = request.POST.get('action', '')
     infoBusqueda = request.POST.get('info', '')
     obj = infoBusqueda.split("#@@#")
-    return JsonResponse(Solicitud().dameDatosSolicitud(obj[0], obj[1], accion))
+
+    if len(obj) < 2 or not obj[0].isdigit() or not obj[1].isdigit():
+        return JsonResponse(
+            {"estatus": 400, "error": "Los datos de la solicitud son inválidos."},
+            status=400,
+        )
+
+    try:
+        return JsonResponse(Solicitud().dameDatosSolicitud(obj[0], obj[1], accion))
+    except Exception:
+        referencia = _referencia_error()
+        logger.exception("Error al cargar una solicitud. Referencia=%s", referencia)
+        return JsonResponse({
+            "estatus": 500,
+            "error": "No fue posible cargar la solicitud.",
+            "referencia": referencia,
+        }, status=500)
 
 
 def requestCancelarSol(request):
     """
         Cancela una solicitud.
     """
+    if request.method != "POST":
+        return JsonResponse(
+            {"ok": False, "code": 405, "error": "Método no permitido."},
+            status=405,
+        )
+
     try:
         raw = request.POST.get("obj")
-        obj = json.loads(raw)
+        if not raw:
+            return JsonResponse(
+                {"ok": False, "code": 400, "error": "No se recibieron los datos de cancelación."},
+                status=400,
+            )
 
+        obj = json.loads(raw)
         idSol = obj["numSoli"]
         idEst = obj["estatus"]
-        token = request.session.get("sipefi_token", "") or obj.get("token", "")
-        rol = request.session.get("sipefi_rol_activo_id", "") or obj.get("rol", "")
-        usuario = request.session.get("sipefi_usuario", "") or obj.get("usuario", "")
+        token = request.session.get("sipefi_token", "")
+        rol = request.session.get("sipefi_rol_activo_id", "")
+        usuario = request.session.get("sipefi_usuario", "")
         comentario = obj["comentario"]
+
+        if not token or not rol or not usuario:
+            return JsonResponse({"ok": False, "code": 401, "error": "Sesion no valida."}, status=401)
 
         with transaction.atomic():
             resp = Solicitud().cancelaSolicitud(idSol, idEst, token, rol, usuario, comentario)
 
         return JsonResponse({"ok": True, "code": 200, "data": resp}, status=200)
 
-    except Exception as e:
-        if e.args and isinstance(e.args[0], tuple) and e.args[0][0] == 409:
-            _, msg = e.args[0]
-            return JsonResponse({"ok": False, "code": 409, "error": msg}, status=409)
-
+    except (json.JSONDecodeError, KeyError, TypeError, ValueError):
         return JsonResponse(
-            {"ok": False, "code": 500, "error": str(e)},
-            status=500
+            {"ok": False, "code": 400, "error": "Los datos de cancelación son inválidos."},
+            status=400,
         )
+
+    except Exception as e:
+        controlado = _extraer_error_controlado(e)
+        if controlado:
+            status, message = controlado
+            return JsonResponse(
+                {"ok": False, "code": status, "estatus": status, "error": message},
+                status=status,
+            )
+
+        referencia = _referencia_error()
+        logger.exception("Error al cancelar una solicitud. Referencia=%s", referencia)
+        return JsonResponse({
+            "ok": False,
+            "code": 500,
+            "estatus": 500,
+            "error": "No fue posible cancelar la solicitud.",
+            "referencia": referencia,
+        }, status=500)

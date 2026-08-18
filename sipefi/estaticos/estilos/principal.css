@@ -39,7 +39,7 @@ html {
     margin: auto;
 }
 
-#logoLogin {
+.logoLogin {
     max-width: 150px;
     height: auto;
     margin: 0 auto 15px auto;

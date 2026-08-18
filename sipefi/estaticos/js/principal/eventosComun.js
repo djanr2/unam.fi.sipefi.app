@@ -45,7 +45,7 @@ const comunE = function(){
 		 */
 		$(elemento).unbind("click");
 		$(elemento).on('click', function () {
-			$(modal).modal('hide');
+			fComun.ocultarModal(modal);
 			if(especial){
 				if(numEl == 0){
 					funcionDest();

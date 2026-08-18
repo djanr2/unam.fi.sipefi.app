@@ -56,7 +56,133 @@ const fcs = function(){
 	      requeridos: [false, false, false, false]
 	    }
 	 };
-	 
+
+	 let bibliografiaEnEdicion = null;
+	 let bibliografiaVisible = '';
+	 let listaBibliografias = [];
+	 let listaRelacionesLicenciaturas = [];
+	 let relacionesVisible = '';
+	 let solicitudListaParaGuardar = false;
+
+	 const textoSeguro = (valor) => $('<div>').text(valor == null ? '' : String(valor)).html();
+
+	 const normalizarBibliografia = (bib = {}) => ({
+		id: Number(bib.id) || 0,
+		idTipo: Number(bib.idTipo) || null,
+		tipo: bib.tipo || '',
+		autor: bib.autor || '',
+		anio: (bib.anio == null || bib.anio === 0 || bib.anio === '0') ? '' : String(bib.anio),
+		clasifBiblio: Number(bib.clasifBiblio) === 1 ? 1 : 0,
+		titulo: bib.titulo || '',
+		extra1: bib.extra1 || '',
+		extra2: bib.extra2 || '',
+		extra3: bib.extra3 || '',
+		extra4: bib.extra4 || '',
+		temas: bib.temas || ''
+	 });
+
+	 const clonarBibliografia = (bib) => ({ ...normalizarBibliografia(bib) });
+
+	 const accionesBibliografia = (bib, visible = '', editando = false) => `
+		<div class="acciones-biblio" data-biblio-id="${bib.id}" ${visible}>
+			<button class="btn btn-sm btn-danger btn-eliminar-biblio" type="button" data-biblio-id="${bib.id}" ${editando ? 'disabled' : ''}>
+				<i class="fas fa-trash-alt"></i>
+			</button>
+			<button type="button" class="btn btn-sm btn-danger" onclick="etii.editarBibliografia(${bib.id})" ${editando ? 'hidden' : ''}>
+				<i class="fas fa-edit"></i>
+			</button>
+			<button type="button" class="btn btn-sm btn-danger" onclick="etii.saveBibliografia(${bib.id})" ${editando ? '' : 'hidden'}>
+				<i class="fas fa-save"></i>
+			</button>
+		</div>`;
+
+	 const datosFilaBibliografia = (bib, visible = '', editando = false) => {
+		const b = normalizarBibliografia(bib);
+		if (!editando) {
+			return [
+				textoSeguro(b.tipo), textoSeguro(b.autor), textoSeguro(b.anio),
+				b.clasifBiblio === 1 ? 'Complementaria' : 'Básica',
+				textoSeguro(b.titulo), textoSeguro(b.extra1), textoSeguro(b.extra2),
+				textoSeguro(b.extra3), textoSeguro(b.extra4), textoSeguro(b.temas),
+				accionesBibliografia(b, visible, false)
+			];
+		}
+
+		const depende = String(b.tipo).trim().toUpperCase() === 'DEPENDERA DE LA TEMÁTICA A TRATAR';
+		const input = (campo, valor) => `<input type="text" class="form-control" id="id-biblio-${campo}-${b.id}" value="${textoSeguro(valor)}">`;
+		const textoOInput = (campo, valor) => depende ? textoSeguro(valor) : input(campo, valor);
+		const clasificacion = `<select id="id-biblio-clasificacion-${b.id}" class="form-select">
+			<option value="0" ${b.clasifBiblio === 0 ? 'selected' : ''}>Básica</option>
+			<option value="1" ${b.clasifBiblio === 1 ? 'selected' : ''}>Complementaria</option>
+		</select>`;
+
+		return [
+			textoSeguro(b.tipo), textoOInput('autor', b.autor), textoOInput('year', b.anio),
+			clasificacion, textoOInput('titulo', b.titulo), textoOInput('extra1', b.extra1),
+			textoOInput('extra2', b.extra2), textoOInput('extra3', b.extra3), textoOInput('extra4', b.extra4),
+			input('temas', b.temas), accionesBibliografia(b, visible, true)
+		];
+	 };
+
+	 const renderizarBibliografias = () => {
+		if (!$.fn.DataTable.isDataTable('#tablaBibliografia')) return;
+		const tabla = $('#tablaBibliografia').DataTable();
+		const filas = listaBibliografias
+			.slice()
+			.sort((a, b) => Number(a.id) - Number(b.id))
+			.map(bib => datosFilaBibliografia(
+				bib,
+				bibliografiaVisible,
+				Number(bibliografiaEnEdicion) === Number(bib.id)
+			));
+
+		tabla.clear();
+		if (filas.length) tabla.rows.add(filas);
+		tabla.draw(false);
+	 };
+
+	 const siguienteIdBibliografia = () => listaBibliografias.reduce(
+		(maximo, bib) => Math.max(maximo, Number(bib.id) || 0),
+		0
+	 ) + 1;
+
+	 const agregarFilaBibliografia = (bib, visible = '', dibujar = true) => {
+		bibliografiaVisible = visible;
+		listaBibliografias.push(normalizarBibliografia(bib));
+		if (dibujar) renderizarBibliografias();
+	 };
+
+	 const cargarBibliografias = (bibliografias, visible = '') => {
+		bibliografiaVisible = visible;
+		bibliografiaEnEdicion = null;
+
+		const idsUsados = new Set();
+		let siguienteId = 1;
+		listaBibliografias = (Array.isArray(bibliografias) ? bibliografias : [])
+			.map(normalizarBibliografia)
+			.map(bibliografia => {
+				let id = Number(bibliografia.id) || 0;
+				if (id <= 0 || idsUsados.has(id)) {
+					while (idsUsados.has(siguienteId)) siguienteId += 1;
+					id = siguienteId;
+				}
+				idsUsados.add(id);
+				siguienteId = Math.max(siguienteId, id + 1);
+				return { ...bibliografia, id };
+			})
+			.sort((a, b) => a.id - b.id);
+		renderizarBibliografias();
+	 };
+
+	 const eliminarBibliografia = (idBibliografia) => {
+		if (bibliografiaEnEdicion !== null) return false;
+		listaBibliografias = listaBibliografias.filter(
+			bib => Number(bib.id) !== Number(idBibliografia)
+		);
+		renderizarBibliografias();
+		return true;
+	 };
+
 	 // --- Estilo para resaltar select2 inválidos (una sola vez) ---
 	 (function ensureSelect2InvalidStyle() {
 	   const styleId = "select2-invalid-style";
@@ -87,6 +213,41 @@ const fcs = function(){
 		$(".input-group-text").css("border-style","inset");
 	};
 
+	const reiniciarFormularioNuevaSolicitud = () => {
+		$('#numSolicitud').text('xxxx');
+		$('#estatusSoli').text('Elaboración');
+		$('#idES').text('1');
+		$('#usuarioSol').text($('#usuario').text());
+
+		[
+			'#asignatura', '#clave_asignatura', '#creditos', '#h_sem_teo', '#h_sem_pra',
+			'#h_semestre_teo', '#h_semestre_pra', '#objetivo', '#horasPracticasTemario',
+			'#formacion_integral', '#perfil_profesiografico', '#nombreTema', '#horasTema',
+			'#objetivoTema', '#contenidoTema', '#autor_biblio', '#anio_biblio',
+			'#titulo_biblio', '#extra_1', '#extra_2', '#extra_3', '#extra_4', '#temas_biblio'
+		].forEach(selector => $(selector).val('').removeClass('is-invalid is-readonly'));
+
+		// Restablecer controles que pudieron quedar bloqueados al visualizar otra solicitud.
+		$('body').find('input:not([type="hidden"]), textarea').prop('readonly', false).removeClass('is-readonly');
+		$('body').find('select').prop('disabled', false);
+		[
+			'#btnAgregarRelLicAsig', '#btnAgregarTema',
+			'#btnAgregarContenido', '#btnAgregarBibliografia'
+		].forEach(selector => $(selector).removeClass('d-none').prop('disabled', false));
+
+		$('#seccionComentarios').empty();
+		$('#comentarios').find('.Editor-editor').html('');
+	};
+
+	const reiniciarSelectsNuevaSolicitud = () => {
+		$('#modalidad, #tipo_modalidad, #tipo_bibliografia, #clasificacion_biblio')
+			.val('0').trigger('change');
+		$('#valor_practico, #rel_semestre, #ser_anterior, #ser_consecuente, ' +
+		  '#estrategias_didacticas, #eval_diagnostica, #eval_formativa, #eval_sumativa')
+			.val(null).trigger('change');
+		$('#rel_licenciatura, #rel_area_con, #rel_caracter').val('0').trigger('change');
+	};
+
 	/**
 	 * Funcion que carga los catalogos iniciales y necesarios en elementos Select para ser usados en el flujo de carga de una solicitud 
 	 * @param {int} opc Parametro que tiene el tipo de visualizacion de la solicitud (nueva, edicion, visualizacion)
@@ -95,12 +256,17 @@ const fcs = function(){
 	 * @method cargaCatalogos
 	 * @static
 	 */
-	const cargaCatalogos = (opc, param) => {
+	const cargaCatalogos = (opc, param = {}) => {
+		solicitudListaParaGuardar = false;
 		try{
+			if (Number(opc) === 1) reiniciarFormularioNuevaSolicitud();
 			soltii.cargaMenuLlenadoBotones();
-			//inicializa datatables
+			// Inicializa DataTables y reinicia estructuras dinámicas para evitar datos residuales.
 			fl.cargaTablasSolicitud();
-			let obj = fComun.getVarLocalJ("catalogos");
+			if (typeof etii !== 'undefined' && etii.reiniciarTemarioContenido) etii.reiniciarTemarioContenido();
+			cargarRelacionesLicenciaturas([], '');
+			cargarBibliografias([], '');
+			let obj = fComun.getVarLocalJ("catalogos") || {};
 			// Cargar combos del tab "Datos generales"
 			llenaCombo("modalidad", obj.catModalidad || [], false);
 			llenaCombo("tipo_modalidad", obj.catTipoMod || [], false);
@@ -139,8 +305,8 @@ const fcs = function(){
 			const asignaturaRequest = param.info?.split('#@@#')[2] || null;
 			const thisAsignatura = (asignaturaRequest !==null )? asignaturaRequest: "" ;
 
-			llenaCombo("ser_anterior", obj.catAsig.filter(([index, dato]) => dato !==thisAsignatura )|| [], false);
-			llenaCombo("ser_consecuente", obj.catAsig.filter(([index, dato]) => dato !==thisAsignatura ) || [], false);
+			llenaCombo("ser_anterior", (obj.catAsig || []).filter(([index, dato]) => dato !== thisAsignatura), false);
+			llenaCombo("ser_consecuente", (obj.catAsig || []).filter(([index, dato]) => dato !== thisAsignatura), false);
 
 			//Cargar combos de la sección de bibliografia
 			llenaCombo("tipo_bibliografia", obj.catTipoBib || [], false);
@@ -163,7 +329,15 @@ const fcs = function(){
 			  llenaCombo("eval_formativa", formativa, false);
 			  llenaCombo("eval_sumativa", sumativa, false);
 			}
-		}catch(e){console.error("Error al cargar catálogos:", e);}
+
+			if (Number(opc) === 1) {
+				reiniciarSelectsNuevaSolicitud();
+				solicitudListaParaGuardar = true;
+			}
+		}catch(e){
+			solicitudListaParaGuardar = false;
+			console.error("Error al cargar catálogos:", e);
+		}
 		cssVistaCaptura();
 		//Desbloqueamos el campo asignatura, por si es nueva solicitud
 		$("#asignatura").prop("readonly", false);
@@ -193,13 +367,126 @@ const fcs = function(){
 		}
 	};
 	
+	const nombreCatalogo = (catalogo, id, fallback = '') => {
+		const encontrado = (catalogo || []).find(([valor]) => Number(valor) === Number(id));
+		return encontrado ? encontrado[1] : fallback;
+	};
+
+	const listaNumerica = (valor) => {
+		const entrada = Array.isArray(valor) ? valor : (valor == null || valor === '' ? [] : [valor]);
+		return [...new Set(entrada
+			.map(Number)
+			.filter(numero => Number.isFinite(numero) && numero > 0))];
+	};
+
+	const normalizarRelacion = (relacion = {}) => {
+		const catalogos = fComun.getVarLocalJ('catalogos') || {};
+		const idLicenciatura = Number(relacion.idLicenciatura ?? relacion.idLic) || 0;
+		const idAreaConocimiento = Number(relacion.idAreaConocimiento) || 0;
+		const idCaracterAsignatura = Number(relacion.idCaracterAsignatura) || 0;
+
+		return {
+			idLicenciatura,
+			licenciatura: relacion.licenciatura || nombreCatalogo(catalogos.catLic, idLicenciatura),
+			idAreaConocimiento,
+			areaConocimiento: relacion.areaConocimiento || nombreCatalogo(catalogos.catAreaCon, idAreaConocimiento),
+			idCaracterAsignatura,
+			caracterAsignatura: relacion.caracterAsignatura || nombreCatalogo(catalogos.catCarAsig, idCaracterAsignatura),
+			semestres: listaNumerica(relacion.semestres ?? relacion.semestre),
+			idSeriacionAnterior: listaNumerica(relacion.idSeriacionAnterior ?? relacion.seriacionAnt),
+			idSeriacionConsecuente: listaNumerica(relacion.idSeriacionConsecuente ?? relacion.seriacionCons)
+		};
+	};
+
+	const claveRelacion = (relacion) => [
+		Number(relacion.idLicenciatura) || 0,
+		Number(relacion.idAreaConocimiento) || 0,
+		Number(relacion.idCaracterAsignatura) || 0
+	].join('|');
+
+	const renderizarRelacionesLicenciaturas = (visible = relacionesVisible) => {
+		if (!$.fn.DataTable.isDataTable('#tablaRelacionesLic')) return;
+		const tabla = $('#tablaRelacionesLic').DataTable();
+		const catalogos = fComun.getVarLocalJ('catalogos') || {};
+		const textoAsig = (id) => nombreCatalogo(catalogos.catAsig, id, String(id));
+		const idSolicitud = Number($('#numSolicitud').html()) || 0;
+		const idPerfil = Number($('#rol').html()) || 0;
+		const idEstatus = Number($('#idES').html()) || 0;
+		const ocultarPdf = (!idSolicitud || idEstatus === 0) ? 'hidden' : '';
+
+		const filas = listaRelacionesLicenciaturas.map(relacion => {
+			const rel = normalizarRelacion(relacion);
+			const clave = encodeURIComponent(claveRelacion(rel));
+			const acciones = `<div>
+				<button type="button" class="btn btn-sm btn-danger btnEliminarRelacion" data-rel-key="${clave}" ${visible}>
+					<i class="fas fa-trash-alt"></i>
+				</button>
+				<button type="button" class="btn btn-sm btn-danger" onclick="etii.descargaPdf(${idPerfil}, ${rel.idLicenciatura}, ${idSolicitud})" ${ocultarPdf}>
+					<i class="fas fa-file-pdf"></i>
+				</button>
+			</div>`;
+
+			return [
+				textoSeguro(rel.licenciatura),
+				textoSeguro(rel.areaConocimiento),
+				textoSeguro(rel.caracterAsignatura),
+				rel.semestres.join(' | '),
+				rel.idSeriacionAnterior.map(textoAsig).join(' | '),
+				rel.idSeriacionConsecuente.map(textoAsig).join(' | '),
+				acciones
+			];
+		});
+
+		tabla.clear();
+		if (filas.length) tabla.rows.add(filas);
+		tabla.draw(false);
+	};
+
+	const agregarFilaRelacion = (relacion, visible = '', dibujar = true) => {
+		relacionesVisible = visible;
+		listaRelacionesLicenciaturas.push(normalizarRelacion(relacion));
+		if (dibujar) renderizarRelacionesLicenciaturas(visible);
+	};
+
+	const cargarRelacionesLicenciaturas = (relaciones, visible = '') => {
+		relacionesVisible = visible;
+		const agrupadas = new Map();
+
+		(Array.isArray(relaciones) ? relaciones : []).forEach(relacionEntrada => {
+			const relacion = normalizarRelacion(relacionEntrada);
+			const clave = claveRelacion(relacion);
+			if (!agrupadas.has(clave)) {
+				agrupadas.set(clave, relacion);
+				return;
+			}
+
+			const actual = agrupadas.get(clave);
+			actual.semestres = listaNumerica([...actual.semestres, ...relacion.semestres]);
+			actual.idSeriacionAnterior = listaNumerica([
+				...actual.idSeriacionAnterior, ...relacion.idSeriacionAnterior
+			]);
+			actual.idSeriacionConsecuente = listaNumerica([
+				...actual.idSeriacionConsecuente, ...relacion.idSeriacionConsecuente
+			]);
+		});
+
+		listaRelacionesLicenciaturas = Array.from(agrupadas.values());
+		renderizarRelacionesLicenciaturas(visible);
+	};
+
+	const eliminarRelacionLicenciatura = (claveCodificada) => {
+		const clave = decodeURIComponent(String(claveCodificada || ''));
+		listaRelacionesLicenciaturas = listaRelacionesLicenciaturas.filter(
+			relacion => claveRelacion(relacion) !== clave
+		);
+		renderizarRelacionesLicenciaturas();
+	};
+
 	/**
 	 * Función que agrega una nueva relación con licenciatura si es válida, no duplicada y usa DataTables.
 	 * @function agregarRelacionLicAsig
 	 */
 	const agregarRelacionLicAsig = () => {
-	  let tablaRelacionesDT = $('#tablaRelacionesLic').DataTable();
-
 	  const idLic = $("#rel_licenciatura").val();
 	  const txtLic = $("#rel_licenciatura option:selected").text().trim();
 
@@ -211,8 +498,8 @@ const fcs = function(){
 
 	  const idSolicitud = $("#numSolicitud").html();
 	  const idPerfil = $("#rol").html();
+	  const idEstatusSolicitud = parseInt($("#idES").html(), 10) || 0;
 
-	  let isPdfHidden = (idSolicitud === "xxxx") ? "hidden" : "";
 	  const isVisible = parseInt(fComun.getVarLocalS("accionSoli"));
 	  let visible = (isVisible === 1) ? "hidden" : "";
 
@@ -224,8 +511,6 @@ const fcs = function(){
 	  serAnt = serAnt.filter(val => val !== "0");
 	  serCon = serCon.filter(val => val !== "0");
 
-	  const txtAnt = serAnt.map(val => $(`#ser_anterior option[value="${val}"]`).text().trim());
-	  const txtCon = serCon.map(val => $(`#ser_consecuente option[value="${val}"]`).text().trim());
 
 	  if (!idLic || idLic === "0") {
 	    fComun.mostrarTooltipCampo("#rel_licenciatura", "Selecciona una licenciatura válida");
@@ -253,48 +538,23 @@ const fcs = function(){
 	    return;
 	  }
 
-	  const existe = tablaRelacionesDT
-	    .rows()
-	    .data()
-	    .toArray()
-	    .some(row => {
-	      const lic = (row[0] || "").trim();
-	      const area = (row[1] || "").trim();
-	      const caracter = (row[2] || "").trim();
-	      return lic === txtLic && area === txtAreaCon && caracter === txtCaracter;
-	    });
+	  const claveNueva = [Number(idLic), Number(idAreaCon), Number(idCaracter)].join('|');
+	  const existe = listaRelacionesLicenciaturas.some(
+	    relacion => claveRelacion(relacion) === claveNueva
+	  );
 
 	  if (existe) {
 	    fComun.mostrarTooltipCampo("#rel_licenciatura", "Ya existe esa relación con la misma área y carácter.");
 	    return;
 	  }
 
-	  const mostrarAnt = txtAnt.join(" | ");
-	  const mostrarCon = txtCon.join(" | ");
-	  const mostrarSem = semestres.join(" | ");
-
-	  const botonEliminar = `
-	    <div>
-	      <button class="btn btn-sm btn-danger btnEliminarRelacion" ${visible}>
-	        <i class="fas fa-trash-alt"></i>
-	      </button>
-	      <button class="btn btn-sm btn-danger" onclick="etii.descargaPdf(${idPerfil}, ${idLic}, ${idSolicitud})" ${isPdfHidden}>
-	        <i class="fas fa-file-pdf"></i>
-	      </button>
-	    </div>
-	    <input type="hidden" class="datos-relacion"
-	      value="${idLic}@##@${txtLic}@##@${idAreaCon}@##@${txtAreaCon}@##@${idCaracter}@##@${txtCaracter}@##@${semestres.join(",")}@##@${serAnt.join(",")}@##@${serCon.join(",")}">
-	  `;
-
-	  tablaRelacionesDT.row.add([
-	    txtLic,
-	    txtAreaCon,
-	    txtCaracter,
-	    mostrarSem,
-	    mostrarAnt,
-	    mostrarCon,
-	    botonEliminar
-	  ]).draw();
+	  agregarFilaRelacion({
+		idLicenciatura: Number(idLic), licenciatura: txtLic,
+		idAreaConocimiento: Number(idAreaCon), areaConocimiento: txtAreaCon,
+		idCaracterAsignatura: Number(idCaracter), caracterAsignatura: txtCaracter,
+		semestres: semestres.map(Number),
+		idSeriacionAnterior: serAnt.map(Number), idSeriacionConsecuente: serCon.map(Number)
+	  }, visible);
 
 	  $("#rel_licenciatura").val("0").trigger("change");
 	  $("#rel_area_con").val("0").trigger("change");
@@ -421,39 +681,11 @@ const fcs = function(){
 		  return;
 		}
 
-		const idBibliografia = $('#tablaBibliografia').DataTable().data().length + 1;
-
-		// Construcción de fila
-		const fila = `
-		  <tr>
-		    <td>${tipoTextoOrig}</td>
-		    <td>${autor}</td>
-		    <td>${anio}</td>
-			<td>${clasifTexto}</td>
-		    <td>${titulo}</td>
-		    <td>${extra1}</td>
-		    <td>${extra2}</td>
-		    <td>${extra3}</td>
-		    <td>${extra4}</td>
-		    <td>${temas}</td>
-		    <td>
-		    	<div>
-					<button class="btn btn-sm btn-danger btn-eliminar-biblio" type="button">
-					<i class="fas fa-trash-alt"></i>
-					</button>
-					<input type="hidden" class="datos-biblio" value="${idTipo}@##@${autor}@##@${anio}@##@${clasif}@##@${titulo}@##@${extra1}@##@${extra2}@##@${extra3}@##@${extra4}@##@${temas}">
-					<button class="btn btn-sm btn-danger" id = "bibliografia-btnedit-${idBibliografia}" onclick="etii.editarBibliografia(${idBibliografia})"><i class="fas fa-edit"></i></button>
-					<button class="btn btn-sm btn-danger" id = "bibliografia-btnsave-${idBibliografia}" onclick="etii.saveBibliografia(${idBibliografia})" hidden><i class="fas fa-save"></i></button>
-				</div>
-		     </td>
-		  </tr>
-		`;
-
-		// Agrega fila al DataTable
-		var bibliografiaTable = $('#tablaBibliografia').DataTable();
-		var paginaActual = bibliografiaTable.page.info().pages - 1;
-		bibliografiaTable.row.add($(fila)).draw();
-		bibliografiaTable.page(paginaActual).draw('page');
+		const idBibliografia = siguienteIdBibliografia();
+		agregarFilaBibliografia({
+			id: idBibliografia, idTipo: Number(idTipo), tipo: tipoTextoOrig, autor, anio,
+			clasifBiblio: Number(clasif), titulo, extra1, extra2, extra3, extra4, temas
+		});
 
 		// Limpia los campos
 		$('#tipo_bibliografia').val('0').trigger('change');
@@ -475,33 +707,10 @@ const fcs = function(){
 	 * @function obtenerBibliografia
 	 * @returns {Array<Object>} Lista de objetos con los datos de la bibliografía.
 	 */
-	const obtenerBibliografia = () => {
-	  const catalogoTipos = (fComun.getVarLocalJ("catalogos")?.catTipoBib) || [];
-	  const tabla = $('#tablaBibliografia').DataTable();
-	  const data = [];
-	  tabla.rows({ page: 'all' }).data().each(function (rowData, index) {
-	  const tipoTexto = rowData.tipo || rowData[0];
-	  const tipoObj = catalogoTipos.find(([id, nombre]) => nombre.trim().toUpperCase() === tipoTexto.trim().toUpperCase());
-	  const clasifTexto = (rowData.clasifBiblio || rowData[3] || '').toString().trim().toLowerCase();
-	  const clasif = clasifTexto === 'complementaria' ? 1 : 0;
-
-	  data.push({
-		idTipo: tipoObj ? tipoObj[0] : null,
-		tipo: tipoTexto,
-		autor: rowData.autor || rowData[1],
-		anio: rowData.anio || rowData[2],
-		clasifBiblio: clasif,
-		titulo: rowData.titulo || rowData[4],
-		extra1: rowData.extra1 || rowData[5],
-		extra2: rowData.extra2 || rowData[6],
-		extra3: rowData.extra3 || rowData[7],
-		extra4: rowData.extra4 || rowData[8],
-		temas: rowData.temas || rowData[9]
-	  });
-	});
-	
-	  return data;
-	};
+	const obtenerBibliografia = () => listaBibliografias
+		.slice()
+		.sort((a, b) => Number(a.id) - Number(b.id))
+		.map(clonarBibliografia);
 	
 	/**
 	 * Función que recorre la tabla de relación con licenciaturas para extraer
@@ -512,72 +721,21 @@ const fcs = function(){
 	 * @function obtenerRelLicAsig
 	 * @returns {Array<Object>} Arreglo con objetos que representan la relación con licenciaturas.
 	 */
-	const obtenerRelLicAsig = () => {
-	  const tabla = $('#tablaRelacionesLic').DataTable();
-	  const data = [];
-	  
-	  tabla.rows().every(function () {
-	    const row = this.data();
+	const obtenerRelLicAsig = () => listaRelacionesLicenciaturas.map(relacion => {
+		const rel = normalizarRelacion(relacion);
+		return {
+			idLicenciatura: rel.idLicenciatura,
+			licenciatura: rel.licenciatura,
+			idAreaConocimiento: rel.idAreaConocimiento,
+			areaConocimiento: rel.areaConocimiento,
+			idCaracterAsignatura: rel.idCaracterAsignatura,
+			caracterAsignatura: rel.caracterAsignatura,
+			semestres: [...rel.semestres],
+			idSeriacionAnterior: [...rel.idSeriacionAnterior],
+			idSeriacionConsecuente: [...rel.idSeriacionConsecuente]
+		};
+	});
 
-	    /*
-	     * Estructura actual de tablaRelacionesLic:
-	     * 0 Licenciatura
-	     * 1 Área de conocimiento
-	     * 2 Carácter
-	     * 3 Semestre
-	     * 4 Seriación anterior
-	     * 5 Seriación consecuente
-	     * 6 Acciones + input hidden .datos-relacion
-	     */
-	    const accionesHtml = row[6] || "";
-
-	    const $tmp = $('<div>').html(accionesHtml);
-	    const hidden = $tmp.find('.datos-relacion').val();
-
-	    if (!hidden) return;
-
-	    const partes = hidden.split('@##@');
-
-	    const idLic = partes[0] || null;
-	    const txtLic = partes[1] || "";
-	    const idAreaCon = partes[2] || null;
-	    const txtAreaCon = partes[3] || "";
-	    const idCaracter = partes[4] || null;
-	    const txtCaracter = partes[5] || "";
-
-	    const semestres = partes[6]
-	      ? partes[6].split(',').map(v => Number(v)).filter(v => !isNaN(v))
-	      : [];
-
-	    const idSerAnt = partes[7]
-	      ? partes[7].split(',').map(v => Number(v)).filter(v => !isNaN(v))
-	      : [];
-
-	    const idSerCon = partes[8]
-	      ? partes[8].split(',').map(v => Number(v)).filter(v => !isNaN(v))
-	      : [];
-
-	    if (!idLic || Number(idLic) === 0) return;
-	    if (!idAreaCon || Number(idAreaCon) === 0) return;
-	    if (!idCaracter || Number(idCaracter) === 0) return;
-	    if (!semestres.length) return;
-
-	    data.push({
-	      idLicenciatura: Number(idLic),
-	      licenciatura: txtLic,
-	      idAreaConocimiento: Number(idAreaCon),
-	      areaConocimiento: txtAreaCon,
-	      idCaracterAsignatura: Number(idCaracter),
-	      caracterAsignatura: txtCaracter,
-	      semestres: semestres,
-	      idSeriacionAnterior: idSerAnt,
-	      idSeriacionConsecuente: idSerCon
-	    });
-	  });
-
-	  return data;
-	};
-	
 	/**
 	 * Función que obtiene la información capturada en las tablas de Temario y Contenido.
 	 * La tabla de Temas contiene número, nombre, horas y objetivo.
@@ -587,36 +745,9 @@ const fcs = function(){
 	 * @returns {Object} Objeto con dos arreglos: `temas` y `contenidos`.
 	 */
 	const obtenerTemarioYContenido = () => {
-
-	  // =======================
-	  //   TEMAS
-	  // =======================
-	  const temas = [];
-	  const tablaTemasDT = $('#tablaTemas').DataTable();
-
-	  tablaTemasDT.rows({ page: 'all' }).data().each(function (row) {
-		temas.push({
-		  numeroTema: row[0]?.toString().trim() || '',
-		  nombre:     row[1]?.toString().trim() || '',
-		  horas:      row[2]?.toString().trim() || '',
-		  objetivo:   row[3]?.toString().trim() || ''
-		});
-	  });
-	  // =======================
-	  //   CONTENIDOS
-	  // =======================
-	  const contenidos = [];
-	  const tablaContenidosDT = $('#tablaContenidos').DataTable();
-
-	  tablaContenidosDT.rows({ page: 'all' }).data().each(function (row) {
-		contenidos.push({
-		  temaRelacionado: row[0]?.toString().trim() || '',
-		  numeroCont:      row[1]?.toString().trim() || '',
-		  contenido:       row[2]?.toString().trim() || ''
-		});
-	  });
-
-	  return { temas, contenidos };
+		return (typeof etii !== 'undefined' && etii.obtenerTemarioContenido)
+			? etii.obtenerTemarioContenido()
+			: { temas: [], contenidos: [] };
 	};
 	
 	/**
@@ -629,6 +760,20 @@ const fcs = function(){
 	 * @static
 	 */
 	const accionSolicitud = (accion) => {
+		if (!solicitudListaParaGuardar) {
+			return fComun.mostrarModalAdvertencia(
+				'La solicitud todavía no termina de cargar. Actualiza la pantalla y vuelve a intentarlo.'
+			);
+		}
+
+		if (typeof etii !== 'undefined' && etii.hayEdicionPendiente && etii.hayEdicionPendiente()) {
+			return fComun.mostrarModalAdvertencia('Guarda primero la edición abierta en temas, contenidos o bibliografía antes de continuar.');
+		}
+
+		if (!String($('#asignatura').val() ?? '').trim()) {
+			return fComun.mostrarTooltipCampo('#asignatura', 'Captura el nombre de la asignatura antes de guardar.');
+		}
+
 		objSolicitud = construirSolicitud();
 		let modalAprob = "#modalAprobSoliEstatus";
 		objSolicitud["accionSoli"] = accion;
@@ -657,19 +802,19 @@ const fcs = function(){
 						let estatus = objSolicitud["idEstSoli"];
 						msjConfirm = (idEstSolicitud == 1)?"La solicitud ha sido enviada correctamente para su aprobaci&oacute;n.":msjConfirm;
 						$(modalAprob+" .textoBody").html(msjConfirm);
-						$(modalAprob).modal('show');
+						fComun.mostrarModal(modalAprob);
 						etii.eventoAprobSoli(".cierraModalAprob",modalAprob);
 					}else if(accion == 3){ //Se rechazo correctamente la solicitud
 						let msjConfirm = "La solicitud ha sido rechazada correctamente.";
 						$(modalAprob+" .textoBody").html(msjConfirm);
-						$(modalAprob).modal('show');
+						fComun.mostrarModal(modalAprob);
 						etii.eventoAprobSoli(".cierraModalAprob",modalAprob);
 					}
 				}else{
 					let palabra = (accion==1)?"guardado":(accion==2)?"procesamiento":"rechazo";
-					if(obj.estatus == 409){
+					if([400, 401, 403, 409].includes(Number(obj.estatus || obj.code))){
 						texto = "No fue posible realizar el "+palabra+" de la solicitud <br>" +
-								obj.error;
+								(obj.error || "La acción no está permitida.");
 					}else{
 						texto = "No fue posible realizar el "+palabra+" de la solicitud <br>" +
 								"Contacta al área de soporte SIPEFI <br>" +
@@ -678,6 +823,9 @@ const fcs = function(){
 								"</a></strong>";
 					}
 					
+					if(obj.referencia){
+						texto += "<br><small>Referencia de soporte: <strong>" + obj.referencia + "</strong></small>";
+					}
 					mostrarModalGuardar(2,texto);
 				}
 			}catch(e){console.log(e)}
@@ -714,11 +862,12 @@ const fcs = function(){
 	 * @returns {Object} Objeto completo de la solicitud.
 	 */
 	const construirSolicitud = () => {
+	  const temarioContenido = obtenerTemarioYContenido();
 	  return {
 		datosGenerales: {
 		  modalidad: $('#modalidad').val(),
 		  tipoModalidad: $('#tipo_modalidad').val(),
-		  valorPractico: $('#valor_practico').val(),
+		  valorPractico: $('#valor_practico').val() || [],
 		  nombreAsignatura: $('#asignatura').val(),
 		  claveAsignatura: $('#clave_asignatura').val(),
 		  creditos: $('#creditos').val(),
@@ -729,16 +878,16 @@ const fcs = function(){
 		  objAsig: $("#objetivo").val()
 		},
 	    relacionLicenciaturas: obtenerRelLicAsig(),
-	    temario: obtenerTemarioYContenido().temas,
+	    temario: temarioContenido.temas,
 		actPracticas: $('#horasPracticasTemario').val(),
-	    contenido: obtenerTemarioYContenido().contenidos,
+	    contenido: temarioContenido.contenidos,
 	    bibliografia: obtenerBibliografia(),
 	    estrategiasEvaluacion: {
-	      estrategiasDidacticas: $('#estrategias_didacticas').val(),
+	      estrategiasDidacticas: $('#estrategias_didacticas').val() || [],
 	      formasEvaluacion: {
-	        diagnostica: $('#eval_diagnostica').val(),
-	        formativa: $('#eval_formativa').val(),
-	        sumativa: $('#eval_sumativa').val()
+	        diagnostica: $('#eval_diagnostica').val() || [],
+	        formativa: $('#eval_formativa').val() || [],
+	        sumativa: $('#eval_sumativa').val() || []
 	      },
 	      formacionIntegral: $('#formacion_integral').val(),
 	      perfilProfesiografico: $('#perfil_profesiografico').val()
@@ -746,12 +895,12 @@ const fcs = function(){
 	    metadatos: {
 	      usuario: $("#usuario").html(),
 	      rol: $("#rol").html(),
-	      token: $("#token").html(),
 	      numSolicitud: $("#numSolicitud").html(),
 	      accionGA: ($.isNumeric($("#numSolicitud").html()) ? 2 : 1),
 	      idEstSoli: $("#idES").html(),
 	      usuarioSoli: $("#usuarioSol").html(),
-	      comentarios: $("#comentarios").Editor("getText")
+	      comentarios: $("#comentarios").Editor("getText"),
+	      cargaCompleta: solicitudListaParaGuardar
 	    }
 	  };
 	};
@@ -783,7 +932,7 @@ const fcs = function(){
 	    // Botón con estilo correspondiente
 	    btn.attr("class", opc == 1 ? "btn btn-success" : "btn btn-danger");
 
-	    modal.modal("show");
+	    fComun.mostrarModal(modal);
 	    fComun.ocultarEspera();
 	};
 	
@@ -795,6 +944,7 @@ const fcs = function(){
 	 * @static
 	 */
 	const cargaSolicitudAccion = (solicitud) => {
+		solicitudListaParaGuardar = false;
 		let accion = Number(solicitud.accion);
 		fComun.guardaVarLocalS("accionSoli",accion);
 		fComun.guardaVarLocal("objSoli",solicitud);
@@ -851,93 +1001,47 @@ const fcs = function(){
 		try {
 			if (!solicitud) return;
 			// === 1. DATOS GENERALES ===
-			const dg = solicitud.datosGenerales;
-			$('#asignatura').val(dg.asignatura);
-			$('#clave_asignatura').val(dg.claveAsignatura);
-			$('#creditos').val(dg.creditos);
-			$('#modalidad').val(dg.modalidad);
-			$('#tipo_modalidad').val(dg.tipoModalidad);
-			$("#valor_practico").val(solicitud.valorPractico).trigger("change");
-			$('#h_sem_teo').val(dg.hSemTeoria);
-			$('#h_sem_pra').val(dg.hSemPractica);
-			$('#h_semestre_teo').val(dg.hSemestreTeoria);
-			$('#h_semestre_pra').val(dg.hSemestrePractica);
-			$('#objetivo').val(dg.objAsig);
+			const dg = solicitud.datosGenerales || {};
+			$('#asignatura').val(dg.asignatura ?? '');
+			$('#clave_asignatura').val(dg.claveAsignatura ?? '');
+			$('#creditos').val(dg.creditos ?? '');
+			$('#modalidad').val(dg.modalidad ?? '');
+			$('#tipo_modalidad').val(dg.tipoModalidad ?? '');
+			$("#valor_practico").val(Array.isArray(solicitud.valorPractico) ? solicitud.valorPractico : []).trigger("change");
+			$('#h_sem_teo').val(dg.hSemTeoria ?? '');
+			$('#h_sem_pra').val(dg.hSemPractica ?? '');
+			$('#h_semestre_teo').val(dg.hSemestreTeoria ?? '');
+			$('#h_semestre_pra').val(dg.hSemestrePractica ?? '');
+			$('#objetivo').val(dg.objAsig ?? '');
 
 			if(dg.tipoModalidad !== 1 && accion == 2){
 				$("#valor_practico").prop("disabled", false);
 			}
 
-			// === 2. RELACIÓN CON LICENCIATURAS (sección tabla) ===
-			if ($.fn.DataTable.isDataTable('#tablaRelacionesLic')) {
-			  $('#tablaRelacionesLic').DataTable().clear().draw();
-			}
-			
-			(solicitud.relacionLicenciaturas || []).forEach(rel => {
-			  const idLic = rel.idLic;
-			  const semestre = rel.semestre || [];
-			  const serAnt = rel.seriacionAnt || [];
-			  const serCon = rel.seriacionCons || [];
-			  const idSolicitud = rel.idSolicitud || [];
-			  const idAreaConocimiento = rel.idAreaConocimiento || "";
-			  const idCaracterAsignatura = rel.idCaracterAsignatura || "";
+			// === 2. RELACIÓN CON LICENCIATURAS ===
+			cargarRelacionesLicenciaturas(solicitud.relacionLicenciaturas || [], visible);
 
-			  $('#rel_licenciatura').val(idLic).trigger('change');
-			  $('#rel_solicitud').val(idSolicitud).trigger('change');
-			  $('#rel_area_con').val(idAreaConocimiento).trigger('change');
-			  $('#rel_caracter').val(idCaracterAsignatura).trigger('change');
-			  $('#rel_semestre').val(semestre).trigger('change');
-			  $('#ser_anterior').val(serAnt).trigger('change');
-			  $('#ser_consecuente').val(serCon).trigger('change');
-
-			  $('#btnAgregarRelLicAsig').click();
-			});
-			
 			// === 3. TEMARIO Y CONTENIDO ===
-			$('#horasPracticasTemario').val(solicitud.actPracticas);
-			(solicitud.temario || []).forEach(t => {
-			  $('#nombreTema').val(t.nombre);
-			  $('#horasTema').val(t.horas);
-			  $('#objetivoTema').val(t.objetivo);
-			  $('#btnAgregarTema').trigger('click');
-			});
-			
-			(solicitud.contenido || []).forEach(c => {
-			  $('#temaContenido').val(c.temaRelacionado).trigger('change');
-			  $('#contenidoTema').val(c.contenido);
-			  $('#btnAgregarContenido').trigger('click');
-			});
+			$('#horasPracticasTemario').val(solicitud.actPracticas ?? '');
+			etii.cargarTemarioContenido(solicitud.temario || [], solicitud.contenido || []);
 
 			// === 4. BIBLIOGRAFÍA ===
-			const tablaBib = $('#tablaBibliografia').DataTable();
-			const catTipoBib = fComun.getVarLocalJ("catalogos")?.catTipoBib || [];
-			tablaBib.clear();
-
-
-			(solicitud.bibliografia || []).forEach(b => {
-				const tipoBib = catTipoBib.find(([id]) => id == b.idTipo)?.[1] || "Tipo desconocido";
-				const clasif = b.clasifBiblio == 1 ? "Complementaria" : "Básica";
-				const hidden = `<input type="hidden" class="datos-biblio" value="${b.idTipo}@##@${b.autor}@##@${b.anio}@##@${b.clasifBiblio}@##@${b.titulo}@##@${b.extra1}@##@${b.extra2}@##@${b.extra3}@##@${b.extra4}@##@${b.temas}">`;
-				tablaBib.row.add([
-					tipoBib, b.autor, b.anio, clasif, b.titulo, b.extra1, b.extra2, b.extra3, b.extra4, b.temas,
-					`<div ${visible}>
-						<button class="btn btn-sm btn-danger btn-eliminar-biblio"><i class="fas fa-trash-alt"></i></button>${hidden}
-						<button class="btn btn-sm btn-danger" id = "bibliografia-btnedit-${b.id}" onclick="etii.editarBibliografia(${b.id})"><i class="fas fa-edit"></i></button>
-						<button class="btn btn-sm btn-danger" id = "bibliografia-btnsave-${b.id}" onclick="etii.saveBibliografia(${b.id})" hidden><i class="fas fa-save"></i></button>
-					</div>`
-				]);
-			});
-
-			tablaBib.draw();
+			const catTipoBib = fComun.getVarLocalJ('catalogos')?.catTipoBib || [];
+			const bibliografias = (solicitud.bibliografia || []).map(b => ({
+				...b,
+				tipo: catTipoBib.find(([id]) => Number(id) === Number(b.idTipo))?.[1] || 'Tipo desconocido'
+			}));
+			cargarBibliografias(bibliografias, visible);
 
 			// === 5. ESTRATEGIAS Y EVALUACIÓN ===
-			const estEval = solicitud.estrategiasEvaluacion;
-			$('#estrategias_didacticas').val(estEval.estrategiasDidacticas || []).trigger('change');
-			$('#formacion_integral').val(estEval.formacionIntegral);
-			$('#perfil_profesiografico').val(estEval.perfilProfesiografico);
-			$('#eval_diagnostica').val(estEval.formasEvaluacion.diagnostica || []).trigger('change');
-			$('#eval_formativa').val(estEval.formasEvaluacion.formativa || []).trigger('change');
-			$('#eval_sumativa').val(estEval.formasEvaluacion.sumativa || []).trigger('change');
+			const estEval = solicitud.estrategiasEvaluacion || {};
+			const formasEvaluacion = estEval.formasEvaluacion || {};
+			$('#estrategias_didacticas').val(Array.isArray(estEval.estrategiasDidacticas) ? estEval.estrategiasDidacticas : []).trigger('change');
+			$('#formacion_integral').val(estEval.formacionIntegral ?? '');
+			$('#perfil_profesiografico').val(estEval.perfilProfesiografico ?? '');
+			$('#eval_diagnostica').val(Array.isArray(formasEvaluacion.diagnostica) ? formasEvaluacion.diagnostica : []).trigger('change');
+			$('#eval_formativa').val(Array.isArray(formasEvaluacion.formativa) ? formasEvaluacion.formativa : []).trigger('change');
+			$('#eval_sumativa').val(Array.isArray(formasEvaluacion.sumativa) ? formasEvaluacion.sumativa : []).trigger('change');
 
 			// === 6. COMENTARIOS ===
 			$("#seccionComentarios").html("");
@@ -963,9 +1067,14 @@ const fcs = function(){
 			
 			//Bloqueamos el campo asignatura, ya no se puede modificar
 			$("#asignatura").prop("readonly", true);
+			solicitudListaParaGuardar = true;
 
 		} catch (e) {
+			solicitudListaParaGuardar = false;
 			console.error("Error cargando la solicitud:", e);
+			fComun.mostrarModalAdvertencia(
+				'No fue posible reconstruir completamente la solicitud. Actualiza la pantalla antes de guardar.'
+			);
 		}
 	};
 	
@@ -986,7 +1095,7 @@ const fcs = function(){
 				"");
 		$("#modalAlerta .modal-body .btn-secondary").attr('id','cerrarAlerta').html('Cancelar');
 		$("#modalAlerta .modal-body .btn-warning").attr('id','rechazarSoli').html('<strong>Confirmar</strong>');
-		$('#modalAlerta').modal('show');
+		fComun.mostrarModal('#modalAlerta');
 		etii.eventoAlerta("#cerrarAlerta","#modalAlerta",0);
 		etii.eventoAlerta("#rechazarSoli","#modalAlerta",1);
 	};
@@ -1045,30 +1154,11 @@ const fcs = function(){
 		  return n;
 		};
 
-		const dtRowsCount = (tblId) => {
-		  if ($.fn.DataTable && $.fn.DataTable.isDataTable(`#${tblId}`)) {
-		    return $(`#${tblId}`).DataTable().rows({ filter: 'applied' }).count();
-		  }
-		  return $(`#${tblId} tbody tr`).length;
-		};
-
-		const dtSumColumn = (tblId, colIdx) => {
-		  let sum = 0;
-		  if ($.fn.DataTable && $.fn.DataTable.isDataTable(`#${tblId}`)) {
-		    const data = $(`#${tblId}`).DataTable().column(colIdx, { search: 'applied' }).data().toArray();
-		    for (const v of data) {
-		      const n = parseFloat(String(v).replace(',', '.'));
-		      if (Number.isFinite(n)) sum += n;
-		    }
-		  } else {
-		    $(`#${tblId} tbody tr`).each(function () {
-		      const txt = $(this).find('td').eq(colIdx).text().trim().replace(',', '.');
-		      const n = parseFloat(txt);
-		      if (Number.isFinite(n)) sum += n;
-		    });
-		  }
-		  return sum;
-		};
+		// Los datos canónicos se conservan fuera de DataTables.
+		// DataTables es únicamente la capa de presentación y nunca la fuente de guardado/validación.
+		const temarioContenidoActual = obtenerTemarioYContenido();
+		const relacionesActuales = obtenerRelLicAsig();
+		const bibliografiasActuales = obtenerBibliografia();
 
 		// === Validamos campos input y select validados ===
 		// Selects requeridos 
@@ -1130,15 +1220,17 @@ const fcs = function(){
 		  }
 		}
 		
-		// === Validamos Tablas con ≥ 1 registro ===
-		if (dtRowsCount('tablaRelacionesLic') < 1) mark('#tablaRelacionesLic', 'Agrega al menos una relación licenciatura–asignatura.');
-		if (dtRowsCount('tablaBibliografia')  < 1) mark('#tablaBibliografia',  'Agrega al menos una referencia bibliográfica.');
-		if (dtRowsCount('tablaTemas')         < 1) mark('#tablaTemas',         'Agrega al menos un tema al temario.');
-		if (dtRowsCount('tablaContenidos')    < 1) mark('#tablaContenidos',    'Agrega al menos un contenido (para algún tema).');
+		// === Validamos secciones dinámicas con sus estructuras internas completas ===
+		if (relacionesActuales.length < 1) mark('#tablaRelacionesLic', 'Agrega al menos una relación licenciatura–asignatura.');
+		if (bibliografiasActuales.length < 1) mark('#tablaBibliografia', 'Agrega al menos una referencia bibliográfica.');
+		if (temarioContenidoActual.temas.length < 1) mark('#tablaTemas', 'Agrega al menos un tema al temario.');
+		if (temarioContenidoActual.contenidos.length < 1) mark('#tablaContenidos', 'Agrega al menos un contenido (para algún tema).');
 
-		// === Validamos Horas del semestre ===
-		const COL_HORAS_TEMA = 2; 
-		const sumaHorasTemas = dtSumColumn('tablaTemas', COL_HORAS_TEMA);
+		// === Validamos Horas del semestre desde el modelo interno, no desde celdas HTML ===
+		const sumaHorasTemas = temarioContenidoActual.temas.reduce((total, tema) => {
+		  const horas = parseFloat(String(tema.horas ?? '').replace(',', '.'));
+		  return total + (Number.isFinite(horas) ? horas : 0);
+		}, 0);
 
 		const horasTotalesSemestre = hSemTeoTotal + hSemPraTotal;
 		const esperado             = sumaHorasTemas + horasPracTemario;
@@ -1203,7 +1295,6 @@ const fcs = function(){
 			estatus: $("#idES").html(),
 			rol: $("#rol").html(),
 			usuario: $("#usuario").html(),
-			token: $("#token").html(),
 			comentario: $("#razonCS").val()
 		};
 		fComun.post2("/SIPEFI/cancelarSolicitud/", param, function(resp){
@@ -1213,7 +1304,7 @@ const fcs = function(){
 					let modalAprob = "#modalAprobSoliEstatus";
 					let msjConfirm = "La solicitud ha sido cancelada correctamente.";
 					$(modalAprob+" .textoBody").html(msjConfirm);
-					$(modalAprob).modal('show');
+					fComun.mostrarModal(modalAprob);
 					etii.eventoAprobSoli(".cierraModalAprob", modalAprob);
 				}else{
 					texto = "No fue posible realizar la cancelaci&oacute;n de la solicitud <br>" +
@@ -1221,8 +1312,11 @@ const fcs = function(){
 							"<strong><a href=\"mailto:sipefi@fi.unam.edu?subject=Necesito%20ayuda\">" +
 								"sipefi@fi.unam.edu" +
 							"</a></strong>";
-					if(obj.code == 409){
-						texto = obj.error
+					if(obj.code == 409 || obj.code == 403){
+						texto = obj.error;
+					}
+					if(obj.referencia){
+						texto += "<br><small>Referencia de soporte: <strong>" + obj.referencia + "</strong></small>";
 					}
 					mostrarModalGuardar(2,texto);
 				}
@@ -1230,10 +1324,59 @@ const fcs = function(){
 		});
 	};
 	
+	const editarBibliografiaFila = (idBibliografia) => {
+		if (bibliografiaEnEdicion !== null) return false;
+		const existe = listaBibliografias.some(bib => Number(bib.id) === Number(idBibliografia));
+		if (!existe) return false;
+		bibliografiaEnEdicion = Number(idBibliografia);
+		renderizarBibliografias();
+		$('.menuBotones[target="guardarSolicitud"], .menuBotones[target="aprobarSolicitud"], .menuBotones[target="rechazarSolicitud"]').prop('disabled', true);
+		return true;
+	};
+
+	const guardarBibliografiaFila = (idBibliografia) => {
+		if (Number(bibliografiaEnEdicion) !== Number(idBibliografia)) return false;
+		const indice = listaBibliografias.findIndex(bib => Number(bib.id) === Number(idBibliografia));
+		if (indice < 0) return false;
+
+		const bib = listaBibliografias[indice];
+		const depende = String(bib.tipo).trim().toUpperCase() === 'DEPENDERA DE LA TEMÁTICA A TRATAR';
+		const valor = (campo, actual) => (depende && campo !== 'temas')
+			? actual
+			: ($(`#id-biblio-${campo}-${bib.id}`).val() ?? '');
+
+		listaBibliografias[indice] = normalizarBibliografia({
+			...bib,
+			autor: valor('autor', bib.autor),
+			anio: valor('year', bib.anio),
+			clasifBiblio: Number($(`#id-biblio-clasificacion-${bib.id}`).val()) === 1 ? 1 : 0,
+			titulo: valor('titulo', bib.titulo),
+			extra1: valor('extra1', bib.extra1),
+			extra2: valor('extra2', bib.extra2),
+			extra3: valor('extra3', bib.extra3),
+			extra4: valor('extra4', bib.extra4),
+			temas: valor('temas', bib.temas)
+		});
+
+		bibliografiaEnEdicion = null;
+		renderizarBibliografias();
+		$('.menuBotones[target="guardarSolicitud"], .menuBotones[target="aprobarSolicitud"], .menuBotones[target="rechazarSolicitud"]').prop('disabled', false);
+		return true;
+	};
+
+	const hayBibliografiaEnEdicion = () => bibliografiaEnEdicion !== null;
+
 	return{
 		cssVistaCaptura:	cssVistaCaptura,
 		cargaCatalogos:	cargaCatalogos,
 		agregarRelacionLicAsig: agregarRelacionLicAsig,
+		cargarRelacionesLicenciaturas: cargarRelacionesLicenciaturas,
+		eliminarRelacionLicenciatura: eliminarRelacionLicenciatura,
+		cargarBibliografias: cargarBibliografias,
+		eliminarBibliografia: eliminarBibliografia,
+		editarBibliografiaFila: editarBibliografiaFila,
+		guardarBibliografiaFila: guardarBibliografiaFila,
+		hayBibliografiaEnEdicion: hayBibliografiaEnEdicion,
 		actualizarCamposExtra:	actualizarCamposExtra,
 		validaCamposReqBiblio:	validaCamposReqBiblio,
 		accionSolicitud:	accionSolicitud,

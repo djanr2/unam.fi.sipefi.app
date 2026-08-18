@@ -1,7 +1,11 @@
 # -*- coding: utf-8 -*-
 from sipefi_apps.tomo_ii.modelo.ConsultasBD import ConsultasBD as CBD
+from sipefi_apps.tomo_ii.modelo.excepciones import SolicitudError
 
 from datetime import datetime
+import logging
+
+logger = logging.getLogger(__name__)
 
 class Solicitud:
     """
@@ -18,6 +22,345 @@ class Solicitud:
         self.rol = None
         self.token = None
 
+    ROL_OPERADOR_ADMIN = 16
+    ROL_VALIDADOR_ADMIN = 17
+
+    @staticmethod
+    def _entero(valor, default=0):
+        try:
+            return int(valor)
+        except (TypeError, ValueError):
+            return default
+
+    @staticmethod
+    def _lista(valor):
+        return valor if isinstance(valor, list) else []
+
+    def _validar_estructura_payload(self, obj):
+        if not isinstance(obj, dict):
+            raise SolicitudError(400, "La estructura de la solicitud no es válida.")
+
+        metadatos = obj.get("metadatos")
+        if not isinstance(metadatos, dict) or metadatos.get("cargaCompleta") is not True:
+            raise SolicitudError(
+                400,
+                "La solicitud no terminó de cargarse correctamente. Actualiza la pantalla antes de guardar.",
+            )
+
+        secciones = (
+            "datosGenerales", "relacionLicenciaturas", "temario",
+            "contenido", "bibliografia", "estrategiasEvaluacion",
+        )
+        faltantes = [seccion for seccion in secciones if seccion not in obj]
+        if faltantes:
+            raise SolicitudError(
+                400,
+                "La información de la solicitud llegó incompleta. Actualiza la pantalla antes de volver a guardar.",
+            )
+
+        datos_generales = obj.get("datosGenerales")
+        estrategias = obj.get("estrategiasEvaluacion")
+        if not isinstance(datos_generales, dict) or not isinstance(estrategias, dict):
+            raise SolicitudError(400, "La estructura de la solicitud no es válida.")
+
+        formas_evaluacion = estrategias.get("formasEvaluacion", {})
+        if formas_evaluacion is None:
+            formas_evaluacion = {}
+        if not isinstance(formas_evaluacion, dict):
+            raise SolicitudError(400, "La estructura de las formas de evaluación no es válida.")
+
+        estrategias_didacticas = estrategias.get("estrategiasDidacticas", [])
+        if estrategias_didacticas is None:
+            estrategias_didacticas = []
+        if not isinstance(estrategias_didacticas, list):
+            raise SolicitudError(400, "La estructura de las estrategias didácticas no es válida.")
+
+        for tipo_evaluacion in ("diagnostica", "formativa", "sumativa"):
+            valores = formas_evaluacion.get(tipo_evaluacion, [])
+            if valores is None:
+                valores = []
+            if not isinstance(valores, list):
+                raise SolicitudError(400, "La estructura de las formas de evaluación no es válida.")
+
+        for seccion in ("relacionLicenciaturas", "temario", "contenido", "bibliografia"):
+            if not isinstance(obj.get(seccion), list):
+                raise SolicitudError(400, "La estructura de la solicitud no es válida.")
+
+        valores_practicos = datos_generales.get("valorPractico", [])
+        if valores_practicos is None:
+            valores_practicos = []
+        if not isinstance(valores_practicos, list):
+            raise SolicitudError(400, "La estructura de valor práctico no es válida.")
+
+        nombre_asignatura = str(datos_generales.get("nombreAsignatura") or "").strip()
+        if not nombre_asignatura:
+            raise SolicitudError(
+                400,
+                "Captura el nombre de la asignatura antes de guardar la solicitud.",
+            )
+
+        numeros_tema = set()
+        for tema in obj.get("temario", []):
+            if not isinstance(tema, dict):
+                raise SolicitudError(400, "La estructura del temario no es válida.")
+            numero_tema = self._entero(tema.get("numeroTema"), 0)
+            if numero_tema <= 0 or numero_tema in numeros_tema:
+                raise SolicitudError(400, "La numeración del temario no es válida.")
+            numeros_tema.add(numero_tema)
+
+        contenidos_vistos = set()
+        for contenido in obj.get("contenido", []):
+            if not isinstance(contenido, dict):
+                raise SolicitudError(400, "La estructura del contenido temático no es válida.")
+            numero_tema = self._entero(
+                str(contenido.get("temaRelacionado") or "").split(".")[0],
+                0,
+            )
+            numero_contenido = str(contenido.get("numeroCont") or "")
+            partes = numero_contenido.split(".")
+            consecutivo = self._entero(partes[1], 0) if len(partes) == 2 else 0
+            clave_contenido = (numero_tema, consecutivo)
+            if (
+                numero_tema <= 0
+                or numero_tema not in numeros_tema
+                or consecutivo <= 0
+                or clave_contenido in contenidos_vistos
+            ):
+                raise SolicitudError(
+                    400,
+                    "Existe contenido temático sin una relación válida con su tema o con numeración duplicada.",
+                )
+            contenidos_vistos.add(clave_contenido)
+
+        relaciones_vistas = set()
+        for relacion in obj.get("relacionLicenciaturas", []):
+            if not isinstance(relacion, dict):
+                raise SolicitudError(400, "La estructura de las relaciones con licenciaturas no es válida.")
+            semestres = relacion.get("semestres", [])
+            anteriores = relacion.get("idSeriacionAnterior", [])
+            consecuentes = relacion.get("idSeriacionConsecuente", [])
+            if not all(isinstance(valor, list) for valor in (semestres, anteriores, consecuentes)):
+                raise SolicitudError(400, "La estructura de las relaciones con licenciaturas no es válida.")
+
+            id_licenciatura = self._entero(relacion.get("idLicenciatura"), 0)
+            id_area = self._entero(relacion.get("idAreaConocimiento"), 0)
+            id_caracter = self._entero(relacion.get("idCaracterAsignatura"), 0)
+            clave_relacion = (id_licenciatura, id_area, id_caracter)
+
+            if (
+                id_licenciatura <= 0
+                or id_area <= 0
+                or id_caracter <= 0
+                or not semestres
+                or any(self._entero(semestre, 0) <= 0 for semestre in semestres)
+                or clave_relacion in relaciones_vistas
+            ):
+                raise SolicitudError(400, "Existe una relación con licenciatura incompleta o duplicada.")
+            relaciones_vistas.add(clave_relacion)
+
+        for bibliografia in obj.get("bibliografia", []):
+            if not isinstance(bibliografia, dict):
+                raise SolicitudError(400, "La estructura de la bibliografía no es válida.")
+
+
+    def _tipo_perfil(self):
+        nombre = self.db.getNombrePerfil(self.rol)
+        nombre_normalizado = str(nombre or "").strip().lower()
+        return {
+            "nombre": nombre_normalizado,
+            "es_validador": nombre_normalizado.startswith("validador"),
+            "es_coordinador": nombre_normalizado.startswith("coordinador"),
+            "es_admin_global": self.rol in (
+                self.ROL_OPERADOR_ADMIN,
+                self.ROL_VALIDADOR_ADMIN,
+            ),
+        }
+
+    def _obtener_solicitud_activa_bloqueada(self, id_solicitud):
+        """
+        Obtiene y bloquea la versión activa para impedir que dos usuarios
+        procesen simultáneamente el mismo estatus.
+        """
+        rows = self.db.consulta("""
+            SELECT id_estatus_solicitud,
+                   id_perfil,
+                   id_usuario_creacion,
+                   id_usuario_mod
+              FROM SIPEFI.TD_SOLICITUD_TOMO_II
+             WHERE id_solicitud = :id_solicitud
+               AND historica = 0
+             FOR UPDATE
+        """, {"id_solicitud": int(id_solicitud)})
+
+        if not rows:
+            raise SolicitudError(
+                409,
+                "La solicitud ya no tiene una versión activa. Actualiza la pantalla e inténtalo nuevamente."
+            )
+
+        if len(rows) != 1:
+            logger.error(
+                "La solicitud %s tiene %s versiones activas.",
+                id_solicitud,
+                len(rows),
+            )
+            raise SolicitudError(
+                409,
+                "La solicitud presenta una inconsistencia de versiones activas. Contacta al área de soporte SIPEFI."
+            )
+
+        estatus, perfil, usuario_creacion, usuario_mod = rows[0]
+        perfil_creador_rows = self.db.consulta("""
+            SELECT id_perfil
+              FROM PARAMETRO.TP_USUARIO
+             WHERE id_usuario = :id_usuario
+        """, {"id_usuario": usuario_creacion})
+        perfil_creador = perfil_creador_rows[0][0] if perfil_creador_rows else perfil
+
+        return {
+            "estatus": int(estatus),
+            "perfil": int(perfil),
+            "perfil_creador": int(perfil_creador),
+            "usuario_creacion": int(usuario_creacion),
+            "usuario_mod": int(usuario_mod),
+        }
+
+    def _perfil_validador_autorizado(self, perfil_solicitud):
+        if self.rol == self.ROL_VALIDADOR_ADMIN:
+            return True
+
+        total = self.db.consulta("""
+            SELECT COUNT(*)
+              FROM CATALOGO.TC_MAPEO_PERFIL
+             WHERE id_perfil_origen = :rol
+               AND id_perfil_destino = :perfil_solicitud
+               AND activo = 0
+        """, {
+            "rol": self.rol,
+            "perfil_solicitud": int(perfil_solicitud),
+        })[0][0]
+        return int(total) > 0
+
+    def _operador_autorizado(self, contexto, id_usuario):
+        if self.rol == self.ROL_OPERADOR_ADMIN:
+            return True
+
+        perfil_solicitud = contexto["perfil"]
+        if perfil_solicitud in (
+            self.ROL_OPERADOR_ADMIN,
+            self.ROL_VALIDADOR_ADMIN,
+        ):
+            perfil_solicitud = contexto["perfil_creador"]
+
+        pertenece_usuario = id_usuario in (
+            contexto["usuario_creacion"],
+            contexto["usuario_mod"],
+        )
+        return pertenece_usuario and self.rol == int(perfil_solicitud)
+
+    def _validar_accion_backend(self, accion, id_solicitud, estatus_enviado):
+        """
+        Replica en backend las reglas que actualmente aplica la interfaz y
+        valida que el estatus enviado siga siendo el estatus activo.
+        """
+        tipo = self._tipo_perfil()
+        id_usuario = self.db.getIdUsuario(self.usuario)
+
+        if id_solicitud <= 0:
+            if accion != 1:
+                raise SolicitudError(409, "La solicitud debe guardarse antes de procesar esta acción.")
+            if tipo["es_validador"] or tipo["es_coordinador"]:
+                raise SolicitudError(403, "El perfil activo no puede crear solicitudes.")
+            if estatus_enviado not in (0, 1):
+                raise SolicitudError(409, "Una solicitud nueva debe iniciar en estatus Elaboración.")
+            return None
+
+        contexto = self._obtener_solicitud_activa_bloqueada(id_solicitud)
+        if contexto["estatus"] != estatus_enviado:
+            raise SolicitudError(
+                409,
+                "El estatus de la solicitud cambió mientras estaba abierta. Actualiza la pantalla antes de continuar."
+            )
+
+        if tipo["es_coordinador"]:
+            raise SolicitudError(403, "El perfil Coordinador es únicamente de consulta.")
+
+        if accion == 1:
+            if tipo["es_validador"]:
+                autorizado = (
+                    contexto["estatus"] == 2
+                    and self._perfil_validador_autorizado(contexto["perfil"])
+                )
+            else:
+                autorizado = (
+                    contexto["estatus"] == 1
+                    and self._operador_autorizado(contexto, id_usuario)
+                )
+
+        elif accion == 2:
+            if contexto["estatus"] == 1:
+                autorizado = (
+                    not tipo["es_validador"]
+                    and self._operador_autorizado(contexto, id_usuario)
+                )
+            elif contexto["estatus"] == 2:
+                autorizado = (
+                    tipo["es_validador"]
+                    and self._perfil_validador_autorizado(contexto["perfil"])
+                )
+            else:
+                autorizado = False
+
+        elif accion == 3:
+            autorizado = (
+                contexto["estatus"] == 2
+                and tipo["es_validador"]
+                and self._perfil_validador_autorizado(contexto["perfil"])
+            )
+        else:
+            autorizado = False
+
+        if not autorizado:
+            raise SolicitudError(
+                403,
+                "El perfil activo no tiene permiso para ejecutar esta acción sobre la solicitud."
+            )
+
+        return contexto
+
+    def _validar_cancelacion_backend(self, id_solicitud, estatus_enviado):
+        contexto = self._obtener_solicitud_activa_bloqueada(id_solicitud)
+
+        if contexto["estatus"] != estatus_enviado:
+            raise SolicitudError(
+                409,
+                "El estatus de la solicitud cambió mientras estaba abierta. Actualiza la pantalla antes de cancelar."
+            )
+
+        tipo = self._tipo_perfil()
+        id_usuario = self.db.getIdUsuario(self.usuario)
+
+        if tipo["es_coordinador"] or contexto["estatus"] == 0:
+            autorizado = False
+        elif tipo["es_validador"]:
+            autorizado = (
+                contexto["estatus"] == 2
+                and self._perfil_validador_autorizado(contexto["perfil"])
+            )
+        else:
+            autorizado = (
+                contexto["estatus"] == 1
+                and self._operador_autorizado(contexto, id_usuario)
+            )
+
+        if not autorizado:
+            raise SolicitudError(
+                403,
+                "El perfil activo no tiene permiso para cancelar esta solicitud."
+            )
+
+        return contexto
+
     def procesar(self, obj):
         """
         Procesa la acción solicitada sobre una solicitud: guardar, aprobar o rechazar.
@@ -26,8 +369,19 @@ class Solicitud:
         :return: Diccionario con resultado y metadatos.
         """
         accion = int(obj.get("accionSoli"))
-        self.token = obj.get("metadatos", {}).get("token")
-        self.rol = int(obj.get("metadatos", {}).get("rol", 0))
+        metadatos = obj.get("metadatos", {})
+        self.token = metadatos.get("token")
+        self.rol = int(metadatos.get("rol", 0))
+        self.usuario = metadatos.get("usuarioSoli")
+        id_solicitud = self._entero(metadatos.get("numSolicitud"), 0)
+        id_estatus = self._entero(metadatos.get("idEstSoli"), 1)
+
+        self._validar_accion_backend(
+            accion,
+            id_solicitud,
+            id_estatus,
+        )
+
         if accion == 1: #Guardar o actualizar
             return self.guardar_o_actualizar(obj)
         elif accion == 2: #procesar solicitud
@@ -37,20 +391,23 @@ class Solicitud:
         else:
             raise ValueError("Acción no reconocida")
 
-    def guardar_o_actualizar(self, obj):
+    def guardar_o_actualizar(self, obj, registrar_traza=True, actualizar_token=True):
         """
         Inserta o actualiza una solicitud y todas sus tablas relacionadas.
 
         :param obj: Objeto de solicitud completo.
+        :param registrar_traza: Registra la acción de guardado/edición.
+        :param actualizar_token: Actualiza la fecha del token de acceso.
         :return: Diccionario con identificadores y nombre de estatus.
         """
         def limpiar_num(valor):
             return int(valor) if str(valor).isdigit() else None
     
         try:
+            self._validar_estructura_payload(obj)
             accion = "Guardado o Edición"
-            datos = obj.get("datosGenerales", {})
-            estrategias = obj.get("estrategiasEvaluacion", {})
+            datos = obj.get("datosGenerales", {}) or {}
+            estrategias = obj.get("estrategiasEvaluacion", {}) or {}
             metadatos = obj.get("metadatos", {})
 
             nombre_usuario = metadatos.get("usuarioSoli")
@@ -62,14 +419,19 @@ class Solicitud:
             self.id_estatus = int(id_estatus_raw) if str(id_estatus_raw).isnumeric() else 1
             self.nom_estatus = self.obtener_nombre_estatus(self.id_estatus)
             
-            # Si la solicitud ya existe, conservar creador y fecha
-            id_usuario_creacion, fecha_creacion = None, None
+            # Si la solicitud ya existe, conservar creador, fecha, asignatura y perfil original.
+            # El perfil del revisor no debe sustituir el perfil funcional de la solicitud.
+            id_usuario_creacion, fecha_creacion, perfil_solicitud = None, None, None
             asignatura = datos.get("nombreAsignatura", "")
-            if self.id_solicitud > 0: #solicitud existente
-                id_usuario_creacion, fecha_creacion, asignatura = self.obtener_datos_creacion()
-            elif self.id_solicitud == 0: #solicitud nueva
+            if self.id_solicitud > 0: # solicitud existente
+                id_usuario_creacion, fecha_creacion, asignatura, perfil_solicitud = self.obtener_datos_creacion()
+            elif self.id_solicitud == 0: # solicitud nueva
                 accion = "Creación"
-                self.id_solicitud = self.db.consulta("SELECT NVL(MAX(id_solicitud), 0) + 1 FROM SIPEFI.TD_SOLICITUD_TOMO_II")[0][0]
+                self.id_solicitud = int(
+                    self.db.consulta(
+                        "SELECT SIPEFI.SEQ_SOLICITUD_TOMO_II.NEXTVAL FROM DUAL"
+                    )[0][0]
+                )
                 
                 #Validamos que no exista la asignatura
                 existeAsig = self.db.consulta("""
@@ -81,7 +443,10 @@ class Solicitud:
                 })[0][0]
                 
                 if existeAsig > 0:
-                    raise Exception((409, f"La asignatura <strong>'{asignatura}'</strong> ya existe"))
+                    raise SolicitudError(
+                        409,
+                        f"La asignatura <strong>'{asignatura}'</strong> ya existe."
+                    )
                 else:
                     #Insertar asignatura en tabla de asignaturas
                     sql = """
@@ -136,7 +501,7 @@ class Solicitud:
                 "actividades_practicas": obj.get("actPracticas") or "",
                 "formacion_integral": estrategias.get("formacionIntegral") or "",
                 "perfil_profesiografico": estrategias.get("perfilProfesiografico") or "",
-                "id_perfil": limpiar_num(metadatos.get("rol")),
+                "id_perfil": perfil_solicitud or limpiar_num(metadatos.get("rol")),
                 "fecha_creacion": fecha_creacion or datetime.now(),
                 "id_usuario_creacion": id_usuario_creacion or id_usuario,
                 "id_usuario_mod": id_usuario
@@ -144,23 +509,23 @@ class Solicitud:
             self.db.insertar(sql, params)
 
             # Insertar detalles
-            self._insertar_valor_practico(datos.get("valorPractico", []))
-            self._insertar_rel_licenciaturas(obj.get("relacionLicenciaturas", []))
-            self._insertar_temario(obj.get("temario", []))
-            self._insertar_contenido(obj.get("contenido", []))
-            self._insertar_bibliografia(obj.get("bibliografia", []))
+            self._insertar_valor_practico(self._lista(datos.get("valorPractico")))
+            self._insertar_rel_licenciaturas(self._lista(obj.get("relacionLicenciaturas")))
+            self._insertar_temario(self._lista(obj.get("temario")))
+            self._insertar_contenido(self._lista(obj.get("contenido")))
+            self._insertar_bibliografia(self._lista(obj.get("bibliografia")))
             self._insertar_estrategias(estrategias)
 
-            # Guardar historial
+            # Guardar historial únicamente cuando la operación solicitada sea un guardado explícito.
             comentario = metadatos.get("comentarios")
-            self._guardar_traza(comentario, self.id_estatus, self.id_estatus, accion)
+            if registrar_traza:
+                self._guardar_traza(comentario, self.id_estatus, self.id_estatus, accion)
             
-            #Actualizamos token
-            self._actualizar_token()
+            if actualizar_token:
+                self._actualizar_token()
             return {"idS": self.id_solicitud, "idES": self.id_estatus, "nomES": self.nom_estatus}
 
-        except Exception as e:
-            print(e)
+        except Exception:
             raise
 
     def procesar_aprobacion(self, obj):
@@ -183,12 +548,22 @@ class Solicitud:
     
             nuevo_estatus = self.id_estatus + 1
             id_usuario_mod = self.db.getIdUsuario(self.usuario)
+
+            # Primero persistimos exactamente la versión visible en pantalla.
+            # Así, enviar o aprobar no descarta cambios que aún no se habían guardado manualmente.
+            self.guardar_o_actualizar(
+                obj,
+                registrar_traza=False,
+                actualizar_token=False,
+            )
     
             # Marcamos versión actual como histórica
             self.db.insertar("""
                 UPDATE SIPEFI.TD_SOLICITUD_TOMO_II
                 SET historica = 1, fecha_modificacion = SYSDATE, id_usuario_mod = :id_usuario_mod
-                WHERE id_solicitud = :id_solicitud AND id_estatus_solicitud = :id_estatus
+                WHERE id_solicitud = :id_solicitud
+                  AND id_estatus_solicitud = :id_estatus
+                  AND historica = 0
             """, {"id_usuario_mod": id_usuario_mod, "id_solicitud": self.id_solicitud, "id_estatus": self.id_estatus})
     
             # Limpiamos cualquier residuo en el estatus destino e insertamos clon de la solicitud en el nuevo estatus
@@ -225,16 +600,38 @@ class Solicitud:
                 return {"idS": self.id_solicitud, "idES": self.id_estatus, "nomES": "Elaboración"}
     
             estatus_anterior = self.id_estatus - 1
-    
-            # Borramos la versión actual completa
-            self.limpiar_solicitud(self.id_solicitud, self.id_estatus)
-    
-            # Reactivamos la versión anterior
+
+            # Persistimos primero la versión que el revisor tiene en pantalla.
+            self.guardar_o_actualizar(
+                obj,
+                registrar_traza=False,
+                actualizar_token=False,
+            )
+
+            # La versión revisada se conserva como histórica en el estatus de revisión.
             self.db.insertar("""
                 UPDATE SIPEFI.TD_SOLICITUD_TOMO_II
-                SET historica = 0, fecha_modificacion = SYSDATE, id_usuario_mod = :id_usuario_mod
-                WHERE id_solicitud = :id_solicitud AND id_estatus_solicitud = :estatus_anterior
-            """, {"id_usuario_mod": id_usuario_mod, "id_solicitud": self.id_solicitud, "estatus_anterior": estatus_anterior})
+                   SET historica = 1,
+                       fecha_modificacion = SYSDATE,
+                       id_usuario_mod = :id_usuario_mod
+                 WHERE id_solicitud = :id_solicitud
+                   AND id_estatus_solicitud = :id_estatus
+                   AND historica = 0
+            """, {
+                "id_usuario_mod": id_usuario_mod,
+                "id_solicitud": self.id_solicitud,
+                "id_estatus": self.id_estatus,
+            })
+
+            # Sustituimos la versión anterior por una copia exacta de la versión revisada.
+            # De esta forma, al volver a Elaboración, el operativo recibe los cambios del revisor.
+            self.limpiar_solicitud(self.id_solicitud, estatus_anterior)
+            self._clonar_version(
+                self.id_solicitud,
+                self.id_estatus,
+                estatus_anterior,
+                self.usuario,
+            )
     
             # Guardamos traza y actualizamos token
             self._guardar_traza(comentario, self.id_estatus, estatus_anterior, "Rechazada")
@@ -354,7 +751,7 @@ class Solicitud:
         :return: Tuple (id_usuario_creacion, fecha_creacion) o (None, None)
         """
         row = self.db.consulta("""
-            SELECT id_usuario_creacion, fecha_creacion, asignatura
+            SELECT id_usuario_creacion, fecha_creacion, asignatura, id_perfil
             FROM SIPEFI.TD_SOLICITUD_TOMO_II
             WHERE id_solicitud = :id_solicitud AND id_estatus_solicitud = :id_estatus
         """, {
@@ -362,7 +759,7 @@ class Solicitud:
             "id_estatus": self.id_estatus
         })
         
-        return (row[0][0], row[0][1], row[0][2]) if row else (None, None, None)
+        return (row[0][0], row[0][1], row[0][2], row[0][3]) if row else (None, None, None, None)
 
     def limpiar_solicitud(self, id_soli, id_est):
         tablas = [
@@ -407,9 +804,9 @@ class Solicitud:
             id_area_conocimiento = lic.get("idAreaConocimiento")
             id_caracter_asig = lic.get("idCaracterAsignatura")
     
-            semestres = lic.get("semestres", [])
-            seriaciones_ant = lic.get("idSeriacionAnterior", [])
-            seriaciones_cons = lic.get("idSeriacionConsecuente", [])
+            semestres = list(dict.fromkeys(lic.get("semestres", []) or []))
+            seriaciones_ant = list(dict.fromkeys(lic.get("idSeriacionAnterior", []) or []))
+            seriaciones_cons = list(dict.fromkeys(lic.get("idSeriacionConsecuente", []) or []))
     
             if not seriaciones_ant:
                 seriaciones_ant = [0]
@@ -474,17 +871,20 @@ class Solicitud:
             """, {
                 "id_solicitud": self.id_solicitud,
                 "id_estatus_solicitud": self.id_estatus,
-                "num_tema": tema["numeroTema"],
-                "tema": tema["nombre"],
-                "objetivo": tema["objetivo"],
-                "horas_tema": tema["horas"],
+                "num_tema": self._entero(tema.get("numeroTema"), 0),
+                "tema": str(tema.get("nombre") or ""),
+                "objetivo": str(tema.get("objetivo") or ""),
+                "horas_tema": tema.get("horas") or None,
                 "busuario": self.usuario
             })
 
     def _insertar_contenido(self, contenidos):
         for cont in contenidos:
-            tema_relacionado = cont.get("temaRelacionado", "")
-            num_tema = int(str(tema_relacionado).split('.')[0].strip())
+            tema_relacionado = str(cont.get("temaRelacionado") or "")
+            numero_contenido = str(cont.get("numeroCont") or "")
+            num_tema = self._entero(tema_relacionado.split('.')[0].strip(), 0)
+            partes_contenido = numero_contenido.split('.')
+            num_contenido = self._entero(partes_contenido[1] if len(partes_contenido) == 2 else 0, 0)
             self.db.insertar("""
                 INSERT INTO SIPEFI.TD_CONTENIDO_TEMATICO (
                     id_solicitud, id_estatus_solicitud, num_tema,
@@ -497,13 +897,13 @@ class Solicitud:
                 "id_solicitud": self.id_solicitud,
                 "id_estatus_solicitud": self.id_estatus,
                 "num_tema": num_tema,
-                "num_contenido": cont["numeroCont"].split(".")[1],
-                "contenido": cont["contenido"],
+                "num_contenido": num_contenido,
+                "contenido": str(cont.get("contenido") or ""),
                 "busuario": self.usuario
             })
 
     def _insertar_bibliografia(self, biblios):
-        for i, bib in enumerate(biblios, start=1):  # ← comienza desde 1
+        for i, bib in enumerate(biblios, start=1):
             self.db.insertar("""
                 INSERT INTO SIPEFI.TD_BIBLIOGRAFIA (
                     id_solicitud, id_estatus_solicitud, id_bibliografia,
@@ -520,22 +920,23 @@ class Solicitud:
                 "id_solicitud": self.id_solicitud,
                 "id_estatus_solicitud": self.id_estatus,
                 "id_bibliografia": i,
-                "es_complementaria": bib["clasifBiblio"],
-                "id_tipo_bibliografia": bib["idTipo"],
-                "autor": bib["autor"],
-                "publicacion": bib["anio"],
-                "titulo": bib["titulo"],
-                "campo_1": bib["extra1"],
-                "campo_2": bib["extra2"],
-                "campo_3": bib["extra3"],
-                "campo_4": bib["extra4"],
-                "temas_recomienda": bib["temas"],
+                "es_complementaria": self._entero(bib.get("clasifBiblio"), 0),
+                "id_tipo_bibliografia": self._entero(bib.get("idTipo"), 0) or None,
+                "autor": str(bib.get("autor") or ""),
+                "publicacion": bib.get("anio") or None,
+                "titulo": str(bib.get("titulo") or ""),
+                "campo_1": str(bib.get("extra1") or ""),
+                "campo_2": str(bib.get("extra2") or ""),
+                "campo_3": str(bib.get("extra3") or ""),
+                "campo_4": str(bib.get("extra4") or ""),
+                "temas_recomienda": str(bib.get("temas") or ""),
                 "busuario": self.usuario
             })
 
     def _insertar_estrategias(self, estrategias):
-        for _, formas in estrategias.get("formasEvaluacion", {}).items():
-            for f in formas:
+        formas_evaluacion = estrategias.get("formasEvaluacion") or {}
+        for formas in formas_evaluacion.values():
+            for forma in (formas or []):
                 self.db.insertar("""
                     INSERT INTO SIPEFI.TD_REL_ASIG_EVALUACION (
                         id_solicitud, id_estatus_solicitud, id_forma_eval, busuario
@@ -545,11 +946,11 @@ class Solicitud:
                 """, {
                     "id_solicitud": self.id_solicitud,
                     "id_estatus_solicitud": self.id_estatus,
-                    "id_forma_eval": f,
+                    "id_forma_eval": forma,
                     "busuario": self.usuario
                 })
-    
-        for estrat in estrategias.get("estrategiasDidacticas", []):
+
+        for estrategia in (estrategias.get("estrategiasDidacticas") or []):
             self.db.insertar("""
                 INSERT INTO SIPEFI.TD_REL_ASIG_ESTRAT_DID (
                     id_solicitud, id_estatus_solicitud, id_estrategia_didact, busuario
@@ -559,7 +960,7 @@ class Solicitud:
             """, {
                 "id_solicitud": self.id_solicitud,
                 "id_estatus_solicitud": self.id_estatus,
-                "id_estrategia_didact": estrat,
+                "id_estrategia_didact": estrategia,
                 "busuario": self.usuario
             })
 
@@ -660,6 +1061,8 @@ class Solicitud:
                 FROM SIPEFI.TD_REL_LIC_ASIGNATURA
                 WHERE id_solicitud = :id_solicitud
                   AND id_estatus_solicitud = :id_estatus_solicitud
+                ORDER BY id_licenciatura, id_area_conocimiento, id_caracter_asig,
+                         semestre, seriacion_ant, seriacion_cons
             """, params)
             
             licenciaturas = {}
@@ -688,8 +1091,8 @@ class Solicitud:
                 "idLic": val["idLic"],
                 "idAreaConocimiento": val["idAreaConocimiento"],
                 "idCaracterAsignatura": val["idCaracterAsignatura"],
-                "seriacionAnt": list(val["seriacionAnt"]),
-                "seriacionCons": list(val["seriacionCons"]),
+                "seriacionAnt": sorted(list(val["seriacionAnt"])),
+                "seriacionCons": sorted(list(val["seriacionCons"])),
                 "semestre": sorted(list(val["semestres"])),
                 "idSolicitud": val["id_solicitud"],
             } for val in licenciaturas.values()]
@@ -698,12 +1101,14 @@ class Solicitud:
                 SELECT num_tema, tema, horas_tema, objetivo
                 FROM SIPEFI.TD_TEMARIO_ASIGNATURA
                 WHERE id_solicitud = :id_solicitud AND id_estatus_solicitud = :id_estatus_solicitud
+                ORDER BY num_tema
             """, params)
         
             contenido = self.db.consulta("""
                 SELECT num_tema, num_tema||'.'||num_contenido, contenido
                 FROM SIPEFI.TD_CONTENIDO_TEMATICO
                 WHERE id_solicitud = :id_solicitud AND id_estatus_solicitud = :id_estatus_solicitud
+                ORDER BY num_tema, num_contenido
             """, params)
         
             bibliografia = self.db.consulta("""
@@ -711,6 +1116,7 @@ class Solicitud:
                        publicacion, titulo, campo_1, campo_2, campo_3, campo_4, temas_recomienda
                 FROM SIPEFI.TD_BIBLIOGRAFIA
                 WHERE id_solicitud = :id_solicitud AND id_estatus_solicitud = :id_estatus_solicitud
+                ORDER BY id_bibliografia
             """, params)
         
             formas_eval = self.db.consulta("""
@@ -720,6 +1126,7 @@ class Solicitud:
                     ON a.id_forma_eval = b.id_forma_eval
                 WHERE a.id_solicitud = :id_solicitud
                 AND a.id_estatus_solicitud = :id_estatus_solicitud
+                ORDER BY a.id_forma_eval
             """, params)
             eval_diagnostica = []
             eval_formativa = []
@@ -738,6 +1145,7 @@ class Solicitud:
                 SELECT id_estrategia_didact
                 FROM SIPEFI.TD_REL_ASIG_ESTRAT_DID
                 WHERE id_solicitud = :id_solicitud AND id_estatus_solicitud = :id_estatus_solicitud
+                ORDER BY id_estrategia_didact
             """, params)
             
             comentarios_raw = self.db.consulta("""
@@ -853,6 +1261,12 @@ class Solicitud:
             self.usuario      = usuario
             self.token        = token
             rol               = int(rol)
+            self.rol          = rol
+
+            self._validar_cancelacion_backend(
+                self.id_solicitud,
+                self.id_estatus,
+            )
             
             # 0) Validación de integridad: la asignatura NO debe estar referenciada como seriación ===
             total_refs = self.db.consulta("""
@@ -885,6 +1299,7 @@ class Solicitud:
                        id_usuario_mod = :id_usuario_mod
                  WHERE id_solicitud = :id_solicitud
                    AND id_estatus_solicitud = :id_estatus
+                   AND historica = 0
             """, {
                 "id_usuario_mod": id_usuario_mod,
                 "id_solicitud": self.id_solicitud,

@@ -1,8 +1,11 @@
 import secrets
+import logging
 from pathlib import Path
 from functools import lru_cache
 
 from sipefi_apps.principal.modelo.ConexionBD import ConexionBD as conBD
+
+logger = logging.getLogger(__name__)
 
 class ConsultasPDF():
 
@@ -12,8 +15,8 @@ class ConsultasPDF():
         """
         self.rol = ""
         self.idUniverso = ""
-        # Carpeta donde guardarás tus .sql (ajusta la ruta a tu estructura real)
-        # Ejemplo: este archivo está en sipefi_apps/principal/modelo/consultas_pdf.py
+        # Carpeta donde guardaras tus .sql (ajusta la ruta a tu estructura real)
+        # Ejemplo: este archivo esta en sipefi_apps/principal/modelo/consultas_pdf.py
         # y los .sql en sipefi_apps/principal/modelo/sql/
         self.sql_dir = Path(__file__).parent / "sql"
 
@@ -21,7 +24,7 @@ class ConsultasPDF():
     @lru_cache(maxsize=64)
     def _read_sql_file(path: Path) -> str:
         if not path.exists():
-            raise FileNotFoundError(f"No se encontró el archivo SQL: {path}")
+            raise FileNotFoundError(f"No se encontro el archivo SQL: {path}")
         return path.read_text(encoding="utf-8")
 
 
@@ -29,10 +32,37 @@ class ConsultasPDF():
     def _load_sql(self, filename: str) -> str:
         """
         Carga y devuelve el contenido del archivo SQL.
-        Usa caché para evitar lecturas repetidas de disco.
+        Usa cache para evitar lecturas repetidas de disco.
         """
         sql_path = self.sql_dir / filename
         return self._read_sql_file(sql_path)
+
+
+    def get_estatus_activo_para_pdf(self, id_asignatura: int):
+        """
+        Devuelve el único estatus activo de una solicitud si es apto para PDF.
+
+        Reglas:
+        - Debe existir exactamente una version con HISTORICA = 0.
+        - El estatus activo no puede ser 0 (solicitud cancelada).
+        """
+        cursor = conBD().cursorBD()
+        try:
+            cursor.execute("""
+                SELECT ID_ESTATUS_SOLICITUD
+                  FROM SIPEFI.TD_SOLICITUD_TOMO_II
+                 WHERE ID_SOLICITUD = :id_asignatura
+                   AND HISTORICA = 0
+            """, {"id_asignatura": int(id_asignatura)})
+            rows = cursor.fetchall()
+
+            if len(rows) != 1:
+                return None
+
+            estatus = int(rows[0][0])
+            return estatus if estatus != 0 else None
+        finally:
+            cursor.close()
 
     def get_informacion_asignatura(self, id_licenciatura: int, id_asignatura: int):
         sql = self._load_sql("getInformacionAsignatura.sql")
@@ -41,7 +71,7 @@ class ConsultasPDF():
             cursor.execute(sql, {"id_licenciatura": id_licenciatura, "id_asignatura": id_asignatura})
             res = cursor.fetchall()
         except Exception as e:
-            print(f"Error en getLicenciatura archivo de consulta: {e}")
+            logger.exception("Error en consulta PDF: get_informacion_asignatura")
             res = []
         finally:
             cursor.close()
@@ -54,7 +84,7 @@ class ConsultasPDF():
             cursor.execute(sql, {"id_licenciatura": id_licenciatura, "id_asignatura": id_asignatura})
             res = cursor.fetchall()
         except Exception as e:
-            print(f"Error en getSeriaciones archivo de consulta: {e}")
+            logger.exception("Error en consulta PDF: get_seriaciones")
             res = []
         finally:
             cursor.close()
@@ -67,7 +97,7 @@ class ConsultasPDF():
             cursor.execute(sql, {"id_asignatura": id_asignatura})
             res = cursor.fetchall()
         except Exception as e:
-            print(f"Error en getTemario archivo de consulta: {e}")
+            logger.exception("Error en consulta PDF: temario/resumen")
             res = []
         finally:
             cursor.close()
@@ -80,7 +110,7 @@ class ConsultasPDF():
             cursor.execute(sql, {"id_asignatura": id_asignatura})
             res = cursor.fetchall()
         except Exception as e:
-            print(f"Error en getTemario archivo de consulta: {e}")
+            logger.exception("Error en consulta PDF: temario/resumen")
             res = []
         finally:
             cursor.close()
@@ -93,7 +123,7 @@ class ConsultasPDF():
             cursor.execute(sql, {"id_asignatura": id_asignatura})
             res = cursor.fetchall()
         except Exception as e:
-            print(f"Error en getSubtemas archivo de consulta: {e}")
+            logger.exception("Error en consulta PDF: get_subtemas")
             res = []
         finally:
             cursor.close()
@@ -106,7 +136,7 @@ class ConsultasPDF():
             cursor.execute(sql, {"id_asignatura": id_asignatura})
             res = cursor.fetchall()
         except Exception as e:
-            print(f"Error en getBibliografiaBasica archivo de consulta: {e}")
+            logger.exception("Error en consulta PDF: get_bibliografia_basica")
             res = []
         finally:
             cursor.close()
@@ -119,7 +149,7 @@ class ConsultasPDF():
             cursor.execute(sql, {"id_asignatura": id_asignatura})
             res = cursor.fetchall()
         except Exception as e:
-            print(f"Error en getBibliografiaComplementaria archivo de consulta: {e}")
+            logger.exception("Error en consulta PDF: get_bibliografia_complementaria")
             res = []
         finally:
             cursor.close()
@@ -132,7 +162,7 @@ class ConsultasPDF():
             cursor.execute(sql, {"id_asignatura": id_asignatura})
             res = cursor.fetchall()
         except Exception as e:
-            print(f"Error en getEstrategiasDidacticas archivo de consulta: {e}")
+            logger.exception("Error en consulta PDF: get_estrategias_didacticas")
             res = []
         finally:
             cursor.close()
@@ -145,7 +175,7 @@ class ConsultasPDF():
             cursor.execute(sql, {"id_asignatura": id_asignatura, "id_forma_evaluacion": id_forma_evaluacion})
             res = cursor.fetchall()
         except Exception as e:
-            print(f"Error en getFormasEvaluacion archivo de consulta: {e}")
+            logger.exception("Error en consulta PDF: get_formas_evaluacion")
             res = []
         finally:
             cursor.close()
@@ -162,7 +192,7 @@ class ConsultasPDF():
             cursor.execute(sql, {"id_perfil": id_perfil,"str_validador": str_validador,"str_administrador": str_administrador, "str_coordinador": str_coordinador})
             res = cursor.fetchall()
         except Exception as e:
-            print(f"Error en getDocumentoOficialByRol archivo de consulta: {e}")
+            logger.exception("Error en consulta PDF: get_documento_oficial_by_rol")
             res = []
         finally:
             cursor.close()
@@ -176,7 +206,7 @@ class ConsultasPDF():
             cursor.execute(sql, {"id_licenciatura": id_licenciatura,"caracter": caracter})
             res = cursor.fetchall()
         except Exception as e:
-            print(f"Error en getIdsAsignatura archivo de consulta: {e}")
+            logger.exception("Error en consulta PDF: get_ids_asignatura")
             res = []
         finally:
             cursor.close()
@@ -190,7 +220,7 @@ class ConsultasPDF():
             cursor.execute(sql, {"id_licenciatura": id_licenciatura,"caracter": caracter})
             res = cursor.fetchall()
         except Exception as e:
-            print(f"Error en getIdsAsignatura archivo de consulta: {e}")
+            logger.exception("Error en consulta PDF: get_ids_asignatura")
             res = []
         finally:
             cursor.close()

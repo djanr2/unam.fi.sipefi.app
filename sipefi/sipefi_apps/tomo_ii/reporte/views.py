@@ -1,7 +1,9 @@
 import unicodedata
 import os
+import logging
 import re
 import json
+import uuid
 from io import BytesIO
 from django.conf import settings
 from django.http import HttpResponse
@@ -50,6 +52,8 @@ registerFontFamily(
     italic="FreeSans-Oblique",
     boldItalic="FreeSans-BoldOblique"
 )
+
+logger = logging.getLogger(__name__)
 
 def generar_pdf_bytes(id_perfil, id_licenciatura, lista_id_asignaturas):
     consultas = ConsultasPDF()
@@ -200,12 +204,12 @@ def generar_pdf_bytes(id_perfil, id_licenciatura, lista_id_asignaturas):
         if os.path.exists(logo_unam_izq):
             p.drawImage(ImageReader(logo_unam_izq), 50, top_y, width=logo_width, height=logo_height, preserveAspectRatio=True)
         else:
-            print("Logo izquierdo no encontrado")
+            logger.warning("Logo izquierdo no encontrado: %s", logo_unam_izq)
 
         if os.path.exists(logo_fi_der):
             p.drawImage(ImageReader(logo_fi_der), width - 50 - logo_width, top_y, width=logo_width, height=logo_height, preserveAspectRatio=True)
         else:
-            print(" Logo derecho no encontrado")
+            logger.warning("Logo derecho no encontrado: %s", logo_fi_der)
 
         # Texto centrado entre los logos
         text_unam = f"UNIVERSIDAD NACIONAL AUTÓNOMA DE MÉXICO"
@@ -446,43 +450,129 @@ def generar_pdf_bytes(id_perfil, id_licenciatura, lista_id_asignaturas):
     return buffer, nombre_archivo_pdf
 
 def generarPdf(request):
-    obj = json.loads(request.POST.get("obj", ""))
+    """
+    Genera PDF únicamente con la versión activa de la solicitud.
+
+    Una solicitud cancelada (ID_ESTATUS_SOLICITUD = 0) no es elegible para PDF.
+    Para descargas por licenciatura, las consultas de IDs ya filtran las
+    solicitudes activas y no canceladas.
+    """
+    try:
+        obj = json.loads(request.POST.get("obj", ""))
+    except (TypeError, json.JSONDecodeError):
+        return HttpResponse(
+            "Solicitud de PDF invalida.",
+            status=400,
+            content_type="text/plain; charset=utf-8"
+        )
 
     consultas = ConsultasPDF()
 
-    id_perfil = int(obj['idPerfil'])
-    id_licenciatura = int(obj['idLic'])
-    id_asignatura_raw = obj.get('idSolicitud')
+    id_perfil = request.session.get("sipefi_rol_activo_id")
+    if not id_perfil:
+        return HttpResponse(
+            "Sesion no valida.",
+            status=401,
+            content_type="text/plain; charset=utf-8"
+        )
 
+    try:
+        id_perfil = int(id_perfil)
+        id_licenciatura = int(obj["idLic"])
+    except (KeyError, TypeError, ValueError):
+        return HttpResponse(
+            "Parametros de PDF invalidos.",
+            status=400,
+            content_type="text/plain; charset=utf-8"
+        )
+
+    id_asignatura_raw = obj.get("idSolicitud")
 
     if id_asignatura_raw is not None and id_asignatura_raw != "":
-        lista_id_asignaturas = [int(id_asignatura_raw)]
+        try:
+            id_asignatura = int(id_asignatura_raw)
+        except (TypeError, ValueError):
+            return HttpResponse(
+                "Solicitud invalida.",
+                status=400,
+                content_type="text/plain; charset=utf-8"
+            )
+
+        estatus_activo = consultas.get_estatus_activo_para_pdf(id_asignatura)
+        if estatus_activo is None:
+            return HttpResponse(
+                "No es posible generar el PDF: la solicitud no tiene una version activa valida o esta cancelada.",
+                status=409,
+                content_type="text/plain; charset=utf-8"
+            )
+
+        if not consultas.get_informacion_asignatura(
+            id_licenciatura,
+            id_asignatura
+        ):
+            return HttpResponse(
+                "No existe una relacion activa entre la solicitud y la licenciatura seleccionada.",
+                status=409,
+                content_type="text/plain; charset=utf-8"
+            )
+
+        lista_id_asignaturas = [id_asignatura]
     else:
         lista_id_asignaturas_obligatorias = [
             fila[0] for fila in
-            consultas.get_ids_asignaturas_obligatorias_ordered_by_semestre_name(id_licenciatura)
+            consultas.get_ids_asignaturas_obligatorias_ordered_by_semestre_name(
+                id_licenciatura
+            )
         ]
 
         lista_id_asignaturas_optativas = [
             fila[0] for fila in
-            consultas.get_ids_asignaturas_optativas_ordered_by_semestre_name(id_licenciatura)
+            consultas.get_ids_asignaturas_optativas_ordered_by_semestre_name(
+                id_licenciatura
+            )
         ]
 
-        lista_id_asignaturas = lista_id_asignaturas_obligatorias + lista_id_asignaturas_optativas
+        lista_id_asignaturas = (
+            lista_id_asignaturas_obligatorias
+            + lista_id_asignaturas_optativas
+        )
 
-    buffer, nombre_archivo_pdf = generar_pdf_bytes(
-        id_perfil,
-        id_licenciatura,
-        lista_id_asignaturas
-    )
+        if not lista_id_asignaturas:
+            return HttpResponse(
+                "No existen solicitudes activas y no canceladas para generar el PDF.",
+                status=404,
+                content_type="text/plain; charset=utf-8"
+            )
+
+    try:
+        buffer, nombre_archivo_pdf = generar_pdf_bytes(
+            id_perfil,
+            id_licenciatura,
+            lista_id_asignaturas
+        )
+    except Exception:
+        referencia = uuid.uuid4().hex[:12].upper()
+        logger.exception(
+            "Error al generar PDF. Referencia=%s, licenciatura=%s, solicitudes=%s",
+            referencia,
+            id_licenciatura,
+            lista_id_asignaturas,
+        )
+        return HttpResponse(
+            "No fue posible generar el PDF. "
+            f"Contacta al área de soporte SIPEFI e indica la referencia {referencia}.",
+            status=500,
+            content_type="text/plain; charset=utf-8",
+        )
 
     return HttpResponse(
         buffer.getvalue(),
-        content_type='application/pdf',
+        content_type="application/pdf",
         headers={
-            'Content-Disposition': f'attachment; filename="{nombre_archivo_pdf}.pdf"',
+            "Content-Disposition": f'attachment; filename="{nombre_archivo_pdf}.pdf"',
         }
     )
+
 
 def dibujar_linea_con_texto(p, y, texto, ancho_pagina, margen=50):
     p.setFont("Helvetica", 12)

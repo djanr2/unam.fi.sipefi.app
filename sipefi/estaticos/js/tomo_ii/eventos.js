@@ -7,14 +7,120 @@
 const etii = function(){
 	
 	let listaTemas = [];       // [{ id, nombre, horas, objetivo }]
-	let listaContenidos = [];  // [{ idTema, texto }] ... [{ idTema, texto, idContenido }]:  idContenido prop is added on reconstruirDesdeEstructuras
+	let listaContenidos = [];  // [{ id, idTema, texto }]
 	let contadorTemas = 1;
-	let temaForEdit = [];
-	let contenidoForEdit = [];
-	let isActionEditingTema = false;
-	let isActionEditingContenido = false;
+	let contadorContenidos = 1;
+	let temaEnEdicionId = null;
+	let contenidoEnEdicionId = null;
 	let isActionEditingBibliografia = false;
-	
+
+	const textoNormalizado = (valor) => valor == null ? '' : String(valor);
+	const textoHtmlSeguro = (valor) => $('<div>').text(textoNormalizado(valor)).html();
+	const numeroEntero = (valor, defecto = 0) => {
+		const numero = Number.parseInt(valor, 10);
+		return Number.isFinite(numero) ? numero : defecto;
+	};
+
+	const reiniciarTemarioContenido = (renderizar = true) => {
+		listaTemas = [];
+		listaContenidos = [];
+		contadorTemas = 1;
+		contadorContenidos = 1;
+		temaEnEdicionId = null;
+		contenidoEnEdicionId = null;
+		isActionEditingBibliografia = false;
+
+		if (renderizar &&
+			$.fn.DataTable.isDataTable('#tablaTemas') &&
+			$.fn.DataTable.isDataTable('#tablaContenidos')) {
+			reconstruirDesdeEstructuras();
+		}
+	};
+
+	const cargarTemarioContenido = (temario, contenidos) => {
+		reiniciarTemarioContenido(false);
+		const mapaNumeroAId = new Map();
+
+		const temasEntrada = Array.isArray(temario) ? temario : [];
+		temasEntrada
+			.map((tema, indice) => ({ tema: tema && typeof tema === 'object' ? tema : {}, indice }))
+			.sort((a, b) => numeroEntero(a.tema.numeroTema, a.indice + 1) - numeroEntero(b.tema.numeroTema, b.indice + 1))
+			.forEach(({ tema, indice }) => {
+				const numeroOriginal = numeroEntero(tema.numeroTema, indice + 1);
+				const idInterno = contadorTemas++;
+				if (!mapaNumeroAId.has(numeroOriginal)) mapaNumeroAId.set(numeroOriginal, idInterno);
+				listaTemas.push({
+					id: idInterno,
+					nombre: textoNormalizado(tema.nombre),
+					horas: textoNormalizado(tema.horas),
+					objetivo: textoNormalizado(tema.objetivo)
+				});
+			});
+
+		const contenidosEntrada = Array.isArray(contenidos) ? contenidos : [];
+		contenidosEntrada
+			.map((contenido, indice) => ({ contenido: contenido && typeof contenido === 'object' ? contenido : {}, indice }))
+			.sort((a, b) => {
+				const temaA = numeroEntero(a.contenido.temaRelacionado, 0);
+				const temaB = numeroEntero(b.contenido.temaRelacionado, 0);
+				if (temaA !== temaB) return temaA - temaB;
+				const numeroA = numeroEntero(textoNormalizado(a.contenido.numeroCont).split('.')[1], a.indice + 1);
+				const numeroB = numeroEntero(textoNormalizado(b.contenido.numeroCont).split('.')[1], b.indice + 1);
+				return numeroA - numeroB;
+			})
+			.forEach(({ contenido }) => {
+				const numeroTema = numeroEntero(contenido.temaRelacionado, 0);
+				const idTema = mapaNumeroAId.get(numeroTema);
+				if (!idTema) {
+					console.warn('Contenido omitido porque no existe su tema relacionado.', contenido);
+					return;
+				}
+				listaContenidos.push({
+					id: contadorContenidos++,
+					idTema,
+					texto: textoNormalizado(contenido.contenido)
+				});
+			});
+
+		reconstruirDesdeEstructuras();
+	};
+
+	const obtenerTemarioContenido = () => {
+		const mapaIdNumero = {};
+		const temas = listaTemas.map((tema, indice) => {
+			const numero = indice + 1;
+			mapaIdNumero[tema.id] = numero;
+			return {
+				numeroTema: numero,
+				nombre: textoNormalizado(tema.nombre).trim(),
+				horas: textoNormalizado(tema.horas).trim(),
+				objetivo: textoNormalizado(tema.objetivo).trim()
+			};
+		});
+
+		const contadores = {};
+		const contenidosSalida = [];
+		listaContenidos.forEach(contenido => {
+			const numeroTema = mapaIdNumero[contenido.idTema];
+			if (!numeroTema) return;
+			contadores[contenido.idTema] = (contadores[contenido.idTema] || 0) + 1;
+			contenidosSalida.push({
+				temaRelacionado: String(numeroTema),
+				numeroCont: `${numeroTema}.${contadores[contenido.idTema]}`,
+				contenido: textoNormalizado(contenido.texto).trim()
+			});
+		});
+
+		return { temas, contenidos: contenidosSalida };
+	};
+
+	const hayEdicionPendiente = () => Boolean(
+		temaEnEdicionId !== null ||
+		contenidoEnEdicionId !== null ||
+		isActionEditingBibliografia ||
+		(typeof fcs !== 'undefined' && fcs.hayBibliografiaEnEdicion && fcs.hayBibliografiaEnEdicion())
+	);
+
 	/**
 	 * Suma de horas ya capturadas en los temas.
 	 * @return {number}
@@ -29,8 +135,8 @@ const etii = function(){
 	 * @return {{totalTeo:number, usadas:number, restantes:number}}
 	 */
 	const actualizaHorasTeoricasRestantes = () => {
-	  const totalTeo  = (parseInt($("#h_semestre_teo").val() , 10)
-		  						+ parseInt($("#h_semestre_pra").val() , 10)) || 0;
+	  const totalTeo  = (parseInt($("#h_semestre_teo").val(), 10) || 0)
+					 + (parseInt($("#h_semestre_pra").val(), 10) || 0);
 	  const usadas    = horasTemasCapturadas() + (parseInt($('#horasPracticasTemario').val() , 10) || 0);
 	  const restantes = totalTeo - usadas;
 
@@ -108,7 +214,7 @@ const etii = function(){
 				  	fcs.modalRechazoSoli();
 				    break;
 			  case '#modalComentarios':
-				  	$(accion).modal('show');
+				  	fComun.mostrarModal(accion);
 				    break;
 			}
 		});
@@ -200,22 +306,23 @@ const etii = function(){
 		 * Valida los campos, actualiza las estructuras internas y agrega el tema a la tabla de temas.
 		 * También agrega una opción al <select> de temas y actualiza la numeración global.
 		 */
-		$("#btnAgregarTema").on("click", agregarTema);
+		$("#btnAgregarTema").off("click.sipefiTema").on("click.sipefiTema", agregarTema);
 		
 		/**
 		 * Evento para agregar contenido a un tema previamente seleccionado.
 		 * Valida el contenido, actualiza el contador, agrega una fila a la tabla de contenidos
 		 * y actualiza la numeración global de contenidos.
 		 */
-		$("#btnAgregarContenido").on("click", agregarContenido);
+		$("#btnAgregarContenido").off("click.sipefiContenido").on("click.sipefiContenido", agregarContenido);
 	   
-	   $("#tablaRelacionesLic").on("click", ".btnEliminarRelacion", function () {
-		 let tablaRelacionesDT = $('#tablaRelacionesLic').DataTable();
-	     tablaRelacionesDT.row($(this).closest("tr")).remove().draw();
-	   });
+	   $("#tablaRelacionesLic")
+		.off("click.sipefiRelacion", ".btnEliminarRelacion")
+		.on("click.sipefiRelacion", ".btnEliminarRelacion", function () {
+			fcs.eliminarRelacionLicenciatura($(this).attr("data-rel-key"));
+		});
 	   
 	   // Evento: cambiar tipo de bibliografía
-	   $('#tipo_bibliografia').on('change', function () {
+	   $('#tipo_bibliografia').off('change.sipefiBibliografia').on('change.sipefiBibliografia', function () {
 	       fcs.actualizarCamposExtra();
 	   });
 
@@ -223,15 +330,17 @@ const etii = function(){
 	    * Evento delegado para eliminar una fila de la tabla de bibliografía.
 	    * Se adjunta al contenedor y aplica solo a botones con clase 'btn-eliminar-biblio'.
 	    */
-	   $('#tablaBibliografia tbody').on('click', '.btn-eliminar-biblio', function () {
-	     $('#tablaBibliografia').DataTable().row($(this).closest('tr')).remove().draw();
-	   });
+	   $('#tablaBibliografia tbody')
+		.off('click.sipefiBibliografia', '.btn-eliminar-biblio')
+		.on('click.sipefiBibliografia', '.btn-eliminar-biblio', function () {
+			fcs.eliminarBibliografia($(this).attr('data-biblio-id'));
+		});
 	   
 	   /**
 	    * Evento que se ejecuta al hacer clic en el botón de agregar bibliografía.
 	    * Valida campos mínimos y agrega la fila a la tabla.
 	    */
-	   $('#btnAgregarBibliografia').on('click', function () {
+	   $('#btnAgregarBibliografia').off('click.sipefiBibliografia').on('click.sipefiBibliografia', function () {
 	     fcs.validaCamposReqBiblio();
 	   });
 		
@@ -370,7 +479,7 @@ const etii = function(){
 	    if (!idTema || !texto)
 	      return fComun.mostrarTooltipCampo("#contenidoTema", "Selecciona un tema y escribe el contenido");
 	
-	    listaContenidos.push({ idTema, texto });
+	    listaContenidos.push({ id: contadorContenidos++, idTema, texto });
 	
 	    $("#contenidoTema").val(""); // Limpiar campo
 	    let option = $("#temaContenido").val();
@@ -382,353 +491,167 @@ const etii = function(){
 	   * Reconstruye las tablas y el select desde las estructuras de datos.
 	   */
 	  const reconstruirDesdeEstructuras = () => {
-	    const tablaTemasDT = $('#tablaTemas').DataTable();
-	    const tablaContenidosDT = $('#tablaContenidos').DataTable();
-		const isVisible = parseInt(fComun.getVarLocalS("accionSoli"));
-		let visible = '';
-		if (isVisible===1){
-			visible = 'hidden'; //Se ocultan las acciones si esta en modo visulaizador
+		if (!$.fn.DataTable.isDataTable('#tablaTemas') || !$.fn.DataTable.isDataTable('#tablaContenidos')) {
+			return;
 		}
-	
-	    tablaTemasDT.clear().draw(false);
-	    tablaContenidosDT.clear().draw(false);
-	    $("#temaContenido").empty();
-	
-	    let mapIdTemaToNumero = {};
-	    let mapIdTemaToNombre = {};
 
-	
-	    // === Renderizar temas y construir mapa ===
-	    listaTemas.forEach((tema, idx) => {
-	      const numero = idx + 1;
-	      const fila = [
-	        numero,
-			  tema.nombre,
-	        tema.horas,
-	        tema.objetivo,
-	        `<div ${visible}>
-				<button class="btn btn-danger btn-sm" onclick="etii.eliminarTema(${tema.id})">
-				   <i class="fas fa-trash-alt"></i>
-				 </button>
-				 <button class="btn btn-danger btn-sm" onclick="etii.editarTema(${tema.id})" id = "btnEdit-${tema.id}">
-				   <i class="fas fa-edit"></i>
-				 </button>
-				 <button class="btn btn-danger btn-sm" onclick="etii.saveTema(${tema.id})" id = "btnSave-${tema.id}" hidden="true">
-				   <i class="fas fa-save"></i>
-				 </button>
-			</div>`
-	      ];
-	      const row = tablaTemasDT.row.add(fila).draw(false);
-	      $(row.node()).attr("data-idtema", tema.id);
-	
-	      mapIdTemaToNumero[tema.id] = numero;
-	      mapIdTemaToNombre[tema.id] = tema.nombre;
-	
-	      $("#temaContenido").append(`<option value="${tema.id}">${numero}. ${tema.nombre}</option>`);
-	    });
-	
-	    // === Renderizar contenidos ===
-	    const contadorPorTema = {};
-	    listaContenidos = listaContenidos.filter(contenido => mapIdTemaToNumero[contenido.idTema]); // eliminar huérfanos
-	
-	    listaContenidos.forEach(contenido => {
-	      const numTema = mapIdTemaToNumero[contenido.idTema];
-	      const nombreTema = mapIdTemaToNombre[contenido.idTema];
-	      const numContenido = contadorPorTema[contenido.idTema] = (contadorPorTema[contenido.idTema] || 1);
-		  const idContenido = numTema + "." + numContenido;
+		const tablaTemasDT = $('#tablaTemas').DataTable();
+		const tablaContenidosDT = $('#tablaContenidos').DataTable();
+		const modoVisualizacion = numeroEntero(fComun.getVarLocalS('accionSoli'), 0) === 1;
+		const atributoOculto = modoVisualizacion ? 'hidden' : '';
+		const mapaIdTemaToNumero = {};
+		const mapaIdTemaToNombre = {};
 
-		  contenido.idContenido = idContenido;
+		const filasTemas = listaTemas.map((tema, indice) => {
+			const numero = indice + 1;
+			mapaIdTemaToNumero[tema.id] = numero;
+			mapaIdTemaToNombre[tema.id] = textoNormalizado(tema.nombre);
+			const editando = Number(temaEnEdicionId) === Number(tema.id);
 
-	      const fila = [
-	        `${numTema}. ${nombreTema}`,
-	        `${idContenido}`,
-	        contenido.texto,
-			`<div ${visible}>
-				<button class="btn btn-danger btn-sm" onclick="etii.eliminarContenido(this)">
-			     <i class="fas fa-trash-alt"></i>
-			   	</button>
-				<button class="btn btn-danger btn-sm" onclick="etii.editarContenido(${numTema},${numContenido})" id = "btnEdit-${idContenido}">
-					 <i class="fas fa-edit"></i>
+			const nombre = editando
+				? `<input type="text" class="form-control" id="id-nombre-tema-${tema.id}" value="${textoHtmlSeguro(tema.nombre)}">`
+				: textoHtmlSeguro(tema.nombre);
+			const horas = editando
+				? `<input type="number" class="form-control" id="id-horas-tema-${tema.id}" value="${textoHtmlSeguro(tema.horas)}">`
+				: textoHtmlSeguro(tema.horas);
+			const objetivo = editando
+				? `<input type="text" class="form-control" id="id-objetivo-tema-${tema.id}" value="${textoHtmlSeguro(tema.objetivo)}">`
+				: textoHtmlSeguro(tema.objetivo);
+
+			const acciones = `<div ${atributoOculto}>
+				<button type="button" class="btn btn-danger btn-sm" onclick="etii.eliminarTema(${tema.id})" ${editando ? 'disabled' : ''}>
+					<i class="fas fa-trash-alt"></i>
 				</button>
-				<button class="btn btn-danger btn-sm" onclick="etii.saveContenido(${numTema},${numContenido})" id = "btnSave-${idContenido}" hidden="true">
-					 <i class="fas fa-save"></i>
+				<button type="button" class="btn btn-danger btn-sm" onclick="etii.editarTema(${tema.id})" ${editando ? 'hidden' : ''}>
+					<i class="fas fa-edit"></i>
 				</button>
-			</div>`
-	      ];
-	
-	      const row = tablaContenidosDT.row.add(fila).draw(false);
-	      $(row.node()).attr("data-idtema", contenido.idTema);
-	
-	      contadorPorTema[contenido.idTema]++;
-	    });
-		
+				<button type="button" class="btn btn-danger btn-sm" onclick="etii.saveTema(${tema.id})" ${editando ? '' : 'hidden'}>
+					<i class="fas fa-save"></i>
+				</button>
+			</div>`;
+
+			return [numero, nombre, horas, objetivo, acciones];
+		});
+
+		tablaTemasDT.clear();
+		if (filasTemas.length) tablaTemasDT.rows.add(filasTemas);
+		tablaTemasDT.draw(false);
+
+		$('#temaContenido').empty();
+		listaTemas.forEach((tema, indice) => {
+			$('#temaContenido').append(
+				$('<option>', { value: tema.id, text: `${indice + 1}. ${textoNormalizado(tema.nombre)}` })
+			);
+		});
+
+		const contadorPorTema = {};
+		const filasContenidos = [];
+		listaContenidos.forEach(contenido => {
+			const numeroTema = mapaIdTemaToNumero[contenido.idTema];
+			if (!numeroTema) {
+				console.warn('Contenido no mostrado porque su tema ya no existe.', contenido);
+				return;
+			}
+
+			contadorPorTema[contenido.idTema] = (contadorPorTema[contenido.idTema] || 0) + 1;
+			const numeroContenido = contadorPorTema[contenido.idTema];
+			const identificadorVisible = `${numeroTema}.${numeroContenido}`;
+			const editando = Number(contenidoEnEdicionId) === Number(contenido.id);
+			const textoContenido = editando
+				? `<input type="text" class="form-control" id="id-contenido-${contenido.id}" value="${textoHtmlSeguro(contenido.texto)}">`
+				: textoHtmlSeguro(contenido.texto);
+
+			const acciones = `<div ${atributoOculto}>
+				<button type="button" class="btn btn-danger btn-sm" onclick="etii.eliminarContenido(${contenido.id})" ${editando ? 'disabled' : ''}>
+					<i class="fas fa-trash-alt"></i>
+				</button>
+				<button type="button" class="btn btn-danger btn-sm" onclick="etii.editarContenido(${contenido.id})" ${editando ? 'hidden' : ''}>
+					<i class="fas fa-edit"></i>
+				</button>
+				<button type="button" class="btn btn-danger btn-sm" onclick="etii.saveContenido(${contenido.id})" ${editando ? '' : 'hidden'}>
+					<i class="fas fa-save"></i>
+				</button>
+			</div>`;
+
+			filasContenidos.push([
+				`${numeroTema}. ${textoHtmlSeguro(mapaIdTemaToNombre[contenido.idTema])}`,
+				identificadorVisible,
+				textoContenido,
+				acciones
+			]);
+		});
+
+		tablaContenidosDT.clear();
+		if (filasContenidos.length) tablaContenidosDT.rows.add(filasContenidos);
+		tablaContenidosDT.draw(false);
 		actualizaHorasTeoricasRestantes();
 	  };
-	
-	  /**
-	   * Elimina un tema si no tiene contenido asociado.
-	   * @param {number} id - ID del tema a eliminar
-	   */
+
 	  const eliminarTema = (id) => {
-	    const tieneContenido = listaContenidos.some(c => c.idTema === id);
-	    if (tieneContenido) {
-	      fComun.mostrarModalAdvertencia("No puedes eliminar este tema porque tiene contenido asociado.");
-	      return;
-	    }
-	
-	    listaTemas = listaTemas.filter(t => t.id !== id);
-	    reconstruirDesdeEstructuras();
+		if (temaEnEdicionId !== null || contenidoEnEdicionId !== null) {
+			return fComun.mostrarModalAdvertencia('Guarda primero la edición abierta.');
+		}
+		const tieneContenido = listaContenidos.some(contenido => Number(contenido.idTema) === Number(id));
+		if (tieneContenido) {
+			return fComun.mostrarModalAdvertencia('No puedes eliminar este tema porque tiene contenido asociado.');
+		}
+		listaTemas = listaTemas.filter(tema => Number(tema.id) !== Number(id));
+		reconstruirDesdeEstructuras();
 	  };
 
 	  const editarTema = (id) => {
-	    const tieneContenido = listaContenidos.some(c => c.idTema === id);
-		if(!isActionEditingTema){
-			temaForEdit = listaTemas.find(t => t.id === id);
-			var nombre_tema = temaForEdit.nombre;
-			var nombre_tema_id = "id_nombre_tema-" + id;
-			var horas_tema = temaForEdit.horas;
-			var horas_tema_id = "id_horas_tema-" + id;
-			var objetivo_tema = temaForEdit.objetivo;
-			var objetivo_tema_id = "id_objetivo_tema-" + id;
-			temaForEdit.nombre = `<input type="text" class="form-control" value="${nombre_tema}" id = "${nombre_tema_id}">`;
-			temaForEdit.horas = `<input type="number" class="form-control" value="${horas_tema}" id = "${horas_tema_id}">`;
-			temaForEdit.objetivo = `<input type="text" class="form-control" value="${objetivo_tema}" id = "${objetivo_tema_id}">`;
-			reconstruirDesdeEstructuras();
-			document.getElementById("btnEdit-"+id).hidden = true;
-			document.getElementById("btnSave-"+id).hidden = false;
-			$('.menuBotones[target="guardarSolicitud"]').prop('disabled', true);
-			isActionEditingTema = !isActionEditingTema;
-		}
-
+		if (temaEnEdicionId !== null || contenidoEnEdicionId !== null) return;
+		if (!listaTemas.some(tema => Number(tema.id) === Number(id))) return;
+		temaEnEdicionId = Number(id);
+		reconstruirDesdeEstructuras();
+		$('.menuBotones[target="guardarSolicitud"], .menuBotones[target="aprobarSolicitud"], .menuBotones[target="rechazarSolicitud"]').prop('disabled', true);
 	  };
 
 	  const saveTema = (id) => {
-		  if(isActionEditingTema){
-			  temaForEdit = listaTemas.find(t => t.id === id);
-			 var input_nombre = document.getElementById("id_nombre_tema-"+id);
-			 var input_horas = document.getElementById("id_horas_tema-"+id);
-			 var input_objetivo = document.getElementById("id_objetivo_tema-"+id);
-
-			 temaForEdit.nombre = input_nombre.value;
-			 temaForEdit.horas = input_horas.value;
-			 temaForEdit.objetivo = input_objetivo.value;
-
-			reconstruirDesdeEstructuras();
-			document.getElementById("btnEdit-"+id).hidden = false;
-			document.getElementById("btnSave-"+id).hidden = true;
-			$('.menuBotones[target="guardarSolicitud"]').prop('disabled', false);
-			isActionEditingTema = !isActionEditingTema;
-		  }
+		if (Number(temaEnEdicionId) !== Number(id)) return;
+		const tema = listaTemas.find(item => Number(item.id) === Number(id));
+		if (!tema) return;
+		tema.nombre = textoNormalizado($(`#id-nombre-tema-${id}`).val());
+		tema.horas = textoNormalizado($(`#id-horas-tema-${id}`).val());
+		tema.objetivo = textoNormalizado($(`#id-objetivo-tema-${id}`).val());
+		temaEnEdicionId = null;
+		reconstruirDesdeEstructuras();
+		$('.menuBotones[target="guardarSolicitud"], .menuBotones[target="aprobarSolicitud"], .menuBotones[target="rechazarSolicitud"]').prop('disabled', false);
 	  };
 
-
-
-	 /**
-	 * Elimina el contenido asociado al botón presionado.
-	 * @param {HTMLElement} boton - Referencia al botón dentro de la fila
-	 */
-	const eliminarContenido = (boton) => {
-	  const tabla = $('#tablaContenidos').DataTable();
-	  const fila = $(boton).closest('tr');
-	  tabla.row(fila).remove().draw(false);
-	
-	  // También remover de la estructura
-	  const idTema = parseInt(fila.attr("data-idtema"));
-	  const texto = fila.find('td:eq(2)').text().trim(); // Tercer columna (contenido)
-	
-	  // Eliminar solo la primera coincidencia (por si hay duplicados)
-	  const idx = listaContenidos.findIndex(c => c.idTema === idTema && c.texto === texto);
-	  if (idx >= 0) listaContenidos.splice(idx, 1);
-	
-	  reconstruirDesdeEstructuras();
-	};
-
-	const editarContenido = (numTema, numContenido) => {
-		const temaStr = String(numContenido);
-		const idContenido = ""+numTema+"."+temaStr;
-		if(!isActionEditingContenido){
-		  contenidoForEdit = listaContenidos.find(c => c.idContenido === idContenido);
-		  var contenido = contenidoForEdit.texto;
-		  var contenido_id = "id_contenido-" + idContenido;
-		  contenidoForEdit.texto = `<input type="text" class="form-control" value="${contenido}" id = "${contenido_id}">`;
-		  reconstruirDesdeEstructuras();
-		  document.getElementById("btnEdit-"+idContenido).hidden = true;
-		  document.getElementById("btnSave-"+idContenido).hidden = false;
-		  $('.menuBotones[target="guardarSolicitud"]').prop('disabled', true);
-		  isActionEditingContenido = !isActionEditingContenido;
+	  const eliminarContenido = (id) => {
+		if (temaEnEdicionId !== null || contenidoEnEdicionId !== null) {
+			return fComun.mostrarModalAdvertencia('Guarda primero la edición abierta.');
 		}
-	};
+		listaContenidos = listaContenidos.filter(contenido => Number(contenido.id) !== Number(id));
+		reconstruirDesdeEstructuras();
+	  };
 
-	const saveContenido = (numTema, numContenido) => {
-		const temaStr = String(numContenido);
-		const idContenido = ""+numTema+"."+temaStr;
-  		if(isActionEditingContenido){
-			contenidoFordit = listaContenidos.find(c => c.idContenido === idContenido);
-			var input_contenido = document.getElementById("id_contenido-"+idContenido);
-			contenidoForEdit.texto = input_contenido.value;
-			reconstruirDesdeEstructuras();
-			document.getElementById("btnEdit-"+idContenido).hidden = false;
-			document.getElementById("btnSave-"+idContenido).hidden = true;
-			$('.menuBotones[target="guardarSolicitud"]').prop('disabled', false);
-			isActionEditingContenido = !isActionEditingContenido;
-		  }
-	};
+	  const editarContenido = (id) => {
+		if (temaEnEdicionId !== null || contenidoEnEdicionId !== null) return;
+		if (!listaContenidos.some(contenido => Number(contenido.id) === Number(id))) return;
+		contenidoEnEdicionId = Number(id);
+		reconstruirDesdeEstructuras();
+		$('.menuBotones[target="guardarSolicitud"], .menuBotones[target="aprobarSolicitud"], .menuBotones[target="rechazarSolicitud"]').prop('disabled', true);
+	  };
 
-const editarBibliografia = (idBibliografia) => {
-		if(!isActionEditingBibliografia) {
+	  const saveContenido = (id) => {
+		if (Number(contenidoEnEdicionId) !== Number(id)) return;
+		const contenido = listaContenidos.find(item => Number(item.id) === Number(id));
+		if (!contenido) return;
+		contenido.texto = textoNormalizado($(`#id-contenido-${id}`).val());
+		contenidoEnEdicionId = null;
+		reconstruirDesdeEstructuras();
+		$('.menuBotones[target="guardarSolicitud"], .menuBotones[target="aprobarSolicitud"], .menuBotones[target="rechazarSolicitud"]').prop('disabled', false);
+	  };
 
-			var bibliografiaTable = $('#tablaBibliografia').DataTable();
-
-			var tipoHandler = bibliografiaTable.cell(idBibliografia - 1, 0).data();
-			var tipoTexto = (tipoHandler || '').toString().trim().toUpperCase();
-			var esTipoDependera = tipoTexto === 'DEPENDERA DE LA TEMÁTICA A TRATAR';
-
-			var varHandler = bibliografiaTable.cell(idBibliografia - 1, 1).data();
-			var autorForEdit = varHandler ? varHandler : "";
-			var autorForEdit_input = esTipoDependera
-				? `<span class="text-start">${autorForEdit}</span>`
-				: `<input type="text" class="form-control" value="${autorForEdit}" id = "id-biblio-autor-${idBibliografia}">`;
-
-			varHandler = bibliografiaTable.cell(idBibliografia - 1, 2).data();
-			var yearForEdit = (varHandler === '0' || varHandler === 0) ? "" : (varHandler ? varHandler : "");
-			var yearForEdit_input = esTipoDependera
-				? `<span class="text-start">${yearForEdit}</span>`
-				: `<input type="text" class="form-control" value="${yearForEdit}" id = "id-biblio-year-${idBibliografia}">`;
-
-
-			varHandler = bibliografiaTable.cell(idBibliografia - 1, 3).data();
-			var isComplementaria = (varHandler === "Complementaria" )? true : false;
-			var clasificacionForEdit_input = `<select id = "id-biblio-clasificacion-${idBibliografia}" className="form-select">
-				<option value="0" ${(!isComplementaria)? "selected" : ""}>Básica</option>
-				<option value="1" ${(isComplementaria)? "selected" : ""}>Complementaria</option>
-			</select>`;
-
-			varHandler = bibliografiaTable.cell(idBibliografia - 1, 4).data();
-			var tituloForEdit = varHandler ? varHandler : "";
-			var tituloForEdit_input = esTipoDependera
-				? `<span class="text-start">${tituloForEdit}</span>`
-				: `<input type="text" class="form-control" value="${tituloForEdit}" id = "id-biblio-titulo-${idBibliografia}">`;
-
-
-			varHandler = bibliografiaTable.cell(idBibliografia - 1, 5).data();
-			var extra1ForEdit = varHandler ? varHandler : "";
-			var extra1ForEdit_input = esTipoDependera
-				? `<span class="text-start">${extra1ForEdit}</span>`
-				: `<input type="text" class="form-control" value="${extra1ForEdit}" id = "id-biblio-extra1-${idBibliografia}">`;
-
-
-			varHandler = bibliografiaTable.cell(idBibliografia - 1, 6).data();
-			var extra2ForEdit = varHandler ? varHandler : "";
-			var extra2ForEdit_input = esTipoDependera
-				? `<span class="text-start">${extra2ForEdit}</span>`
-				: `<input type="text" class="form-control" value="${extra2ForEdit}" id = "id-biblio-extra2-${idBibliografia}">`;
-
-
-			varHandler = bibliografiaTable.cell(idBibliografia - 1, 7).data();
-			var extra3ForEdit = varHandler ? varHandler : "";
-			var extra3ForEdit_input = esTipoDependera
-				? `<span class="text-start">${extra3ForEdit}</span>`
-				: `<input type="text" class="form-control" value="${extra3ForEdit}" id = "id-biblio-extra3-${idBibliografia}">`;
-
-
-			varHandler = bibliografiaTable.cell(idBibliografia - 1, 8).data();
-			var extra4ForEdit = varHandler ? varHandler : "";
-			var extra4ForEdit_input = esTipoDependera
-				? `<span class="text-start">${extra4ForEdit}</span>`
-				: `<input type="text" class="form-control" value="${extra4ForEdit}" id = "id-biblio-extra4-${idBibliografia}">`;
-
-
-			varHandler = bibliografiaTable.cell(idBibliografia - 1, 9).data();
-			var temasForEdit = varHandler ? varHandler : "";
-			var temasForEdit_input = `<input type="text" class="form-control" value="${temasForEdit}" id="id-biblio-temas-${idBibliografia}">`;
-
-			varHandler = bibliografiaTable.cell(idBibliografia - 1, 0).data();
-			var tipoNoEdit = varHandler ? varHandler : "";
-			var tipoNoEdit_input = `<input type="text" class="border-0 bg-transparent" value="${tipoNoEdit}" disabled>`;
-
-			var buttons = `<div>
-						<button class="btn btn-sm btn-danger btn-eliminar-biblio"><i class="fas fa-trash-alt"></i></button>
-						<button class="btn btn-sm btn-danger" id = "bibliografia-btnedit-${idBibliografia}" onclick="etii.editarBibliografia(${idBibliografia})" hidden><i class="fas fa-edit"></i></button>
-						<button class="btn btn-sm btn-danger" id = "bibliografia-btnsave-${idBibliografia}" onclick="etii.saveBibliografia(${idBibliografia})"><i class="fas fa-save"></i></button>
-					</div>`;
-
-			bibliografiaTable.row(idBibliografia-1).data([tipoNoEdit_input,autorForEdit_input,yearForEdit_input,
-				clasificacionForEdit_input,tituloForEdit_input,extra1ForEdit_input,extra2ForEdit_input,
-				extra3ForEdit_input,extra4ForEdit_input, temasForEdit_input,buttons]).draw(false);
-
-			$('.menuBotones[target="guardarSolicitud"]').prop('disabled', true);
-			isActionEditingBibliografia = !isActionEditingBibliografia;
-
-		}
+	const editarBibliografia = (idBibliografia) => {
+		if (fcs.editarBibliografiaFila(idBibliografia)) isActionEditingBibliografia = true;
 	};
 
 	const saveBibliografia = (idBibliografia) => {
-		if (isActionEditingBibliografia) {
-			const bibliografiaTable = $('#tablaBibliografia').DataTable();
-
-			var tipoValor = $(bibliografiaTable.cell(idBibliografia-1, 0).node()).find('input').val();
-			var esTipoDependera = (tipoValor || '').toString().trim().toUpperCase() === 'DEPENDERA DE LA TEMÁTICA A TRATAR';
-
-			var varHandler = $(bibliografiaTable.cell(idBibliografia-1, 0).node()).find('input').val();
-			const tipoNoEdit = varHandler ? varHandler : "";
-
-			 varHandler = esTipoDependera
-				? $(bibliografiaTable.cell(idBibliografia-1, 1).node()).text().trim()
-				: $(bibliografiaTable.cell(idBibliografia-1, 1).node()).find('input').val();
-			const autorForEdit = varHandler ? varHandler : "";
-
-			varHandler = esTipoDependera
-				? $(bibliografiaTable.cell(idBibliografia-1, 2).node()).text().trim()
-				: $(bibliografiaTable.cell(idBibliografia-1, 2).node()).find('input').val();
-			const yearForEdit = (!varHandler || varHandler === '0') ? "" : varHandler;
-
-			varHandler = esTipoDependera
-				? $(bibliografiaTable.cell(idBibliografia-1, 4).node()).text().trim()
-				: $(bibliografiaTable.cell(idBibliografia-1, 4).node()).find('input').val();
-			const tituloForEdit = varHandler ? varHandler : "";
-
-			varHandler = esTipoDependera
-				? $(bibliografiaTable.cell(idBibliografia-1, 5).node()).text().trim()
-				: $(bibliografiaTable.cell(idBibliografia-1, 5).node()).find('input').val();
-			const extra1ForEdit = varHandler ? varHandler : "";
-
-			varHandler = esTipoDependera
-				? $(bibliografiaTable.cell(idBibliografia-1, 6).node()).text().trim()
-				: $(bibliografiaTable.cell(idBibliografia-1, 6).node()).find('input').val();
-			const extra2ForEdit =  varHandler ? varHandler : "";
-
-			varHandler = esTipoDependera
-				? $(bibliografiaTable.cell(idBibliografia-1, 7).node()).text().trim()
-				: $(bibliografiaTable.cell(idBibliografia-1, 7).node()).find('input').val();
-			const extra3ForEdit = varHandler ? varHandler : "";
-
-			varHandler = esTipoDependera
-				? $(bibliografiaTable.cell(idBibliografia-1, 8).node()).text().trim()
-				: $(bibliografiaTable.cell(idBibliografia-1, 8).node()).find('input').val();
-			const extra4ForEdit = varHandler ? varHandler : "";
-
-			varHandler = $(bibliografiaTable.cell(idBibliografia-1, 9).node()).find('input').val();
-			const temasForEdit = varHandler ? varHandler : "";
-
-
-			const clasificacionForEdit_selected = document.getElementById("id-biblio-clasificacion-"+idBibliografia).value;
-			const clasificacionForEdit_input = (clasificacionForEdit_selected === "0")? "B&aacute;sica" : "Complementaria";
-
-			var buttons = `<div>
-						<button class="btn btn-sm btn-danger btn-eliminar-biblio"><i class="fas fa-trash-alt"></i></button>
-						<button class="btn btn-sm btn-danger" id = "bibliografia-btnedit-${idBibliografia}" onclick="etii.editarBibliografia(${idBibliografia})"><i class="fas fa-edit"></i></button>
-						<button class="btn btn-sm btn-danger" id = "bibliografia-btnsave-${idBibliografia}" onclick="etii.saveBibliografia(${idBibliografia})" hidden><i class="fas fa-save"></i></button>
-					</div>`;
-
-
-			bibliografiaTable.row(idBibliografia-1).data([tipoNoEdit,autorForEdit,yearForEdit,
-				clasificacionForEdit_input,tituloForEdit,extra1ForEdit,extra2ForEdit,
-				extra3ForEdit,extra4ForEdit, temasForEdit,buttons]).draw(false);
-
-			$('.menuBotones[target="guardarSolicitud"]').prop('disabled', false);
-			isActionEditingBibliografia = !isActionEditingBibliografia;
-		}
-	  };
+		if (fcs.guardarBibliografiaFila(idBibliografia)) isActionEditingBibliografia = false;
+	};
 
 
 	
@@ -826,7 +749,7 @@ const editarBibliografia = (idBibliografia) => {
 		 */
 		$(elemento).unbind("click");
 		$(elemento).on('click', function () {
-			$(modal).modal('hide');
+			fComun.ocultarModal(modal);
 			if(especial){
 				if(numEl == 0){
 					funcionDest();
@@ -858,7 +781,7 @@ const editarBibliografia = (idBibliografia) => {
 		 */
 		$(objB).unbind("click");
 		$(objB).on('click', function () {
-			$(objM).modal('hide');
+			fComun.ocultarModal(objM);
 			opc==1?fcs.accionSolicitud(3):"";
 		});
 	};
@@ -880,7 +803,7 @@ const editarBibliografia = (idBibliografia) => {
 		 */
 		$(objB).unbind("click");
 		$(objB).on('click', function () {
-			$(objM).modal('hide');
+			fComun.ocultarModal(objM);
 			location.reload();
 		});
 	};
@@ -939,6 +862,10 @@ const editarBibliografia = (idBibliografia) => {
 	
 	return{
 		cargaEventosPrincipales: cargaEventosPrincipales,
+		reiniciarTemarioContenido: reiniciarTemarioContenido,
+		cargarTemarioContenido: cargarTemarioContenido,
+		obtenerTemarioContenido: obtenerTemarioContenido,
+		hayEdicionPendiente: hayEdicionPendiente,
 		accionSolicitud:	accionSolicitud,
 		eventoEspecial:	eventoEspecial,
 		eventoAlerta:	eventoAlerta,

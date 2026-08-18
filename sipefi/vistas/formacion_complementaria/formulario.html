@@ -1,0 +1,30 @@
+<section id="fcSeccionFormulario" class="container-fluid py-4 d-none">
+    <div class="fc-form-header mb-3">
+        <div>
+            <span id="fcFolio" class="fc-folio">Nueva solicitud</span>
+            <h2 id="fcTituloFormulario">Formación complementaria</h2>
+        </div>
+        <span id="fcEstatusBadge" class="badge bg-secondary">Borrador</span>
+    </div>
+
+    <div id="fcAvisoSoloLectura" class="alert alert-success d-none">
+        <i class="fa-solid fa-lock me-2"></i>
+        Esta formación complementaria está completada y se encuentra en modo consulta.
+    </div>
+
+    <ul class="nav nav-tabs fc-tabs" id="fcTabs" role="tablist">
+        <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#fcDatos" type="button">1. Datos generales</button></li>
+        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#fcTemario" type="button">2. Temario</button></li>
+        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#fcBibliografia" type="button">3. Bibliografía</button></li>
+        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#fcEstrategias" type="button">4. Estrategias didácticas</button></li>
+        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#fcJustificacionTab" type="button">5. Justificación académica</button></li>
+    </ul>
+
+    <div class="tab-content fc-tab-content">
+        {% include "formacion_complementaria/secciones/seccion_1_datos_generales.html" %}
+        {% include "formacion_complementaria/secciones/seccion_2_temario.html" %}
+        {% include "formacion_complementaria/secciones/seccion_3_bibliografia.html" %}
+        {% include "formacion_complementaria/secciones/seccion_4_estrategias.html" %}
+        {% include "formacion_complementaria/secciones/seccion_5_justificacion.html" %}
+    </div>
+</section>

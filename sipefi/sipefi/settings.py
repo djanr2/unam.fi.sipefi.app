@@ -25,10 +25,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-5x9#a*z8a4!v-0r0i(1a@6z4wd3yj-i(+rb(#$xd1kb(om2dtz'
+SECRET_KEY = os.getenv('SIPEFI_SECRET_KEY', 'django-insecure-5x9#a*z8a4!v-0r0i(1a@6z4wd3yj-i(+rb(#$xd1kb(om2dtz')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.getenv('SIPEFI_DEBUG', 'False').strip().lower() in ('1', 'true', 'yes', 'on')
 
 ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'tomo2pe', '192.168.10.5', '132.248.54.199', 'www.sipefi.unam.mx']
 
@@ -94,8 +94,8 @@ WSGI_APPLICATION = 'sipefi.wsgi.application'
 
 
 # Database
-f = open(os.path.join(BASE_DIR,"connectionDjango.txt"), "r") 
-dataDB = f.read().split("*##@@##*")
+with open(os.path.join(BASE_DIR, "connectionDjango.txt"), "r") as f:
+    dataDB = f.read().split("*##@@##*")
 key = dataDB[0]
 host = desencripta(dataDB[2], key)
 port = desencripta(dataDB[3], key)
@@ -152,6 +152,15 @@ DATETIME_FORMAT = 'd/m/Y H:i:s'  # Ejemplo: 25/06/2025 14:30:45
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = '/estaticos/'
+STATIC_VERSION = os.getenv('SIPEFI_STATIC_VERSION', '20260818.1')
+
+# Migración progresiva y opcional de contraseñas históricas en texto plano.
+# False mantiene el comportamiento de almacenamiento actual sin modificar BD.
+# Al activarlo, cada login correcto migra únicamente esa contraseña a hash Django.
+SIPEFI_MIGRAR_PASSWORD_HASH = os.getenv(
+    'SIPEFI_MIGRAR_PASSWORD_HASH',
+    'True'
+).strip().lower() in ('1', 'true', 'yes', 'on')
 
 STATICFILES_DIRS = (
     os.path.join(BASE_DIR, 'estaticos'),
