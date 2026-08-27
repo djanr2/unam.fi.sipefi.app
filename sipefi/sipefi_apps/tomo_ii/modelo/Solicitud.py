@@ -904,6 +904,11 @@ class Solicitud:
 
     def _insertar_bibliografia(self, biblios):
         for i, bib in enumerate(biblios, start=1):
+            id_tipo_bibliografia = self._entero(bib.get("idTipo"), 0) or None
+            temas_recomienda = str(bib.get("temas") or "").strip()
+            if id_tipo_bibliografia == 11 and not temas_recomienda:
+                temas_recomienda = "Todos"
+
             self.db.insertar("""
                 INSERT INTO SIPEFI.TD_BIBLIOGRAFIA (
                     id_solicitud, id_estatus_solicitud, id_bibliografia,
@@ -921,7 +926,7 @@ class Solicitud:
                 "id_estatus_solicitud": self.id_estatus,
                 "id_bibliografia": i,
                 "es_complementaria": self._entero(bib.get("clasifBiblio"), 0),
-                "id_tipo_bibliografia": self._entero(bib.get("idTipo"), 0) or None,
+                "id_tipo_bibliografia": id_tipo_bibliografia,
                 "autor": str(bib.get("autor") or ""),
                 "publicacion": bib.get("anio") or None,
                 "titulo": str(bib.get("titulo") or ""),
@@ -929,7 +934,7 @@ class Solicitud:
                 "campo_2": str(bib.get("extra2") or ""),
                 "campo_3": str(bib.get("extra3") or ""),
                 "campo_4": str(bib.get("extra4") or ""),
-                "temas_recomienda": str(bib.get("temas") or ""),
+                "temas_recomienda": temas_recomienda,
                 "busuario": self.usuario
             })
 

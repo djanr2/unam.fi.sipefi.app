@@ -47,7 +47,7 @@ const fcs = function(){
 	      labels: ['Nombre del sitio web', 'URL', 'Fecha de Consulta: Día y mes', ''],
 	      requeridos: [true, true, false, false]
 	    },
-	    'DEPENDERA DE LA TEMÁTICA A TRATAR': {
+	    'DEPENDERÁ DE LA TEMÁTICA A TRATAR': {
 	      labels: ['', '', '', ''],
 	      requeridos: [false, false, false, false]
 	    },
@@ -78,7 +78,9 @@ const fcs = function(){
 		extra2: bib.extra2 || '',
 		extra3: bib.extra3 || '',
 		extra4: bib.extra4 || '',
-		temas: bib.temas || ''
+		temas: Number(bib.idTipo) === 11
+			? (String(bib.temas || '').trim() || 'Todos')
+			: (bib.temas || '')
 	 });
 
 	 const clonarBibliografia = (bib) => ({ ...normalizarBibliografia(bib) });
@@ -108,7 +110,7 @@ const fcs = function(){
 			];
 		}
 
-		const depende = String(b.tipo).trim().toUpperCase() === 'DEPENDERA DE LA TEMÁTICA A TRATAR';
+		const depende = Number(b.idTipo) === 11;
 		const input = (campo, valor) => `<input type="text" class="form-control" id="id-biblio-${campo}-${b.id}" value="${textoSeguro(valor)}">`;
 		const textoOInput = (campo, valor) => depende ? textoSeguro(valor) : input(campo, valor);
 		const clasificacion = `<select id="id-biblio-clasificacion-${b.id}" class="form-select">
@@ -571,9 +573,21 @@ const fcs = function(){
 	const actualizarCamposExtra = () => {
 	  const tipo = $('#tipo_bibliografia option:selected').text().trim().toUpperCase();
 	  const idTipo = $('#tipo_bibliografia').val();
-	  const config = camposPorTipo[tipo] || camposPorTipo['DEFAULT'];
+	  const config = idTipo === '11'
+			? camposPorTipo['DEPENDERÁ DE LA TEMÁTICA A TRATAR']
+			: (camposPorTipo[tipo] || camposPorTipo['DEFAULT']);
 	  const labels = config.labels;
 	  const requeridos = config.requeridos;
+
+	  // Para el tipo 11, "Temas donde se recomienda" usa "Todos" por defecto.
+	  // Si el usuario cambia a otro tipo y el campo conserva exactamente ese valor
+	  // automático, se limpia para que capture los temas correspondientes.
+	  const $temasBiblio = $('#temas_biblio');
+	  if (idTipo === '11') {
+		$temasBiblio.val('Todos');
+	  } else if (($temasBiblio.val() || '').trim().toUpperCase() === 'TODOS') {
+		$temasBiblio.val('');
+	  }
 
 	  // Ocultar/deshabilitar campos principales si es tipo 11
 	  if (idTipo === '11') {
@@ -621,11 +635,13 @@ const fcs = function(){
 	const validaCamposReqBiblio = () => {
 		const tipoTextoOrig = $('#tipo_bibliografia option:selected').text().trim();
 		const tipoTexto = $('#tipo_bibliografia option:selected').text().trim().toUpperCase();
-		const config = camposPorTipo[tipoTexto] || camposPorTipo['DEFAULT'];
+		const idTipo = $('#tipo_bibliografia').val();
+		const config = idTipo === '11'
+			? camposPorTipo['DEPENDERÁ DE LA TEMÁTICA A TRATAR']
+			: (camposPorTipo[tipoTexto] || camposPorTipo['DEFAULT']);
 		const requeridos = config.requeridos;
 
 		// Obtener valores
-		const idTipo = $('#tipo_bibliografia').val();
 		const autor = $('#autor_biblio').val().trim();
 		const anio = $('#anio_biblio').val().trim();
 		const clasif = $('#clasificacion_biblio').val().trim();
@@ -635,7 +651,8 @@ const fcs = function(){
 		const extra2 = $('#extra_2').val().trim();
 		const extra3 = $('#extra_3').val().trim();
 		const extra4 = $('#extra_4').val().trim();
-		const temas = $('#temas_biblio').val().trim();
+		const temasCapturados = $('#temas_biblio').val().trim();
+		const temas = idTipo === '11' ? (temasCapturados || 'Todos') : temasCapturados;
 
 		// Validaciones básicas
 		if (!idTipo || idTipo === '0') {
@@ -1340,10 +1357,13 @@ const fcs = function(){
 		if (indice < 0) return false;
 
 		const bib = listaBibliografias[indice];
-		const depende = String(bib.tipo).trim().toUpperCase() === 'DEPENDERA DE LA TEMÁTICA A TRATAR';
+		const depende = Number(bib.idTipo) === 11;
 		const valor = (campo, actual) => (depende && campo !== 'temas')
 			? actual
 			: ($(`#id-biblio-${campo}-${bib.id}`).val() ?? '');
+
+		let temasEditados = valor('temas', bib.temas);
+		if (depende && !String(temasEditados || '').trim()) temasEditados = 'Todos';
 
 		listaBibliografias[indice] = normalizarBibliografia({
 			...bib,
@@ -1355,7 +1375,7 @@ const fcs = function(){
 			extra2: valor('extra2', bib.extra2),
 			extra3: valor('extra3', bib.extra3),
 			extra4: valor('extra4', bib.extra4),
-			temas: valor('temas', bib.temas)
+			temas: temasEditados
 		});
 
 		bibliografiaEnEdicion = null;

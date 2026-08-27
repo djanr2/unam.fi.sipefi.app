@@ -152,7 +152,7 @@ DATETIME_FORMAT = 'd/m/Y H:i:s'  # Ejemplo: 25/06/2025 14:30:45
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = '/estaticos/'
-STATIC_VERSION = os.getenv('SIPEFI_STATIC_VERSION', '20260818.1')
+STATIC_VERSION = os.getenv('SIPEFI_STATIC_VERSION', '20260826.1')
 
 # Migración progresiva y opcional de contraseñas históricas en texto plano.
 # False mantiene el comportamiento de almacenamiento actual sin modificar BD.

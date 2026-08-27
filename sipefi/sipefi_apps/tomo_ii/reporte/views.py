@@ -2577,7 +2577,7 @@ def get_bibliografia_str(fila):
         extra4 = extra4 + "*"
 
     if id_ == 11:
-        autor = "Dependera de la temática a tratar"
+        autor = "Dependerá de la temática a tratar"
         anio_ =""
         titulo=""
         extra1=""
