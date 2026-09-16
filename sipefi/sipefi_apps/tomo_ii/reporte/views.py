@@ -233,7 +233,7 @@ def generar_pdf_bytes(id_perfil, id_licenciatura, lista_id_asignaturas):
             y=y_actual,
             width=ancho_total,
             color=color_pdf,
-            clave="",
+            clave=str(clave_pdf) if clave_pdf != "" else "",
             nombre=asignatura_pdf
         )
 
