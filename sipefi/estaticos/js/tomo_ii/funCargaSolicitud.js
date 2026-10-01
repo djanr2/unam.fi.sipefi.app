@@ -5,6 +5,9 @@
  */
 const fcs = function(){
 	
+	//Solo el Operador Admin (usuario administrador) puede renombrar una asignatura existente
+	const puedeRenombrarAsignatura = () => $("#puedeRenombrarAsignatura").text().trim() === "1";
+
 	//Variables globales
 	const camposPorTipo = {
 	    'LIBRO IMPRESO': {
@@ -812,8 +815,8 @@ const fcs = function(){
 						mostrarModalGuardar(1,texto);
 						validarBotonesCambioEstatus(1);
 						fComun.guardaVarLocalS("accionSoli",2);
-						//Bloqueamos el campo asignatura, ya no se puede modificar
-						$("#asignatura").prop("readonly", true);
+						//Bloqueamos el campo asignatura, salvo para el Operador Admin (puede renombrarla)
+						$("#asignatura").prop("readonly", !puedeRenombrarAsignatura());
 					}else if(accion == 2){ //Se proceso correctamente estatus solicitud
 						let msjConfirm = "La aprobaci&oacute;n de la solicitud se ha realizado correctamente.";
 						let estatus = objSolicitud["idEstSoli"];
@@ -1082,8 +1085,8 @@ const fcs = function(){
 			  });
 			}
 			
-			//Bloqueamos el campo asignatura, ya no se puede modificar
-			$("#asignatura").prop("readonly", true);
+			//Bloqueamos el campo asignatura, salvo para el Operador Admin al editar (puede renombrarla)
+			$("#asignatura").prop("readonly", !(accion == 2 && puedeRenombrarAsignatura()));
 			solicitudListaParaGuardar = true;
 
 		} catch (e) {

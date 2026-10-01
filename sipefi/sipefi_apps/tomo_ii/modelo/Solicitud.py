@@ -425,6 +425,7 @@ class Solicitud:
             asignatura = datos.get("nombreAsignatura", "")
             if self.id_solicitud > 0: # solicitud existente
                 id_usuario_creacion, fecha_creacion, asignatura, perfil_solicitud = self.obtener_datos_creacion()
+                asignatura = self._renombrar_asignatura(asignatura, datos.get("nombreAsignatura"), id_usuario)
             elif self.id_solicitud == 0: # solicitud nueva
                 accion = "Creación"
                 self.id_solicitud = int(
@@ -742,6 +743,54 @@ class Solicitud:
             WHERE id_solicitud = :id_solicitud AND id_estatus_solicitud = :est_origen
         """, {"id_solicitud": id_soli, "est_origen": est_origen, "est_destino": est_destino, "busuario": usuario_mod})
     
+    def _renombrar_asignatura(self, nombre_actual, nombre_nuevo, id_usuario):
+        """
+        Cambia el nombre de una asignatura existente. Solo lo permite el Operador Admin
+        cuyo usuario tenga el perfil base Administrador; para cualquier otro perfil
+        se conserva el nombre actual aunque el cliente envíe uno distinto.
+
+        Actualiza SIPEFI.TD_ASIGNATURA y todas las versiones (estatus) de la solicitud
+        en SIPEFI.TD_SOLICITUD_TOMO_II para mantenerlas consistentes.
+
+        :return: Nombre de la asignatura que debe quedar en la versión que se guarda.
+        """
+        nombre_nuevo = str(nombre_nuevo or "").strip()
+        if (
+            not nombre_nuevo
+            or nombre_nuevo == nombre_actual
+            or self.rol != self.ROL_OPERADOR_ADMIN
+            or not self.db.esUsuarioAdministrador(id_usuario)
+        ):
+            return nombre_actual
+
+        duplicada = self.db.consulta("""
+            SELECT COUNT(*)
+              FROM SIPEFI.TD_ASIGNATURA
+             WHERE UPPER(asignatura) = UPPER(:nombre)
+               AND id_asignatura <> :id_asignatura
+        """, {"nombre": nombre_nuevo, "id_asignatura": self.id_solicitud})[0][0]
+        if duplicada > 0:
+            raise SolicitudError(
+                409,
+                f"La asignatura <strong>'{nombre_nuevo}'</strong> ya existe."
+            )
+
+        self.db.insertar("""
+            UPDATE SIPEFI.TD_ASIGNATURA
+               SET asignatura = :nombre, busuario = :usuario, bfecha = SYSDATE
+             WHERE id_asignatura = :id_asignatura
+        """, {"nombre": nombre_nuevo, "usuario": self.usuario, "id_asignatura": self.id_solicitud})
+        self.db.insertar("""
+            UPDATE SIPEFI.TD_SOLICITUD_TOMO_II
+               SET asignatura = :nombre
+             WHERE id_solicitud = :id_solicitud
+        """, {"nombre": nombre_nuevo, "id_solicitud": self.id_solicitud})
+        logger.info(
+            "Asignatura %s renombrada de '%s' a '%s' por %s.",
+            self.id_solicitud, nombre_actual, nombre_nuevo, self.usuario,
+        )
+        return nombre_nuevo
+
     def obtener_datos_creacion(self):
         """
         Consulta la fecha y el ID del usuario que creó originalmente la solicitud.

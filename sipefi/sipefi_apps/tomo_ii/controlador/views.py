@@ -52,6 +52,7 @@ class Vista_Principal_TomoII(TemplateView):
         self.urlSIPEFI = ""
         self.token = ""
         self.tiene_multiples_roles = False
+        self.puede_renombrar_asignatura = False
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -64,6 +65,7 @@ class Vista_Principal_TomoII(TemplateView):
         context['static_version'] = settings.STATIC_VERSION
         context['universo'] = 1
         context['tiene_multiples_roles'] = self.tiene_multiples_roles
+        context['puede_renombrar_asignatura'] = self.puede_renombrar_asignatura
         return context
     
     def get(self, request):
@@ -100,6 +102,10 @@ class Vista_Principal_TomoII(TemplateView):
         self.urlSIPEFI = "/SIPEFI/logout/"
         self.token = token
         self.tiene_multiples_roles = len(roles) > 1
+        self.puede_renombrar_asignatura = (
+            int(rol_id) == Solicitud.ROL_OPERADOR_ADMIN
+            and CBD().esUsuarioAdministrador(request.session.get("sipefi_id_usuario"))
+        )
 
         return TemplateResponse(request, self.template_name, self.get_context_data())
  
