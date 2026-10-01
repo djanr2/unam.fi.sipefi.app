@@ -957,6 +957,47 @@ class ConsultasBD():
             finally:
                 cursor.close()
                 
+        def esUsuarioAdministrador(self, id_usuario):
+            """
+            Indica si el usuario activo tiene como perfil base el de Administrador (ID_PERFIL = 1).
+            """
+            if not id_usuario:
+                return False
+            filas = self.consulta("""
+                SELECT 1
+                  FROM PARAMETRO.TP_USUARIO
+                 WHERE ID_USUARIO = :id_usuario
+                   AND ID_PERFIL = 1
+                   AND ACTIVO = 0
+            """, {"id_usuario": int(id_usuario)})
+            return len(filas) > 0
+
+        def listarUsuariosAdmin(self):
+            """
+            Lista todos los usuarios del sistema con su perfil base (sin la clave de acceso).
+            """
+            filas = self.consulta("""
+                SELECT u.ID_USUARIO, u.USUARIO_SISTEMA, u.NOMBRE_COMPLETO, u.CORREO,
+                       u.ID_PERFIL, p.NOMBRE_PERFIL, u.ACTIVO
+                  FROM PARAMETRO.TP_USUARIO u
+                  LEFT JOIN CATALOGO.TC_PERFIL p ON p.ID_PERFIL = u.ID_PERFIL
+                 ORDER BY u.NOMBRE_COMPLETO
+            """)
+            return [{
+                "id": f[0], "usuario": f[1], "nombre": f[2], "correo": f[3],
+                "id_perfil": f[4], "perfil": f[5], "activo": f[6] == 0
+            } for f in filas]
+
+        def actualizarEstatusUsuario(self, id_usuario, activo, busuario):
+            """
+            Activa (ACTIVO = 0) o desactiva (ACTIVO = -1) a un usuario.
+            """
+            self.insertar("""
+                UPDATE PARAMETRO.TP_USUARIO
+                   SET ACTIVO = :activo, BFECHA = SYSDATE, BUSUARIO = :busuario
+                 WHERE ID_USUARIO = :id_usuario
+            """, {"activo": 0 if activo else -1, "busuario": busuario, "id_usuario": int(id_usuario)})
+
         def consulta(self, sql, params=None):
             """
             Ejecuta un SELECT y retorna todos los resultados.

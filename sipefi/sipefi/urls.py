@@ -29,6 +29,8 @@ urlpatterns = [
     path("SIPEFI/seleccion-perfil/", SeleccionPerfilView.as_view(), name="seleccion_perfil"),
     path("SIPEFI/seleccionarPerfil/", views.seleccionarPerfilActivo, name="seleccionar_perfil_activo"),
 
+    path("SIPEFI/admin-usuarios/", views.adminUsuarios, name="admin_usuarios"),
+
     path("SIPEFI/logout/", views.logoutSipefi, name="logout_sipefi"),
     path('SIPEFI/cerrarSesion/', views.cerrarSesionUsuarioSistema, name='logOut'),
 

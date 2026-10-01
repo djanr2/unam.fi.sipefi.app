@@ -291,6 +291,50 @@ class LoginSipefi(View):
         return redirect("/SIPEFI/seleccion-perfil/")
 
 
+def es_administrador(request):
+    return CBD().esUsuarioAdministrador(request.session.get("sipefi_id_usuario"))
+
+
+@never_cache
+def adminUsuarios(request):
+    """
+    Pantalla de gestion de usuarios, solo para sesiones con el rol Administrador.
+    """
+    token = request.session.get("sipefi_token", "")
+    roles = request.session.get("sipefi_roles", [])
+
+    if not token or CBD().validaSesionUsuario(token, 1) != "OK":
+        limpiar_sesion_sipefi(request)
+        return redirect("/SIPEFI/login/")
+
+    if not es_administrador(request):
+        messages.error(request, "No tienes permisos para administrar usuarios.")
+        return redirect("/SIPEFI/seleccion-perfil/")
+
+    if request.method == "POST":
+        accion = request.POST.get("accion", "")
+        busuario = request.session.get("sipefi_usuario", "")
+        try:
+            id_usuario = int(request.POST.get("id_usuario", "0"))
+            if id_usuario == request.session.get("sipefi_id_usuario") and accion == "desactivar":
+                messages.error(request, "No puedes desactivar tu propio usuario.")
+            elif accion in ("activar", "desactivar"):
+                CBD().actualizarEstatusUsuario(id_usuario, accion == "activar", busuario)
+                messages.success(request, "Estatus del usuario actualizado.")
+            else:
+                messages.error(request, "Acción inválida.")
+        except ValueError:
+            messages.error(request, "Datos inválidos.")
+        return redirect("/SIPEFI/admin-usuarios/")
+
+    return render(request, "principal/admin_usuarios.html", {
+        "usuario": request.session.get("sipefi_usuario", ""),
+        "nombre": request.session.get("sipefi_nombre", ""),
+        "id_usuario_sesion": request.session.get("sipefi_id_usuario"),
+        "usuarios": CBD().listarUsuariosAdmin(),
+    })
+
+
 class SeleccionPerfilView(TemplateView):
     template_name = "principal/seleccion_perfil.html"
 
@@ -318,6 +362,7 @@ class SeleccionPerfilView(TemplateView):
         
         contexto.update(construir_roles_ui(roles))
         contexto["modo_simple_dupla"] = es_dupla_operador_validador(roles)
+        contexto["es_admin"] = es_administrador(request)
         
         return render(request, self.template_name, contexto)
 

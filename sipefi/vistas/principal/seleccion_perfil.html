@@ -78,9 +78,16 @@
                 </div>
             </div>
 
-            <a href="/SIPEFI/logout/" class="btn btn-outline-secondary btn-sm">
-                Cancelar y cerrar sesión
-            </a>
+            <div class="d-flex gap-2">
+                {% if es_admin %}
+                <a href="/SIPEFI/admin-usuarios/" class="btn btn-dark btn-sm">
+                    <i class="fa-solid fa-users-gear me-1"></i> Gestionar usuarios
+                </a>
+                {% endif %}
+                <a href="/SIPEFI/logout/" class="btn btn-outline-secondary btn-sm">
+                    Cancelar y cerrar sesión
+                </a>
+            </div>
         </div>
 
         <div class="selector-simple-summary">
