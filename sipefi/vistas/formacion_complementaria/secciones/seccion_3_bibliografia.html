@@ -1,6 +1,9 @@
 <div class="tab-pane fade" id="fcBibliografia">
     <div class="fc-section-intro">
-        <div><h4>Bibliografía de la asignatura de apoyo</h4><p>Selecciona una, varias o todas las referencias disponibles.</p></div>
+        <div>
+            <h4>Bibliografía de la asignatura de apoyo</h4>
+            <p>Selecciona una, varias o todas las referencias disponibles.</p>
+        </div>
         <div class="d-flex gap-2">
             <button id="fcBtnSeleccionarTodas" class="btn btn-outline-primary btn-sm fc-editable-btn" type="button">Seleccionar todas</button>
             <button id="fcBtnLimpiarBibliografia" class="btn btn-outline-secondary btn-sm fc-editable-btn" type="button">Limpiar</button>
@@ -21,6 +24,84 @@
                     <th class="text-center">Extra 2</th>
                     <th class="text-center">Extra 3</th>
                     <th class="text-center">Extra 4</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+
+    <hr class="my-4">
+
+    <div class="fc-section-intro">
+        <div>
+            <h4>Bibliografía adicional</h4>
+            <p>Agrega referencias bibliográficas propias de esta formación complementaria.</p>
+        </div>
+    </div>
+
+    <div class="row g-3 mb-3">
+        <div class="col-md-3">
+            <label for="fcTipoBibliografiaNueva" class="form-label">Tipo de bibliografía <span class="text-danger">*</span></label>
+            <select id="fcTipoBibliografiaNueva" class="form-select fc-editable"></select>
+        </div>
+        <div class="col-md-5" id="fcDivAutorBibliografiaNueva">
+            <label for="fcAutorBibliografiaNueva" id="fcLblAutorBibliografiaNueva" class="form-label">Autor(es) <span class="text-danger">*</span></label>
+            <input id="fcAutorBibliografiaNueva" type="text" class="form-control fc-editable" maxlength="500">
+        </div>
+        <div class="col-md-2" id="fcDivAnioBibliografiaNueva">
+            <label for="fcAnioBibliografiaNueva" id="fcLblAnioBibliografiaNueva" class="form-label">Año de publicación <span class="text-danger">*</span></label>
+            <input id="fcAnioBibliografiaNueva" type="number" class="form-control fc-editable" min="1000" max="2100" step="1" inputmode="numeric">
+        </div>
+        <div class="col-md-2">
+            <label for="fcClasificacionBibliografiaNueva" class="form-label">Clasificación <span class="text-danger">*</span></label>
+            <select id="fcClasificacionBibliografiaNueva" class="form-select fc-editable">
+                <option value="0">Básica</option>
+                <option value="1">Complementaria</option>
+            </select>
+        </div>
+        <div class="col-md-8" id="fcDivTituloBibliografiaNueva">
+            <label for="fcTituloBibliografiaNueva" id="fcLblTituloBibliografiaNueva" class="form-label">Título <span class="text-danger">*</span></label>
+            <input id="fcTituloBibliografiaNueva" type="text" class="form-control fc-editable" maxlength="200">
+        </div>
+        <div id="fcDivExtraBibliografiaNueva1" class="col-md-3">
+            <label for="fcExtraBibliografiaNueva1" id="fcLblExtraBibliografiaNueva1" class="form-label">Campo extra 1</label>
+            <input id="fcExtraBibliografiaNueva1" type="text" class="form-control fc-editable" maxlength="200">
+        </div>
+        <div id="fcDivExtraBibliografiaNueva2" class="col-md-3">
+            <label for="fcExtraBibliografiaNueva2" id="fcLblExtraBibliografiaNueva2" class="form-label">Campo extra 2</label>
+            <input id="fcExtraBibliografiaNueva2" type="text" class="form-control fc-editable" maxlength="200">
+        </div>
+        <div id="fcDivExtraBibliografiaNueva3" class="col-md-3">
+            <label for="fcExtraBibliografiaNueva3" id="fcLblExtraBibliografiaNueva3" class="form-label">Campo extra 3</label>
+            <input id="fcExtraBibliografiaNueva3" type="text" class="form-control fc-editable" maxlength="200">
+        </div>
+        <div id="fcDivExtraBibliografiaNueva4" class="col-md-3">
+            <label for="fcExtraBibliografiaNueva4" id="fcLblExtraBibliografiaNueva4" class="form-label">Campo extra 4</label>
+            <input id="fcExtraBibliografiaNueva4" type="text" class="form-control fc-editable" maxlength="200">
+        </div>
+    </div>
+
+    <div class="d-flex justify-content-end gap-2 mb-3">
+        <button id="fcBtnCancelarBibliografiaNueva" type="button" class="btn btn-outline-secondary d-none fc-editable-btn">Cancelar edición</button>
+        <button id="fcBtnAgregarBibliografiaNueva" type="button" class="btn btn-primary fc-editable-btn">
+            <i class="fa-solid fa-plus me-1"></i> Agregar bibliografía
+        </button>
+    </div>
+
+    <div class="table-responsive">
+        <table id="fcTablaBibliografiaNueva" class="table table-sm table-bordered table-hover table-striped align-middle w-100">
+            <thead>
+                <tr>
+                    <th class="text-center">Tipo</th>
+                    <th class="text-center">Autor(es)</th>
+                    <th class="text-center">Año</th>
+                    <th class="text-center">Clasificación</th>
+                    <th class="text-center">Título</th>
+                    <th class="text-center">Extra 1</th>
+                    <th class="text-center">Extra 2</th>
+                    <th class="text-center">Extra 3</th>
+                    <th class="text-center">Extra 4</th>
+                    <th class="text-center">Acciones</th>
                 </tr>
             </thead>
             <tbody></tbody>

@@ -9,7 +9,9 @@
         actualizarNombreClave, mostrarEspera, cargarBibliografias, mensajeError,
         ocultarEspera, recalcular, marcarCampoHoraEntera, actualizarHorasRestantes,
         agregarOActualizarTema, limpiarTemaEditor, renderTemas, renderBibliografias,
-        renderListado, inicializarReloj, inicializarTablas, post, ejecutar, pintarCatalogos
+        renderListado, inicializarReloj, inicializarTablas, post, ejecutar, pintarCatalogos,
+        agregarOActualizarBibliografiaNueva, editarBibliografiaNueva, eliminarBibliografiaNueva,
+        actualizarCamposBibliografiaNueva, limpiarBibliografiaNuevaEditor
     } = FC;
 
     const registrarEventos = () => {
@@ -18,16 +20,7 @@
         $("#fcBtnActualizar").on("click", () => recargarListado(true));
         $("#fcBtnGuardar").on("click", () => guardar(false));
         $("#fcBtnPdf").on("click", () => descargarPdf());
-        $("#fcBtnCompletar").on("click", () => {
-            const payload = construirPayload();
-            if (!validarMinimoBorrador(payload)) return;
-            if (!validarParaCompletar(payload)) return;
-            modalConfirmar().show();
-        });
-        $("#fcBtnConfirmarCompletar").on("click", () => {
-            modalConfirmar().hide();
-            guardar(true);
-        });
+        $("#fcBtnCompletar").prop("disabled", true).attr("title", "Temporalmente no disponible");
         $("#fcAsignaturaApoyo").on("change", async function () {
             actualizarNombreClave();
             if (!estado.cargaCompleta || estado.soloLectura) return;
@@ -41,15 +34,15 @@
             }
         });
         $("#fcSubprograma, #fcModalidad").on("change", actualizarNombreClave);
-        const camposHorasEnteras = "#fcHorasPraSemana, #fcTemaHoras";
+        const camposEnteros = "#fcHorasPraSemestre, #fcTemaHoras, #fcAnioBibliografiaNueva";
 
-        $(camposHorasEnteras).on("keydown", event => {
+        $(camposEnteros).on("keydown", event => {
             if ([".", ",", "e", "E", "+", "-"].includes(event.key)) {
                 event.preventDefault();
             }
         });
 
-        $("#fcHorasPraSemana").on("input", recalcular);
+        $("#fcHorasPraSemestre").on("input", recalcular);
 
         $("#fcTemaHoras").on("input", () => {
             marcarCampoHoraEntera("#fcTemaHoras", {permitirVacio: true, permitirCero: false});
@@ -87,6 +80,15 @@
         $("#fcBtnLimpiarBibliografia").on("click", () => {
             estado.bibliografias.forEach(item => { item.seleccionada = false; });
             renderBibliografias();
+        });
+        $("#fcTipoBibliografiaNueva").on("change", actualizarCamposBibliografiaNueva);
+        $("#fcBtnAgregarBibliografiaNueva").on("click", agregarOActualizarBibliografiaNueva);
+        $("#fcBtnCancelarBibliografiaNueva").on("click", limpiarBibliografiaNuevaEditor);
+        $("#fcTablaBibliografiaNueva tbody").on("click", ".fc-editar-biblio-nueva", function () {
+            editarBibliografiaNueva(Number($(this).data("id")));
+        });
+        $("#fcTablaBibliografiaNueva tbody").on("click", ".fc-eliminar-biblio-nueva", function () {
+            eliminarBibliografiaNueva(Number($(this).data("id")));
         });
         $("#fcJustificacion").on("input", function () {
             $("#fcJustificacionContador").text(String($(this).val() || "").length);

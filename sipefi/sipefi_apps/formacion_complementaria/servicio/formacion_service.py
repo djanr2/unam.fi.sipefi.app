@@ -18,7 +18,7 @@ from sipefi_apps.formacion_complementaria.validadores.validaciones import (
 class FormacionComplementariaService:
     ESTATUS_BORRADOR = 1
     ESTATUS_COMPLETADA = 2
-    SEMANAS_SEMESTRE = 16
+    HORAS_SEMANA_PERMITIDAS = {16, 32, 48, 64, 80, 96, 112, 128, 144, 160}
     TIPO_PRACTICO = 2
     CARACTER_OPTATIVO = 2
     MAX_JUSTIFICACION = 12000
@@ -88,6 +88,7 @@ class FormacionComplementariaService:
         detalle["bibliografias_disponibles"] = self.db.bibliografias_origen(
             detalle["id_solicitud_apoyo"], id_usuario, id_formacion
         )
+        detalle["bibliografias_nuevas"] = self.db.bibliografias_manuales(id_formacion)
         detalle["solo_lectura"] = int(detalle["id_estatus_fc"]) == self.ESTATUS_COMPLETADA
         return detalle
 
@@ -187,6 +188,61 @@ class FormacionComplementariaService:
         for item in lista(valores, "Bibliografía"):
             if not isinstance(item, dict):
                 raise FormacionComplementariaError(400, "Una bibliografía no tiene el formato esperado.")
+
+            origen = str(item.get("origen") or "apoyo").strip().lower()
+            if origen == "manual":
+                id_tipo = entero_requerido(item.get("idTipo"), "tipo de bibliografía", minimo=1)
+                if not self.db.existe_catalogo(
+                    "CATALOGO.TC_TIPO_BIBLIOGRAFIA",
+                    "ID_TIPO_BIBLIOGRAFIA",
+                    id_tipo,
+                ):
+                    raise FormacionComplementariaError(400, "El tipo de bibliografía seleccionado ya no es válido.")
+
+                es_complementaria = entero_opcional(
+                    item.get("clasifBiblio"), "clasificación de bibliografía", minimo=0, maximo=1
+                )
+                if es_complementaria is None:
+                    es_complementaria = 0
+
+                autor = texto(item.get("autor"), max_length=500)
+                publicacion = entero_opcional(item.get("anio"), "año de publicación", minimo=1000, maximo=2100)
+                titulo = texto(item.get("titulo"), max_length=200)
+                campos = [texto(item.get(f"extra{i}"), max_length=200) for i in range(1, 5)]
+                temas_recomienda = None
+
+                if id_tipo == 11:
+                    autor = ""
+                    publicacion = None
+                    titulo = ""
+                elif not autor or publicacion is None or not titulo:
+                    raise FormacionComplementariaError(
+                        400,
+                        "La bibliografía adicional debe incluir autor, año de publicación y título.",
+                    )
+
+                resultado.append(
+                    {
+                        "id_solicitud_origen": None,
+                        "id_estatus_origen": None,
+                        "id_bibliografia_origen": None,
+                        "es_complementaria": es_complementaria,
+                        "id_tipo_bibliografia": id_tipo,
+                        "autor": autor,
+                        "publicacion": publicacion,
+                        "titulo": titulo,
+                        "campo_1": campos[0],
+                        "campo_2": campos[1],
+                        "campo_3": campos[2],
+                        "campo_4": campos[3],
+                        "temas_recomienda": temas_recomienda,
+                    }
+                )
+                continue
+
+            if origen != "apoyo":
+                raise FormacionComplementariaError(400, "El origen de una bibliografía no es válido.")
+
             id_solicitud = entero_requerido(item.get("idSolicitudOrigen"), "asignatura origen", minimo=1)
             id_estatus = entero_requerido(item.get("idEstatusOrigen"), "estatus origen", minimo=1)
             id_bibliografia = entero_requerido(item.get("idBibliografiaOrigen"), "bibliografía origen", minimo=1)
@@ -214,7 +270,8 @@ class FormacionComplementariaService:
         obligatorios = {
             "id_area_conocimiento": "área del conocimiento",
             "semestre": "semestre",
-            "horas_pract_semana": "horas prácticas por semana",
+            "horas_pract_semana": "horas semana",
+            "horas_pract_semestre": "horas totales",
         }
         for campo, etiqueta in obligatorios.items():
             if datos.get(campo) is None:
@@ -223,10 +280,16 @@ class FormacionComplementariaService:
                     f"El campo {etiqueta} es obligatorio para completar.",
                 )
 
-        if datos["horas_pract_semana"] <= 0:
+        if datos["horas_pract_semana"] not in self.HORAS_SEMANA_PERMITIDAS:
             raise FormacionComplementariaError(
                 400,
-                "Las horas prácticas por semana deben ser mayores a cero.",
+                "Las horas semana deben ser un múltiplo de 16 entre 16 y 160.",
+            )
+
+        if datos["horas_pract_semestre"] <= 0:
+            raise FormacionComplementariaError(
+                400,
+                "Las horas totales deben ser mayores a cero.",
             )
 
         if not datos.get("objetivo_general"):
@@ -264,25 +327,13 @@ class FormacionComplementariaService:
             )
             raise FormacionComplementariaError(
                 400,
-                f"Debe utilizar todas las horas prácticas del semestre ({horas_semestre}) en el temario. {detalle}",
-            )
-
-        disponibles = self.db.bibliografias_origen(
-            datos["id_solicitud_apoyo"],
-            id_usuario,
-            datos.get("id_formacion"),
-        )
-        if not disponibles:
-            raise FormacionComplementariaError(
-                400,
-                "La asignatura de apoyo no cuenta con bibliografía disponible; "
-                "la formación complementaria no puede marcarse como completada.",
+                f"Debe utilizar todas las horas totales ({horas_semestre}) en el temario. {detalle}",
             )
 
         if not bibliografias:
             raise FormacionComplementariaError(
                 400,
-                "Seleccione al menos una bibliografía de la asignatura de apoyo.",
+                "Seleccione una bibliografía de la asignatura de apoyo o agregue al menos una bibliografía adicional.",
             )
 
         if not estrategias:
@@ -298,6 +349,11 @@ class FormacionComplementariaService:
             )
 
     def guardar(self, payload, id_usuario, usuario, completar=False):
+        if completar:
+            raise FormacionComplementariaError(
+                409,
+                "La opción para marcar Formación complementaria como completada está temporalmente deshabilitada.",
+            )
         validar_payload_base(payload)
         generales = payload["datosGenerales"]
         if not isinstance(generales, dict):
@@ -348,8 +404,17 @@ class FormacionComplementariaService:
         id_caracter = self.CARACTER_OPTATIVO
 
         semestre = entero_opcional(generales.get("semestre"), "semestre", minimo=1, maximo=10)
-        h_pra = self._hora_entera_opcional(generales.get("horasPracticasSemana"), "horas prácticas por semana")
-        h_pra_semestre = None if h_pra is None else h_pra * self.SEMANAS_SEMESTRE
+        h_pra = self._hora_entera_opcional(generales.get("horasPracticasSemana"), "horas semana")
+        if h_pra is not None and h_pra not in self.HORAS_SEMANA_PERMITIDAS:
+            raise FormacionComplementariaError(
+                400,
+                "Las horas semana deben ser un múltiplo de 16 entre 16 y 160.",
+            )
+        h_pra_semestre = self._hora_entera_opcional(
+            generales.get("horasPracticasSemestre"), "horas totales"
+        )
+        if h_pra_semestre is not None and h_pra_semestre <= 0:
+            raise FormacionComplementariaError(400, "Las horas totales deben ser mayores a cero.")
 
         nombre = self._normalizar_nombre(modalidad["prefijo_nombre"], apoyo["asignatura"])
         clave = self._clave_formacion(subprograma["clave_subprograma"], apoyo["clave_asignatura"])

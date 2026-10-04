@@ -20,15 +20,28 @@
             return false;
         }
 
-        const pra = leerHoraEntera("#fcHorasPraSemana");
-        if (!pra.valida) {
-            marcarCampoHoraEntera("#fcHorasPraSemana", {permitirVacio: true, permitirCero: false});
+        const horasSemana = Number($("#fcHorasPraSemana").val() || 0);
+        const horasSemanaPermitidas = new Set([16, 32, 48, 64, 80, 96, 112, 128, 144, 160]);
+        if (horasSemana && !horasSemanaPermitidas.has(horasSemana)) {
+            $("#fcHorasPraSemana").addClass("is-invalid");
             mostrarMensaje(
-                "Las horas prácticas por semana deben capturarse únicamente con números enteros mayores a cero.",
+                "Las horas semana deben seleccionarse en múltiplos de 16, entre 16 y 160.",
                 "Horas no válidas"
             );
             return false;
         }
+        $("#fcHorasPraSemana").removeClass("is-invalid");
+
+        const horasTotales = leerHoraEntera("#fcHorasPraSemestre");
+        if (!horasTotales.vacia && (!horasTotales.valida || (horasTotales.valor ?? 0) <= 0)) {
+            marcarCampoHoraEntera("#fcHorasPraSemestre", {permitirVacio: true, permitirCero: false});
+            mostrarMensaje(
+                "Las horas totales deben capturarse únicamente con números enteros mayores a cero.",
+                "Horas no válidas"
+            );
+            return false;
+        }
+        $("#fcHorasPraSemestre").removeClass("is-invalid");
 
         const temaNoEntero = estado.temas.find(tema => !esHoraEntera(tema.horas, {permitirCero: false}));
         if (temaNoEntero) {
@@ -89,17 +102,25 @@
         if (!datos.idModalidad) registrar("Selecciona la modalidad.", "#fcModalidad", "#fcDatos");
         if (!datos.semestre) registrar("Selecciona el semestre.", "#fcSemestre", "#fcDatos");
 
-        const praCapturado = leerHoraEntera("#fcHorasPraSemana");
-        if (praCapturado.vacia) {
+        const horasSemana = Number($("#fcHorasPraSemana").val() || 0);
+        const horasSemanaPermitidas = new Set([16, 32, 48, 64, 80, 96, 112, 128, 144, 160]);
+        if (!horasSemana) {
+            registrar("Selecciona las horas semana.", "#fcHorasPraSemana", "#fcDatos");
+        } else if (!horasSemanaPermitidas.has(horasSemana)) {
             registrar(
-                "Captura las horas prácticas por semana.",
+                "Las horas semana deben ser un múltiplo de 16 entre 16 y 160.",
                 "#fcHorasPraSemana",
                 "#fcDatos"
             );
-        } else if (!praCapturado.valida || (praCapturado.valor ?? 0) <= 0) {
+        }
+
+        const horasTotales = leerHoraEntera("#fcHorasPraSemestre");
+        if (horasTotales.vacia) {
+            registrar("Captura las horas totales.", "#fcHorasPraSemestre", "#fcDatos");
+        } else if (!horasTotales.valida || (horasTotales.valor ?? 0) <= 0) {
             registrar(
-                "Las horas prácticas por semana deben ser un número entero mayor a cero.",
-                "#fcHorasPraSemana",
+                "Las horas totales deben ser un número entero mayor a cero.",
+                "#fcHorasPraSemestre",
                 "#fcDatos"
             );
         }
@@ -157,17 +178,17 @@
         const {total, restantes} = actualizarHorasRestantes();
         if (total <= TOLERANCIA_HORAS) {
             registrar(
-                "Define las horas prácticas del semestre desde Datos generales antes de completar el temario.",
+                "Define las horas totales desde Datos generales antes de completar el temario.",
                 "#fcBoxHorasRestantes",
                 "#fcTemario"
             );
         } else if (Math.abs(restantes) > TOLERANCIA_HORAS) {
             const detalle = restantes > 0
-                ? `Faltan ${formatearHoras(restantes)} horas prácticas por asignar.`
-                : `El temario excede el total por ${formatearHoras(Math.abs(restantes))} horas prácticas.`;
+                ? `Faltan ${formatearHoras(restantes)} horas por asignar.`
+                : `El temario excede el total por ${formatearHoras(Math.abs(restantes))} horas.`;
 
             registrar(
-                `Debes utilizar exactamente las ${formatearHoras(total)} horas prácticas del semestre en el temario. ${detalle}`,
+                `Debes utilizar exactamente las ${formatearHoras(total)} horas totales en el temario. ${detalle}`,
                 "#fcBoxHorasRestantes",
                 "#fcTemario"
             );
@@ -177,7 +198,7 @@
         // 3. Bibliografía.
         if (!payload.bibliografias.length) {
             registrar(
-                "Selecciona al menos una referencia bibliográfica.",
+                "Selecciona una referencia de la asignatura de apoyo o agrega al menos una bibliografía adicional.",
                 "#fcTablaBibliografia",
                 "#fcBibliografia"
             );

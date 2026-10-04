@@ -55,6 +55,12 @@ class ConsultasBD:
                      WHERE id_estrategia_didact <> 0
                      ORDER BY estrategia_didactica
                 """,
+                "tipos_bibliografia": """
+                    SELECT id_tipo_bibliografia AS id, tipo_bibliografia AS nombre
+                      FROM CATALOGO.TC_TIPO_BIBLIOGRAFIA
+                     WHERE id_tipo_bibliografia <> 0
+                     ORDER BY id_tipo_bibliografia
+                """,
             }
             for nombre, sql in consultas.items():
                 cursor.execute(sql)
@@ -343,6 +349,7 @@ class ConsultasBD:
     def existe_catalogo(self, tabla, columna, valor):
         permitidos = {
             ("CATALOGO.TC_ESTRATEGIAS_DIDACTICAS", "ID_ESTRATEGIA_DIDACT"),
+            ("CATALOGO.TC_TIPO_BIBLIOGRAFIA", "ID_TIPO_BIBLIOGRAFIA"),
         }
         if (tabla, columna) not in permitidos:
             return False
@@ -401,6 +408,9 @@ class ConsultasBD:
                       LEFT JOIN CATALOGO.TC_TIPO_BIBLIOGRAFIA tb
                         ON tb.id_tipo_bibliografia = bfc.id_tipo_bibliografia
                      WHERE bfc.id_formacion = :id_formacion
+                       AND bfc.id_solicitud_origen IS NOT NULL
+                       AND bfc.id_estatus_origen IS NOT NULL
+                       AND bfc.id_bibliografia_origen IS NOT NULL
                      ORDER BY bfc.id_bibliografia_fc
                     """,
                     {"id_formacion": int(id_formacion)},
@@ -433,6 +443,33 @@ class ConsultasBD:
                     item["disponible_origen"] = False
                     resultado.append(item)
             return resultado
+        finally:
+            cursor.close()
+
+    def bibliografias_manuales(self, id_formacion):
+        cursor = self._cursor()
+        try:
+            cursor.execute(
+                """
+                SELECT bfc.id_bibliografia_fc,
+                       bfc.es_complementaria,
+                       bfc.id_tipo_bibliografia,
+                       tb.tipo_bibliografia,
+                       bfc.autor, bfc.publicacion, bfc.titulo,
+                       bfc.campo_1, bfc.campo_2, bfc.campo_3, bfc.campo_4,
+                       bfc.temas_recomienda
+                  FROM SIPEFI.TD_BIBLIO_FORMACION_COMP bfc
+                  LEFT JOIN CATALOGO.TC_TIPO_BIBLIOGRAFIA tb
+                    ON tb.id_tipo_bibliografia = bfc.id_tipo_bibliografia
+                 WHERE bfc.id_formacion = :id_formacion
+                   AND bfc.id_solicitud_origen IS NULL
+                   AND bfc.id_estatus_origen IS NULL
+                   AND bfc.id_bibliografia_origen IS NULL
+                 ORDER BY bfc.id_bibliografia_fc
+                """,
+                {"id_formacion": int(id_formacion)},
+            )
+            return _filas_diccionario(cursor)
         finally:
             cursor.close()
 

@@ -235,7 +235,7 @@ def _dibujar_datos_generales(p, x, y, w_total, color, info):
     ]
     y -= max(alturas) + 14
 
-    # Fila 2: Tipo | Carácter | Horas Semana | Horas Semestre
+    # Fila 2: Tipo | Carácter | Horas Semana | Horas Totales
     ratios2 = (0.23, 0.23, 0.27, 0.27)
     widths2 = [w_total * r for r in ratios2]
     widths2[-1] -= 3 * gap
@@ -246,7 +246,7 @@ def _dibujar_datos_generales(p, x, y, w_total, color, info):
         ("Tipo", info.get("tipo_modalidad")),
         ("Carácter", info.get("caracter_asignatura")),
         ("Horas Semana", _entero_visual(info.get("horas_pract_semana"))),
-        ("Horas Semestre", _entero_visual(info.get("horas_pract_semestre"))),
+        ("Horas Totales", _entero_visual(info.get("horas_pract_semestre"))),
     ]
     alturas2 = [
         _dibujar_celda_info(p, xs2[i], y, widths2[i], etiqueta, valor, color, center=i >= 2)

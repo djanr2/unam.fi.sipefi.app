@@ -5,7 +5,8 @@
     const {
         estado, post, renderBibliografias, ejecutar, limpiarFormulario,
         pintarAsignaturas, inicializarSelect2, mostrarFormulario,
-        normalizarNumero, normalizarHoraBD, renderTemas, setSoloLectura, numero
+        normalizarNumero, normalizarHoraBD, renderTemas, setSoloLectura, numero,
+        renderBibliografiasNuevas, limpiarBibliografiaNuevaEditor
     } = FC;
 
     const cargarBibliografias = async (idSolicitud, conservar = false) => {
@@ -75,8 +76,23 @@
                 horas: normalizarHoraBD(tema.horas_tema),
             }));
             estado.bibliografias = (detalle.bibliografias_disponibles || []).map(item => ({...item, seleccionada: Boolean(item.seleccionada)}));
+            estado.bibliografiasNuevas = (detalle.bibliografias_nuevas || []).map((item, indice) => ({
+                idLocal: indice + 1,
+                idTipo: Number(item.id_tipo_bibliografia) || null,
+                tipo: item.tipo_bibliografia || "",
+                autor: item.autor || "",
+                anio: item.publicacion == null ? "" : String(item.publicacion),
+                clasifBiblio: Number(item.es_complementaria) === 1 ? 1 : 0,
+                titulo: item.titulo || "",
+                extra1: item.campo_1 || "",
+                extra2: item.campo_2 || "",
+                extra3: item.campo_3 || "",
+                extra4: item.campo_4 || "",
+            }));
+            limpiarBibliografiaNuevaEditor();
             renderTemas();
             renderBibliografias();
+            renderBibliografiasNuevas();
             setSoloLectura(Boolean(detalle.solo_lectura));
             estado.cargaCompleta = true;
             mostrarFormulario();
@@ -94,6 +110,7 @@
             idModalidad: numero($("#fcModalidad").val()),
             semestre: numero($("#fcSemestre").val()),
             horasPracticasSemana: numero($("#fcHorasPraSemana").val()),
+            horasPracticasSemestre: numero($("#fcHorasPraSemestre").val()),
             objetivoGeneral: $("#fcObjetivo").val(),
             justificacionAcademica: $("#fcJustificacion").val(),
         },
@@ -102,11 +119,26 @@
             tema: tema.tema,
             horas: numero(tema.horas),
         })),
-        bibliografias: estado.bibliografias.filter(item => item.seleccionada).map(item => ({
-            idSolicitudOrigen: Number(item.id_solicitud_origen),
-            idEstatusOrigen: Number(item.id_estatus_origen),
-            idBibliografiaOrigen: Number(item.id_bibliografia_origen),
-        })),
+        bibliografias: [
+            ...estado.bibliografias.filter(item => item.seleccionada).map(item => ({
+                origen: "apoyo",
+                idSolicitudOrigen: Number(item.id_solicitud_origen),
+                idEstatusOrigen: Number(item.id_estatus_origen),
+                idBibliografiaOrigen: Number(item.id_bibliografia_origen),
+            })),
+            ...estado.bibliografiasNuevas.map(item => ({
+                origen: "manual",
+                idTipo: Number(item.idTipo),
+                clasifBiblio: Number(item.clasifBiblio) === 1 ? 1 : 0,
+                autor: item.autor,
+                anio: item.anio === "" ? null : Number(item.anio),
+                titulo: item.titulo,
+                extra1: item.extra1,
+                extra2: item.extra2,
+                extra3: item.extra3,
+                extra4: item.extra4,
+            })),
+        ],
         estrategias: ($("#fcEstrategiasSelect").val() || []).map(Number),
         comentario: "",
     });

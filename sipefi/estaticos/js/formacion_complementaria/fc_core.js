@@ -16,7 +16,9 @@ window.FormacionComplementaria = window.FormacionComplementaria || {};
         cargaCompleta: false,
         temas: [],
         bibliografias: [],
+        bibliografiasNuevas: [],
         temaEditandoId: null,
+        bibliografiaNuevaEditandoId: null,
         tablas: {},
     };
 

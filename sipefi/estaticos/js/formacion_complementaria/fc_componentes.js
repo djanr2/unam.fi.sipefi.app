@@ -49,6 +49,16 @@
                 ],
             });
         } else estado.tablas.bibliografias = $("#fcTablaBibliografia").DataTable();
+
+        if (!$.fn.DataTable.isDataTable("#fcTablaBibliografiaNueva")) {
+            estado.tablas.bibliografiasNuevas = $("#fcTablaBibliografiaNueva").DataTable({
+                ...opcionesDataTable(10),
+                columnDefs: [
+                    {targets: [0, 2, 3, 9], className: "text-center"},
+                    {targets: 9, searchable: false},
+                ],
+            });
+        } else estado.tablas.bibliografiasNuevas = $("#fcTablaBibliografiaNueva").DataTable();
     };
 
     const llenarSelect = ($select, items, textoInicial, atributos = {}) => {
@@ -85,6 +95,7 @@
         llenarSelect($("#fcSubprograma"), cat.subprogramas || [], "Selecciona", {code: "clave"});
         llenarSelect($("#fcAreaConocimiento"), cat.areas_conocimiento || [], "Selecciona");
         llenarSelect($("#fcModalidad"), cat.modalidades || [], "Selecciona", {prefix: "prefijo"});
+        llenarSelect($("#fcTipoBibliografiaNueva"), cat.tipos_bibliografia || [], "Selecciona");
 
         const $estrategias = $("#fcEstrategiasSelect").empty();
         (cat.estrategias || []).forEach(item => $estrategias.append(new Option(item.nombre, item.id)));
@@ -171,19 +182,19 @@
         if (total <= TOLERANCIA_HORAS) {
             $box
                 .addClass("bg-secondary")
-                .attr("title", "Define primero las horas prácticas por semana en Datos generales.");
+                .attr("title", "Define primero las horas totales en Datos generales.");
         } else if (restantes < -TOLERANCIA_HORAS) {
             $box
                 .addClass("bg-danger")
-                .attr("title", `El temario excede por ${formatearHoras(Math.abs(restantes))} horas prácticas el total del semestre.`);
+                .attr("title", `El temario excede por ${formatearHoras(Math.abs(restantes))} horas el total capturado.`);
         } else if (Math.abs(restantes) <= TOLERANCIA_HORAS) {
             $box
                 .addClass("bg-success")
-                .attr("title", "Todas las horas prácticas del semestre ya fueron asignadas al temario.");
+                .attr("title", "Todas las horas ya fueron asignadas al temario.");
         } else {
             $box
                 .addClass("bg-warning text-dark")
-                .attr("title", `Faltan ${formatearHoras(restantes)} horas prácticas por asignar al temario.`);
+                .attr("title", `Faltan ${formatearHoras(restantes)} horas por asignar al temario.`);
         }
 
         const editando = estado.temaEditandoId !== null;
@@ -221,7 +232,7 @@
         ]);
         estado.tablas.temas.clear().rows.add(filas).draw(false);
         const total = estado.temas.reduce((sum, tema) => sum + (Number(tema.horas) || 0), 0);
-        $("#fcHorasTemarioResumen").text(`${formatearHoras(total)} horas prácticas registradas`);
+        $("#fcHorasTemarioResumen").text(`${formatearHoras(total)} horas registradas`);
         actualizarHorasRestantes();
     };
 
@@ -260,6 +271,98 @@
         $("#fcSinBibliografia").toggleClass("d-none", estado.bibliografias.length > 0);
     };
 
+    const normalizarTipoBibliografia = (valor) => String(valor || "")
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .toUpperCase()
+        .replace(/\s+/g, " ")
+        .trim();
+
+    const CAMPOS_BIBLIOGRAFIA = {
+        "LIBRO IMPRESO": {labels: ["Editorial", "Edición", "", ""], requeridos: [true, false, false, false]},
+        "ARTICULO IMPRESO": {labels: ["Nombre de la Revista", "Volumen(Número)", "Páginas", "DOI/URL"], requeridos: [true, true, true, false]},
+        "NORMA O LEY": {labels: ["Edición/Revisión", "Editorial/Organización", "DOI/URL", "Fecha precisa: Día y mes"], requeridos: [false, true, true, false]},
+        "APUNTES DE CLASE (MATERIAL DE CURSO)": {labels: ["Tipo de Documento", "Nombre de la Institución", "URL/Enlace", "Asignatura"], requeridos: [true, true, false, false]},
+        "MATERIAL AUDIOVISUAL DIGITAL": {labels: ["Tipo de Contenido", "Plataforma/Sitio Web", "URL", "Fecha precisa: Día y mes"], requeridos: [true, true, true, false]},
+        "LIBRO ELECTRONICO": {labels: ["Editorial", "Edición", "DOI/URL", ""], requeridos: [true, false, true, false]},
+        "ARTICULO ELECTRONICO": {labels: ["Nombre de la Revista", "Volumen(Número)", "Páginas", "DOI/URL"], requeridos: [true, true, true, true]},
+        "TESIS EN REPOSITORIO DIGITAL": {labels: ["Grado de la tesis", "Nombre de la institución", "DOI/URL", ""], requeridos: [true, true, true, false]},
+        "TESIS": {labels: ["Grado de la tesis", "Nombre de la institución", "DOI/URL", ""], requeridos: [true, true, true, false]},
+        "INFORME": {labels: ["Serie o número de informe", "Editorial/Organización", "URL", ""], requeridos: [true, true, true, false]},
+        "PAGINA WEB": {labels: ["Nombre del sitio web", "URL", "Fecha de Consulta: Día y mes", ""], requeridos: [true, true, false, false]},
+        "DEPENDERA DE LA TEMATICA A TRATAR": {labels: ["", "", "", ""], requeridos: [false, false, false, false]},
+        DEFAULT: {labels: ["Campo extra 1", "Campo extra 2", "Campo extra 3", "Campo extra 4"], requeridos: [false, false, false, false]},
+    };
+
+    const configuracionBibliografiaNueva = () => {
+        const idTipo = String($("#fcTipoBibliografiaNueva").val() || "");
+        const tipo = normalizarTipoBibliografia($("#fcTipoBibliografiaNueva option:selected").text());
+        const depende = idTipo === "11" || tipo === "DEPENDERA DE LA TEMATICA A TRATAR";
+        return {
+            idTipo,
+            tipo,
+            depende,
+            config: depende
+                ? CAMPOS_BIBLIOGRAFIA["DEPENDERA DE LA TEMATICA A TRATAR"]
+                : (CAMPOS_BIBLIOGRAFIA[tipo] || CAMPOS_BIBLIOGRAFIA.DEFAULT),
+        };
+    };
+
+    const actualizarCamposBibliografiaNueva = () => {
+        const {depende, config} = configuracionBibliografiaNueva();
+
+        $("#fcDivAutorBibliografiaNueva, #fcDivAnioBibliografiaNueva, #fcDivTituloBibliografiaNueva")
+            .toggle(!depende);
+        $("#fcAutorBibliografiaNueva, #fcAnioBibliografiaNueva, #fcTituloBibliografiaNueva")
+            .prop("disabled", estado.soloLectura || depende);
+
+        config.labels.forEach((label, indice) => {
+            const n = indice + 1;
+            const visible = Boolean(String(label || "").trim());
+            $("#fcDivExtraBibliografiaNueva" + n).toggle(visible);
+            $("#fcLblExtraBibliografiaNueva" + n).html(
+                visible
+                    ? `${escapeHtml(label)}${config.requeridos[indice] ? ' <span class="text-danger">*</span>' : ''}`
+                    : ""
+            );
+        });
+    };
+
+    const renderBibliografiasNuevas = () => {
+        if (!estado.tablas.bibliografiasNuevas) return;
+        const texto = valor => {
+            const contenido = String(valor ?? "").trim();
+            return contenido ? escapeHtml(contenido) : '<span class="text-muted">—</span>';
+        };
+        const filas = estado.bibliografiasNuevas.map(item => [
+            texto(item.tipo),
+            texto(item.autor),
+            texto(item.anio),
+            Number(item.clasifBiblio) === 1 ? "Complementaria" : "Básica",
+            texto(item.titulo),
+            texto(item.extra1),
+            texto(item.extra2),
+            texto(item.extra3),
+            texto(item.extra4),
+            estado.soloLectura ? "" : `<div class="fc-actions">
+                <button type="button" class="btn btn-outline-primary btn-sm fc-editar-biblio-nueva" data-id="${Number(item.idLocal)}" title="Editar"><i class="fa-solid fa-pen"></i></button>
+                <button type="button" class="btn btn-outline-danger btn-sm fc-eliminar-biblio-nueva" data-id="${Number(item.idLocal)}" title="Eliminar"><i class="fa-solid fa-trash"></i></button>
+            </div>`,
+        ]);
+        estado.tablas.bibliografiasNuevas.clear().rows.add(filas).draw(false);
+    };
+
+    const limpiarBibliografiaNuevaEditor = () => {
+        estado.bibliografiaNuevaEditandoId = null;
+        $("#fcTipoBibliografiaNueva").val("");
+        $("#fcAutorBibliografiaNueva, #fcAnioBibliografiaNueva, #fcTituloBibliografiaNueva, #fcExtraBibliografiaNueva1, #fcExtraBibliografiaNueva2, #fcExtraBibliografiaNueva3, #fcExtraBibliografiaNueva4").val("");
+        $("#fcClasificacionBibliografiaNueva").val("0");
+        $("#fcBtnAgregarBibliografiaNueva").html('<i class="fa-solid fa-plus me-1"></i> Agregar bibliografía');
+        $("#fcBtnCancelarBibliografiaNueva").addClass("d-none");
+        $("#fcBibliografia .is-invalid").removeClass("is-invalid");
+        actualizarCamposBibliografiaNueva();
+    };
+
     const limpiarTemaEditor = () => {
         estado.temaEditandoId = null;
         $("#fcTemaNombre, #fcTemaHoras").val("");
@@ -267,21 +370,7 @@
     };
 
     const recalcular = () => {
-        const pra = leerHoraEntera("#fcHorasPraSemana");
-        marcarCampoHoraEntera("#fcHorasPraSemana", {permitirVacio: true, permitirCero: false});
-
-        if (!pra.valida) {
-            $("#fcHorasPraSemestre").val("");
-            actualizarHorasRestantes();
-            return;
-        }
-
-        if (pra.vacia) {
-            $("#fcHorasPraSemestre").val("");
-        } else {
-            $("#fcHorasPraSemestre").val((pra.valor ?? 0) * 16);
-        }
-
+        marcarCampoHoraEntera("#fcHorasPraSemestre", {permitirVacio: true, permitirCero: false});
         actualizarHorasRestantes();
     };
 
@@ -300,14 +389,17 @@
     const setSoloLectura = (valor) => {
         estado.soloLectura = Boolean(valor);
         $("#fcSeccionFormulario").toggleClass("fc-readonly", estado.soloLectura);
-        $(".fc-editable").prop("disabled", estado.soloLectura);
+        $(".fc-editable, .fc-editable-btn").prop("disabled", estado.soloLectura);
         $("#fcAsignaturaApoyo, #fcSubprograma, #fcModalidad, #fcEstrategiasSelect")
             .prop("disabled", estado.soloLectura)
             .trigger("change.select2");
         $("#fcBtnGuardar, #fcBtnCompletar").toggleClass("d-none", estado.soloLectura);
+        $("#fcBtnCompletar").prop("disabled", true).attr("title", "Temporalmente no disponible");
+        if (!estado.soloLectura) actualizarCamposBibliografiaNueva();
         $("#fcAvisoSoloLectura").toggleClass("d-none", !estado.soloLectura);
         renderTemas();
         renderBibliografias();
+        renderBibliografiasNuevas();
     };
 
     const mostrarFormulario = () => {
@@ -321,6 +413,7 @@
                 ? "Generar PDF con la \u00faltima informaci\u00f3n guardada"
                 : "Guarda primero la solicitud para generar el PDF");
         if (!estado.soloLectura) $("#fcBtnGuardar, #fcBtnCompletar").removeClass("d-none");
+        $("#fcBtnCompletar").prop("disabled", true).attr("title", "Temporalmente no disponible");
         bootstrap.Tab.getOrCreateInstance(document.querySelector('#fcTabs button[data-bs-target="#fcDatos"]')).show();
     };
 
@@ -339,7 +432,9 @@
         estado.cargaCompleta = false;
         estado.temas = [];
         estado.bibliografias = [];
+        estado.bibliografiasNuevas = [];
         limpiarTemaEditor();
+        limpiarBibliografiaNuevaEditor();
         $("#fcFolio").text("Nueva solicitud");
         $("#fcEstatusBadge").attr("class", "badge bg-secondary").text("Borrador");
         $("#fcAsignaturaApoyo, #fcSubprograma, #fcAreaConocimiento, #fcModalidad, #fcSemestre").val("").trigger("change.select2");
@@ -368,6 +463,12 @@
         actualizarHorasRestantes,
         renderTemas,
         renderBibliografias,
+        renderBibliografiasNuevas,
+        normalizarTipoBibliografia,
+        CAMPOS_BIBLIOGRAFIA,
+        configuracionBibliografiaNueva,
+        actualizarCamposBibliografiaNueva,
+        limpiarBibliografiaNuevaEditor,
         limpiarTemaEditor,
         recalcular,
         actualizarNombreClave,
