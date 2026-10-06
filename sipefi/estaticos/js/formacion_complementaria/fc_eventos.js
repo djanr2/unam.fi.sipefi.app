@@ -34,7 +34,7 @@
             }
         });
         $("#fcSubprograma, #fcModalidad").on("change", actualizarNombreClave);
-        const camposEnteros = "#fcHorasPraSemestre, #fcTemaHoras, #fcAnioBibliografiaNueva";
+        const camposEnteros = "#fcHorasPraSemana, #fcTemaHoras, #fcAnioBibliografiaNueva";
 
         $(camposEnteros).on("keydown", event => {
             if ([".", ",", "e", "E", "+", "-"].includes(event.key)) {
@@ -42,7 +42,7 @@
             }
         });
 
-        $("#fcHorasPraSemestre").on("input", recalcular);
+        $("#fcHorasPraSemana").on("input", recalcular);
 
         $("#fcTemaHoras").on("input", () => {
             marcarCampoHoraEntera("#fcTemaHoras", {permitirVacio: true, permitirCero: false});

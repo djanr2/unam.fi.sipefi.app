@@ -18,7 +18,7 @@ from sipefi_apps.formacion_complementaria.validadores.validaciones import (
 class FormacionComplementariaService:
     ESTATUS_BORRADOR = 1
     ESTATUS_COMPLETADA = 2
-    HORAS_SEMANA_PERMITIDAS = {16, 32, 48, 64, 80, 96, 112, 128, 144, 160}
+    SEMANAS_SEMESTRE = 16
     TIPO_PRACTICO = 2
     CARACTER_OPTATIVO = 2
     MAX_JUSTIFICACION = 12000
@@ -271,7 +271,6 @@ class FormacionComplementariaService:
             "id_area_conocimiento": "área del conocimiento",
             "semestre": "semestre",
             "horas_pract_semana": "horas semana",
-            "horas_pract_semestre": "horas totales",
         }
         for campo, etiqueta in obligatorios.items():
             if datos.get(campo) is None:
@@ -280,16 +279,10 @@ class FormacionComplementariaService:
                     f"El campo {etiqueta} es obligatorio para completar.",
                 )
 
-        if datos["horas_pract_semana"] not in self.HORAS_SEMANA_PERMITIDAS:
+        if datos["horas_pract_semana"] <= 0:
             raise FormacionComplementariaError(
                 400,
-                "Las horas semana deben ser un múltiplo de 16 entre 16 y 160.",
-            )
-
-        if datos["horas_pract_semestre"] <= 0:
-            raise FormacionComplementariaError(
-                400,
-                "Las horas totales deben ser mayores a cero.",
+                "Las horas semana deben ser mayores a cero.",
             )
 
         if not datos.get("objetivo_general"):
@@ -405,16 +398,7 @@ class FormacionComplementariaService:
 
         semestre = entero_opcional(generales.get("semestre"), "semestre", minimo=1, maximo=10)
         h_pra = self._hora_entera_opcional(generales.get("horasPracticasSemana"), "horas semana")
-        if h_pra is not None and h_pra not in self.HORAS_SEMANA_PERMITIDAS:
-            raise FormacionComplementariaError(
-                400,
-                "Las horas semana deben ser un múltiplo de 16 entre 16 y 160.",
-            )
-        h_pra_semestre = self._hora_entera_opcional(
-            generales.get("horasPracticasSemestre"), "horas totales"
-        )
-        if h_pra_semestre is not None and h_pra_semestre <= 0:
-            raise FormacionComplementariaError(400, "Las horas totales deben ser mayores a cero.")
+        h_pra_semestre = None if h_pra is None else h_pra * self.SEMANAS_SEMESTRE
 
         nombre = self._normalizar_nombre(modalidad["prefijo_nombre"], apoyo["asignatura"])
         clave = self._clave_formacion(subprograma["clave_subprograma"], apoyo["clave_asignatura"])

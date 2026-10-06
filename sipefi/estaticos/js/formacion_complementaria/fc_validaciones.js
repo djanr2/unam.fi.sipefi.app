@@ -20,28 +20,16 @@
             return false;
         }
 
-        const horasSemana = Number($("#fcHorasPraSemana").val() || 0);
-        const horasSemanaPermitidas = new Set([16, 32, 48, 64, 80, 96, 112, 128, 144, 160]);
-        if (horasSemana && !horasSemanaPermitidas.has(horasSemana)) {
-            $("#fcHorasPraSemana").addClass("is-invalid");
+        const horasSemana = leerHoraEntera("#fcHorasPraSemana");
+        if (!horasSemana.valida) {
+            marcarCampoHoraEntera("#fcHorasPraSemana", {permitirVacio: true, permitirCero: false});
             mostrarMensaje(
-                "Las horas semana deben seleccionarse en múltiplos de 16, entre 16 y 160.",
+                "Las horas semana deben capturarse únicamente con números enteros mayores a cero.",
                 "Horas no válidas"
             );
             return false;
         }
         $("#fcHorasPraSemana").removeClass("is-invalid");
-
-        const horasTotales = leerHoraEntera("#fcHorasPraSemestre");
-        if (!horasTotales.vacia && (!horasTotales.valida || (horasTotales.valor ?? 0) <= 0)) {
-            marcarCampoHoraEntera("#fcHorasPraSemestre", {permitirVacio: true, permitirCero: false});
-            mostrarMensaje(
-                "Las horas totales deben capturarse únicamente con números enteros mayores a cero.",
-                "Horas no válidas"
-            );
-            return false;
-        }
-        $("#fcHorasPraSemestre").removeClass("is-invalid");
 
         const temaNoEntero = estado.temas.find(tema => !esHoraEntera(tema.horas, {permitirCero: false}));
         if (temaNoEntero) {
@@ -102,25 +90,13 @@
         if (!datos.idModalidad) registrar("Selecciona la modalidad.", "#fcModalidad", "#fcDatos");
         if (!datos.semestre) registrar("Selecciona el semestre.", "#fcSemestre", "#fcDatos");
 
-        const horasSemana = Number($("#fcHorasPraSemana").val() || 0);
-        const horasSemanaPermitidas = new Set([16, 32, 48, 64, 80, 96, 112, 128, 144, 160]);
-        if (!horasSemana) {
-            registrar("Selecciona las horas semana.", "#fcHorasPraSemana", "#fcDatos");
-        } else if (!horasSemanaPermitidas.has(horasSemana)) {
+        const horasSemana = leerHoraEntera("#fcHorasPraSemana");
+        if (horasSemana.vacia) {
+            registrar("Captura las horas semana.", "#fcHorasPraSemana", "#fcDatos");
+        } else if (!horasSemana.valida || (horasSemana.valor ?? 0) <= 0) {
             registrar(
-                "Las horas semana deben ser un múltiplo de 16 entre 16 y 160.",
+                "Las horas semana deben ser un número entero mayor a cero.",
                 "#fcHorasPraSemana",
-                "#fcDatos"
-            );
-        }
-
-        const horasTotales = leerHoraEntera("#fcHorasPraSemestre");
-        if (horasTotales.vacia) {
-            registrar("Captura las horas totales.", "#fcHorasPraSemestre", "#fcDatos");
-        } else if (!horasTotales.valida || (horasTotales.valor ?? 0) <= 0) {
-            registrar(
-                "Las horas totales deben ser un número entero mayor a cero.",
-                "#fcHorasPraSemestre",
                 "#fcDatos"
             );
         }

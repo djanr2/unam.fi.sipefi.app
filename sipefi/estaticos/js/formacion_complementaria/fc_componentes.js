@@ -370,7 +370,15 @@
     };
 
     const recalcular = () => {
-        marcarCampoHoraEntera("#fcHorasPraSemestre", {permitirVacio: true, permitirCero: false});
+        const horasSemana = leerHoraEntera("#fcHorasPraSemana");
+        marcarCampoHoraEntera("#fcHorasPraSemana", {permitirVacio: true, permitirCero: false});
+
+        if (!horasSemana.valida || horasSemana.vacia) {
+            $("#fcHorasPraSemestre").val("");
+        } else {
+            $("#fcHorasPraSemestre").val((horasSemana.valor ?? 0) * 16);
+        }
+
         actualizarHorasRestantes();
     };
 

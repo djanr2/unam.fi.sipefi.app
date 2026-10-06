@@ -6,7 +6,7 @@
         estado, post, renderBibliografias, ejecutar, limpiarFormulario,
         pintarAsignaturas, inicializarSelect2, mostrarFormulario,
         normalizarNumero, normalizarHoraBD, renderTemas, setSoloLectura, numero,
-        renderBibliografiasNuevas, limpiarBibliografiaNuevaEditor
+        renderBibliografiasNuevas, limpiarBibliografiaNuevaEditor, recalcular
     } = FC;
 
     const cargarBibliografias = async (idSolicitud, conservar = false) => {
@@ -63,7 +63,7 @@
             $("#fcNombre").val(detalle.nombre_asignatura || "");
             $("#fcClave").val(detalle.clave_asignatura || "");
             $("#fcHorasPraSemana").val(normalizarHoraBD(detalle.horas_pract_semana));
-            $("#fcHorasPraSemestre").val(normalizarHoraBD(detalle.horas_pract_semestre));
+            recalcular();
             $("#fcObjetivo").val(detalle.objetivo_general || "");
             $("#fcJustificacion").val(detalle.justificacion_academica || "");
             $("#fcJustificacionContador").text(String($("#fcJustificacion").val() || "").length);
