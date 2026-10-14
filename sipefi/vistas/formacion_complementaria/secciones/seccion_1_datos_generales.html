@@ -36,6 +36,13 @@
             </select>
         </div>
         <div class="col-md-4">
+            <label for="fcTipoImparticion" class="form-label">Tipo de impartición <span class="text-danger">*</span></label>
+            <select id="fcTipoImparticion" class="form-select fc-editable">
+                <option value="SEMESTRAL">Semestral</option>
+                <option value="INTERSEMESTRAL">Intersemestral</option>
+            </select>
+        </div>
+        <div class="col-md-4">
             <label for="fcTipo" class="form-label">Tipo</label>
             <input id="fcTipo" class="form-control" type="text" value="Práctico" readonly>
         </div>
@@ -43,13 +50,13 @@
             <label for="fcCaracter" class="form-label">Carácter</label>
             <input id="fcCaracter" class="form-control" type="text" value="Optativo" readonly>
         </div>
-        <div class="col-md-4">
+        <div id="fcGrupoHorasSemana" class="col-md-4">
             <label for="fcHorasPraSemana" class="form-label">Horas semana <span class="text-danger">*</span></label>
             <input id="fcHorasPraSemana" class="form-control fc-editable" type="number" min="1" step="1" inputmode="numeric">
         </div>
         <div class="col-md-4">
-            <label for="fcHorasPraSemestre" class="form-label">Horas totales</label>
-            <input id="fcHorasPraSemestre" class="form-control" type="number" step="1" readonly>
+            <label for="fcHorasPraSemestre" class="form-label">Horas totales <span id="fcHorasTotalesRequeridas" class="text-danger d-none">*</span></label>
+            <input id="fcHorasPraSemestre" class="form-control fc-editable" type="number" min="1" step="1" inputmode="numeric" readonly>
         </div>
         <div class="col-12">
             <label for="fcObjetivo" class="form-label">Objetivo general <span class="text-danger">*</span></label>

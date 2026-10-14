@@ -6,7 +6,8 @@
         estado, post, renderBibliografias, ejecutar, limpiarFormulario,
         pintarAsignaturas, inicializarSelect2, mostrarFormulario,
         normalizarNumero, normalizarHoraBD, renderTemas, setSoloLectura, numero,
-        renderBibliografiasNuevas, limpiarBibliografiaNuevaEditor, recalcular
+        renderBibliografiasNuevas, limpiarBibliografiaNuevaEditor, recalcular,
+        actualizarModoImparticion, TIPO_IMPARTICION_SEMESTRAL
     } = FC;
 
     const cargarBibliografias = async (idSolicitud, conservar = false) => {
@@ -58,12 +59,14 @@
             $("#fcAreaConocimiento").val(normalizarNumero(detalle.id_area_conocimiento)).trigger("change.select2");
             $("#fcModalidad").val(normalizarNumero(detalle.id_modalidad_fc)).trigger("change.select2");
             $("#fcSemestre").val(normalizarNumero(detalle.semestre));
+            $("#fcTipoImparticion").val(String(detalle.tipo_imparticion || TIPO_IMPARTICION_SEMESTRAL).toUpperCase());
             $("#fcTipo").val("Práctico");
             $("#fcCaracter").val("Optativo");
             $("#fcNombre").val(detalle.nombre_asignatura || "");
             $("#fcClave").val(detalle.clave_asignatura || "");
             $("#fcHorasPraSemana").val(normalizarHoraBD(detalle.horas_pract_semana));
-            recalcular();
+            $("#fcHorasPraSemestre").val(normalizarHoraBD(detalle.horas_pract_semestre));
+            actualizarModoImparticion({limpiar: false});
             $("#fcObjetivo").val(detalle.objetivo_general || "");
             $("#fcJustificacion").val(detalle.justificacion_academica || "");
             $("#fcJustificacionContador").text(String($("#fcJustificacion").val() || "").length);
@@ -109,6 +112,7 @@
             idAreaConocimiento: numero($("#fcAreaConocimiento").val()),
             idModalidad: numero($("#fcModalidad").val()),
             semestre: numero($("#fcSemestre").val()),
+            tipoImparticion: String($("#fcTipoImparticion").val() || TIPO_IMPARTICION_SEMESTRAL),
             horasPracticasSemana: numero($("#fcHorasPraSemana").val()),
             horasPracticasSemestre: numero($("#fcHorasPraSemestre").val()),
             objetivoGeneral: $("#fcObjetivo").val(),

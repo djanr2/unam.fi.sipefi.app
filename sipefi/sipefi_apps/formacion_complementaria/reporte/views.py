@@ -235,21 +235,35 @@ def _dibujar_datos_generales(p, x, y, w_total, color, info):
     ]
     y -= max(alturas) + 14
 
-    # Fila 2: Tipo | Carácter | Horas Semana | Horas Totales
-    ratios2 = (0.23, 0.23, 0.27, 0.27)
+    tipo_imparticion = str(info.get("tipo_imparticion") or "SEMESTRAL").upper()
+    if tipo_imparticion == "INTERSEMESTRAL":
+        # Intersemestral: no se presentan horas semana.
+        ratios2 = (0.30, 0.30, 0.40)
+        valores = [
+            ("Tipo", info.get("tipo_modalidad")),
+            ("Carácter", info.get("caracter_asignatura")),
+            ("Horas Totales", _entero_visual(info.get("horas_pract_semestre"))),
+        ]
+    else:
+        # Semestral: se presentan horas semana y horas totales.
+        ratios2 = (0.23, 0.23, 0.27, 0.27)
+        valores = [
+            ("Tipo", info.get("tipo_modalidad")),
+            ("Carácter", info.get("caracter_asignatura")),
+            ("Horas Semana", _entero_visual(info.get("horas_pract_semana"))),
+            ("Horas Totales", _entero_visual(info.get("horas_pract_semestre"))),
+        ]
+
     widths2 = [w_total * r for r in ratios2]
-    widths2[-1] -= 3 * gap
+    widths2[-1] -= (len(widths2) - 1) * gap
     xs2 = [x]
-    for i in range(1, 4):
+    for i in range(1, len(widths2)):
         xs2.append(xs2[-1] + widths2[i - 1] + gap)
-    valores = [
-        ("Tipo", info.get("tipo_modalidad")),
-        ("Carácter", info.get("caracter_asignatura")),
-        ("Horas Semana", _entero_visual(info.get("horas_pract_semana"))),
-        ("Horas Totales", _entero_visual(info.get("horas_pract_semestre"))),
-    ]
     alturas2 = [
-        _dibujar_celda_info(p, xs2[i], y, widths2[i], etiqueta, valor, color, center=i >= 2)
+        _dibujar_celda_info(
+            p, xs2[i], y, widths2[i], etiqueta, valor, color,
+            center=etiqueta.startswith("Horas")
+        )
         for i, (etiqueta, valor) in enumerate(valores)
     ]
     return y - max(alturas2) - 6

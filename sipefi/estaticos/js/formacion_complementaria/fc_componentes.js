@@ -369,17 +369,52 @@
         $("#fcBtnAgregarTema").html('<i class="fa-solid fa-plus"></i>').attr("title", "Agregar tema");
     };
 
-    const recalcular = () => {
-        const horasSemana = leerHoraEntera("#fcHorasPraSemana");
-        marcarCampoHoraEntera("#fcHorasPraSemana", {permitirVacio: true, permitirCero: false});
+    const TIPO_IMPARTICION_SEMESTRAL = "SEMESTRAL";
+    const TIPO_IMPARTICION_INTERSEMESTRAL = "INTERSEMESTRAL";
 
-        if (!horasSemana.valida || horasSemana.vacia) {
-            $("#fcHorasPraSemestre").val("");
+    const tipoImparticionActual = () => {
+        const valor = String($("#fcTipoImparticion").val() || TIPO_IMPARTICION_SEMESTRAL).toUpperCase();
+        return valor === TIPO_IMPARTICION_INTERSEMESTRAL
+            ? TIPO_IMPARTICION_INTERSEMESTRAL
+            : TIPO_IMPARTICION_SEMESTRAL;
+    };
+
+    const recalcular = () => {
+        const intersemestral = tipoImparticionActual() === TIPO_IMPARTICION_INTERSEMESTRAL;
+
+        if (intersemestral) {
+            $("#fcHorasPraSemana").val("").removeClass("is-invalid");
+            marcarCampoHoraEntera("#fcHorasPraSemestre", {permitirVacio: true, permitirCero: false});
         } else {
-            $("#fcHorasPraSemestre").val((horasSemana.valor ?? 0) * 16);
+            const horasSemana = leerHoraEntera("#fcHorasPraSemana");
+            marcarCampoHoraEntera("#fcHorasPraSemana", {permitirVacio: true, permitirCero: false});
+            $("#fcHorasPraSemestre").removeClass("is-invalid");
+
+            if (!horasSemana.valida || horasSemana.vacia) {
+                $("#fcHorasPraSemestre").val("");
+            } else {
+                $("#fcHorasPraSemestre").val((horasSemana.valor ?? 0) * 16);
+            }
         }
 
         actualizarHorasRestantes();
+    };
+
+    const actualizarModoImparticion = ({limpiar = false} = {}) => {
+        const intersemestral = tipoImparticionActual() === TIPO_IMPARTICION_INTERSEMESTRAL;
+
+        if (limpiar) {
+            $("#fcHorasPraSemana, #fcHorasPraSemestre").val("").removeClass("is-invalid");
+        }
+
+        $("#fcGrupoHorasSemana").toggleClass("d-none", intersemestral);
+        $("#fcHorasTotalesRequeridas").toggleClass("d-none", !intersemestral);
+        $("#fcHorasPraSemana").prop("disabled", estado.soloLectura || intersemestral);
+        $("#fcHorasPraSemestre")
+            .prop("disabled", estado.soloLectura)
+            .prop("readonly", !intersemestral);
+
+        recalcular();
     };
 
     const actualizarNombreClave = () => {
@@ -403,6 +438,7 @@
             .trigger("change.select2");
         $("#fcBtnGuardar, #fcBtnCompletar").toggleClass("d-none", estado.soloLectura);
         $("#fcBtnCompletar").prop("disabled", true).attr("title", "Temporalmente no disponible");
+        actualizarModoImparticion({limpiar: false});
         if (!estado.soloLectura) actualizarCamposBibliografiaNueva();
         $("#fcAvisoSoloLectura").toggleClass("d-none", !estado.soloLectura);
         renderTemas();
@@ -446,6 +482,7 @@
         $("#fcFolio").text("Nueva solicitud");
         $("#fcEstatusBadge").attr("class", "badge bg-secondary").text("Borrador");
         $("#fcAsignaturaApoyo, #fcSubprograma, #fcAreaConocimiento, #fcModalidad, #fcSemestre").val("").trigger("change.select2");
+        $("#fcTipoImparticion").val(TIPO_IMPARTICION_SEMESTRAL);
         $("#fcTipo").val("Práctico");
         $("#fcCaracter").val("Optativo");
         $("#fcNombre, #fcClave, #fcHorasPraSemana, #fcHorasPraSemestre, #fcObjetivo, #fcJustificacion").val("");
@@ -478,6 +515,10 @@
         actualizarCamposBibliografiaNueva,
         limpiarBibliografiaNuevaEditor,
         limpiarTemaEditor,
+        TIPO_IMPARTICION_SEMESTRAL,
+        TIPO_IMPARTICION_INTERSEMESTRAL,
+        tipoImparticionActual,
+        actualizarModoImparticion,
         recalcular,
         actualizarNombreClave,
         setSoloLectura,

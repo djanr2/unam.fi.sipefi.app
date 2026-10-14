@@ -19,6 +19,9 @@ class FormacionComplementariaService:
     ESTATUS_BORRADOR = 1
     ESTATUS_COMPLETADA = 2
     SEMANAS_SEMESTRE = 16
+    TIPO_IMPARTICION_SEMESTRAL = "SEMESTRAL"
+    TIPO_IMPARTICION_INTERSEMESTRAL = "INTERSEMESTRAL"
+    TIPOS_IMPARTICION = {TIPO_IMPARTICION_SEMESTRAL, TIPO_IMPARTICION_INTERSEMESTRAL}
     TIPO_PRACTICO = 2
     CARACTER_OPTATIVO = 2
     MAX_JUSTIFICACION = 12000
@@ -73,6 +76,10 @@ class FormacionComplementariaService:
         detalle = self.db.obtener_detalle(id_formacion, id_usuario)
         if not detalle:
             raise FormacionComplementariaError(404, "No se encontró la formación complementaria solicitada.")
+
+        detalle["tipo_imparticion"] = str(
+            detalle.get("tipo_imparticion") or self.TIPO_IMPARTICION_SEMESTRAL
+        ).upper()
 
         for campo in (
             "horas_pract_semana",
@@ -270,7 +277,7 @@ class FormacionComplementariaService:
         obligatorios = {
             "id_area_conocimiento": "área del conocimiento",
             "semestre": "semestre",
-            "horas_pract_semana": "horas semana",
+            "tipo_imparticion": "tipo de impartición",
         }
         for campo, etiqueta in obligatorios.items():
             if datos.get(campo) is None:
@@ -279,11 +286,19 @@ class FormacionComplementariaService:
                     f"El campo {etiqueta} es obligatorio para completar.",
                 )
 
-        if datos["horas_pract_semana"] <= 0:
-            raise FormacionComplementariaError(
-                400,
-                "Las horas semana deben ser mayores a cero.",
-            )
+        tipo_imparticion = datos.get("tipo_imparticion")
+        if tipo_imparticion == self.TIPO_IMPARTICION_INTERSEMESTRAL:
+            if datos.get("horas_pract_semestre") is None or datos["horas_pract_semestre"] <= 0:
+                raise FormacionComplementariaError(
+                    400,
+                    "Las horas totales son obligatorias y deben ser mayores a cero para una impartición intersemestral.",
+                )
+        else:
+            if datos.get("horas_pract_semana") is None or datos["horas_pract_semana"] <= 0:
+                raise FormacionComplementariaError(
+                    400,
+                    "Las horas semana son obligatorias y deben ser mayores a cero para una impartición semestral.",
+                )
 
         if not datos.get("objetivo_general"):
             raise FormacionComplementariaError(
@@ -397,8 +412,25 @@ class FormacionComplementariaService:
         id_caracter = self.CARACTER_OPTATIVO
 
         semestre = entero_opcional(generales.get("semestre"), "semestre", minimo=1, maximo=10)
-        h_pra = self._hora_entera_opcional(generales.get("horasPracticasSemana"), "horas semana")
-        h_pra_semestre = None if h_pra is None else h_pra * self.SEMANAS_SEMESTRE
+        tipo_imparticion = str(
+            generales.get("tipoImparticion") or self.TIPO_IMPARTICION_SEMESTRAL
+        ).strip().upper()
+        if tipo_imparticion not in self.TIPOS_IMPARTICION:
+            raise FormacionComplementariaError(400, "El tipo de impartición seleccionado no es válido.")
+
+        if tipo_imparticion == self.TIPO_IMPARTICION_INTERSEMESTRAL:
+            h_pra = None
+            h_pra_semestre = self._hora_entera_opcional(
+                generales.get("horasPracticasSemestre"),
+                "horas totales",
+            )
+            if h_pra_semestre is not None and h_pra_semestre <= 0:
+                raise FormacionComplementariaError(400, "Las horas totales deben ser mayores a cero.")
+        else:
+            h_pra = self._hora_entera_opcional(generales.get("horasPracticasSemana"), "horas semana")
+            if h_pra is not None and h_pra <= 0:
+                raise FormacionComplementariaError(400, "Las horas semana deben ser mayores a cero.")
+            h_pra_semestre = None if h_pra is None else h_pra * self.SEMANAS_SEMESTRE
 
         nombre = self._normalizar_nombre(modalidad["prefijo_nombre"], apoyo["asignatura"])
         clave = self._clave_formacion(subprograma["clave_subprograma"], apoyo["clave_asignatura"])
@@ -433,6 +465,7 @@ class FormacionComplementariaService:
             "nombre_asignatura": nombre,
             "clave_asignatura": clave,
             "semestre": semestre,
+            "tipo_imparticion": tipo_imparticion,
             "horas_pract_semana": h_pra,
             "horas_pract_semestre": h_pra_semestre,
             "objetivo_general": texto(generales.get("objetivoGeneral"), max_length=4000),

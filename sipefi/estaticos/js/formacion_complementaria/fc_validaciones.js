@@ -6,7 +6,8 @@
     const {
         estado, mostrarMensaje, leerHoraEntera, marcarCampoHoraEntera,
         esHoraEntera, escapeHtml, actualizarHorasRestantes,
-        TOLERANCIA_HORAS, formatearHoras
+        TOLERANCIA_HORAS, formatearHoras,
+        TIPO_IMPARTICION_SEMESTRAL, TIPO_IMPARTICION_INTERSEMESTRAL
     } = FC;
 
     const validarMinimoBorrador = (payload) => {
@@ -20,16 +21,30 @@
             return false;
         }
 
-        const horasSemana = leerHoraEntera("#fcHorasPraSemana");
-        if (!horasSemana.valida) {
-            marcarCampoHoraEntera("#fcHorasPraSemana", {permitirVacio: true, permitirCero: false});
-            mostrarMensaje(
-                "Las horas semana deben capturarse únicamente con números enteros mayores a cero.",
-                "Horas no válidas"
-            );
-            return false;
+        const tipoImparticion = String(datos.tipoImparticion || TIPO_IMPARTICION_SEMESTRAL).toUpperCase();
+        if (tipoImparticion === TIPO_IMPARTICION_INTERSEMESTRAL) {
+            const horasTotales = leerHoraEntera("#fcHorasPraSemestre");
+            if (!horasTotales.valida || (!horasTotales.vacia && (horasTotales.valor ?? 0) <= 0)) {
+                marcarCampoHoraEntera("#fcHorasPraSemestre", {permitirVacio: true, permitirCero: false});
+                mostrarMensaje(
+                    "Las horas totales deben capturarse únicamente con números enteros mayores a cero.",
+                    "Horas no válidas"
+                );
+                return false;
+            }
+            $("#fcHorasPraSemestre").removeClass("is-invalid");
+        } else {
+            const horasSemana = leerHoraEntera("#fcHorasPraSemana");
+            if (!horasSemana.valida || (!horasSemana.vacia && (horasSemana.valor ?? 0) <= 0)) {
+                marcarCampoHoraEntera("#fcHorasPraSemana", {permitirVacio: true, permitirCero: false});
+                mostrarMensaje(
+                    "Las horas semana deben capturarse únicamente con números enteros mayores a cero.",
+                    "Horas no válidas"
+                );
+                return false;
+            }
+            $("#fcHorasPraSemana").removeClass("is-invalid");
         }
-        $("#fcHorasPraSemana").removeClass("is-invalid");
 
         const temaNoEntero = estado.temas.find(tema => !esHoraEntera(tema.horas, {permitirCero: false}));
         if (temaNoEntero) {
@@ -90,15 +105,31 @@
         if (!datos.idModalidad) registrar("Selecciona la modalidad.", "#fcModalidad", "#fcDatos");
         if (!datos.semestre) registrar("Selecciona el semestre.", "#fcSemestre", "#fcDatos");
 
-        const horasSemana = leerHoraEntera("#fcHorasPraSemana");
-        if (horasSemana.vacia) {
-            registrar("Captura las horas semana.", "#fcHorasPraSemana", "#fcDatos");
-        } else if (!horasSemana.valida || (horasSemana.valor ?? 0) <= 0) {
-            registrar(
-                "Las horas semana deben ser un número entero mayor a cero.",
-                "#fcHorasPraSemana",
-                "#fcDatos"
-            );
+        const tipoImparticion = String(datos.tipoImparticion || "").toUpperCase();
+        if (![TIPO_IMPARTICION_SEMESTRAL, TIPO_IMPARTICION_INTERSEMESTRAL].includes(tipoImparticion)) {
+            registrar("Selecciona el tipo de impartición.", "#fcTipoImparticion", "#fcDatos");
+        } else if (tipoImparticion === TIPO_IMPARTICION_INTERSEMESTRAL) {
+            const horasTotales = leerHoraEntera("#fcHorasPraSemestre");
+            if (horasTotales.vacia) {
+                registrar("Captura las horas totales.", "#fcHorasPraSemestre", "#fcDatos");
+            } else if (!horasTotales.valida || (horasTotales.valor ?? 0) <= 0) {
+                registrar(
+                    "Las horas totales deben ser un número entero mayor a cero.",
+                    "#fcHorasPraSemestre",
+                    "#fcDatos"
+                );
+            }
+        } else {
+            const horasSemana = leerHoraEntera("#fcHorasPraSemana");
+            if (horasSemana.vacia) {
+                registrar("Captura las horas semana.", "#fcHorasPraSemana", "#fcDatos");
+            } else if (!horasSemana.valida || (horasSemana.valor ?? 0) <= 0) {
+                registrar(
+                    "Las horas semana deben ser un número entero mayor a cero.",
+                    "#fcHorasPraSemana",
+                    "#fcDatos"
+                );
+            }
         }
 
         if (!String(datos.objetivoGeneral || "").trim()) {

@@ -11,7 +11,8 @@
         agregarOActualizarTema, limpiarTemaEditor, renderTemas, renderBibliografias,
         renderListado, inicializarReloj, inicializarTablas, post, ejecutar, pintarCatalogos,
         agregarOActualizarBibliografiaNueva, editarBibliografiaNueva, eliminarBibliografiaNueva,
-        actualizarCamposBibliografiaNueva, limpiarBibliografiaNuevaEditor
+        actualizarCamposBibliografiaNueva, limpiarBibliografiaNuevaEditor,
+        actualizarModoImparticion, tipoImparticionActual, TIPO_IMPARTICION_INTERSEMESTRAL
     } = FC;
 
     const registrarEventos = () => {
@@ -34,7 +35,7 @@
             }
         });
         $("#fcSubprograma, #fcModalidad").on("change", actualizarNombreClave);
-        const camposEnteros = "#fcHorasPraSemana, #fcTemaHoras, #fcAnioBibliografiaNueva";
+        const camposEnteros = "#fcHorasPraSemana, #fcHorasPraSemestre, #fcTemaHoras, #fcAnioBibliografiaNueva";
 
         $(camposEnteros).on("keydown", event => {
             if ([".", ",", "e", "E", "+", "-"].includes(event.key)) {
@@ -42,7 +43,15 @@
             }
         });
 
+        $("#fcTipoImparticion").on("change", () => actualizarModoImparticion({limpiar: true}));
+
         $("#fcHorasPraSemana").on("input", recalcular);
+        $("#fcHorasPraSemestre").on("input", () => {
+            if (tipoImparticionActual() === TIPO_IMPARTICION_INTERSEMESTRAL) {
+                marcarCampoHoraEntera("#fcHorasPraSemestre", {permitirVacio: true, permitirCero: false});
+                actualizarHorasRestantes();
+            }
+        });
 
         $("#fcTemaHoras").on("input", () => {
             marcarCampoHoraEntera("#fcTemaHoras", {permitirVacio: true, permitirCero: false});
